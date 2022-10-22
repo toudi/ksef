@@ -11,10 +11,11 @@ type generateCommand struct {
 }
 
 type generateArgsType struct {
-	FileName      string
-	Output        string
-	Delimiter     string
-	GeneratorName string
+	FileName               string
+	Output                 string
+	Delimiter              string
+	GeneratorName          string
+	EncodingConversionFile string
 }
 
 var GenerateCmd *generateCommand
@@ -36,6 +37,7 @@ func init() {
 	GenerateCmd.FlagSet.StringVar(&generateArgs.Delimiter, "d", ",", "łańcuch znaków rozdzielający pola w CSV")
 	GenerateCmd.FlagSet.StringVar(&generateArgs.GeneratorName, "g", "fa_1_1", "nazwa generatora")
 	GenerateCmd.FlagSet.BoolVar(&metadataArgs.testGateway, "t", false, "użyj certyfikatu bramki testowej do generowania podpisu")
+	GenerateCmd.FlagSet.StringVar(&generateArgs.EncodingConversionFile, "e", "", "użyj pliku z konwersją znaków")
 
 	registerCommand(&GenerateCmd.Command)
 }
@@ -48,7 +50,7 @@ func generateRun(c *Command) error {
 		return nil
 	}
 
-	generator, err := generators.Run(generateArgs.GeneratorName, generateArgs.Delimiter, generateArgs.FileName, generateArgs.Output)
+	generator, err := generators.Run(generateArgs.GeneratorName, generateArgs.Delimiter, generateArgs.FileName, generateArgs.Output, generateArgs.EncodingConversionFile)
 	if err != nil {
 		return fmt.Errorf("błąd generowania danych wejściowych: %v", err)
 	}

@@ -24,7 +24,7 @@ func registerGenerator(name string, g Generator) error {
 	return nil
 }
 
-func Run(generatorName string, delimiter string, inputFile string, outputDirectory string) (Generator, error) {
+func Run(generatorName string, delimiter string, inputFile string, outputDirectory string, encodingConversionFile string) (Generator, error) {
 	var g Generator
 	g, exists := registry[generatorName]
 	if !exists {
@@ -34,7 +34,7 @@ func Run(generatorName string, delimiter string, inputFile string, outputDirecto
 	var input *os.File
 	var err error
 
-	parser := &ksef.Parser{LineHandler: g.LineHandler, Comma: delimiter}
+	parser := &ksef.Parser{LineHandler: g.LineHandler, Comma: delimiter, EncodingConversionFile: encodingConversionFile}
 	input, err = os.Open(inputFile)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open input file")
