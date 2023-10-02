@@ -9,6 +9,12 @@ import (
 	"time"
 )
 
+var fieldToVATTotalMapping = map[string][]string{
+	"P_14_1": {"22", "23"},
+	"P_14_2": {"8", "7"},
+	"P_14_3": {"5"},
+}
+
 func FA_2_Invoice_to_xml_tree(invoice *common.Invoice) *xml.Node {
 	var root = &xml.Node{Name: "Faktura"}
 
@@ -21,6 +27,25 @@ func FA_2_Invoice_to_xml_tree(invoice *common.Invoice) *xml.Node {
 	root.SetValue("Faktura.Naglowek.KodFormularza#wersjaSchemy", "1-0E")
 	root.SetValue("Faktura.Naglowek.WariantFormularza", "2")
 	root.SetValue("Faktura.Naglowek.SystemInfo", "WSI Pegasus")
+
+	var totalPerField map[string]float64 = make(map[string]float64)
+
+	for field, vatRatesList := range fieldToVATTotalMapping {
+		for _, rate := range vatRatesList {
+			totalPerVatRate, exists := invoice.TotalPerVATRate[rate]
+			if exists {
+				totalPerFieldEntry, exists := totalPerField[field]
+				if !exists {
+					totalPerFieldEntry = 0
+				}
+				totalPerFieldEntry += float64(totalPerVatRate.VAT)
+				totalPerField[field] = totalPerFieldEntry
+			}
+		}
+		if totalPerFieldEntry, exists := totalPerField[field]; exists {
+			root.SetValue("Faktura.Fa."+field, fmt.Sprintf("%.2f", totalPerFieldEntry/100))
+		}
+	}
 
 	return root
 }
@@ -60,11 +85,7 @@ func FA_2(invoice *xml.Node, dest string) error {
 		"P_13_6": {"0"},
 		"P_13_7": {"zw"},
 	}
-	var totalVATAmountFieldPerVATRatesMapping = map[string][]string{
-		"P_14_1": {"22", "23"},
-		"P_14_2": {"8", "7"},
-		"P_14_3": {"5"},
-	}
+	var totalVATAmountFieldPerVATRatesMapping = map[string][]string{}
 
 	itemsNode, err := invoice.LocateNode("Faktura.Fa.FaWiersze")
 	if err != nil {

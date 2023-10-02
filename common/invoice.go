@@ -1,8 +1,8 @@
 package common
 
 type VAT struct {
-	Exempt bool
-	Rate   int
+	Rate        int
+	Description string
 }
 
 type Price struct {
@@ -11,16 +11,17 @@ type Price struct {
 	Vat     VAT
 }
 
-type InvoiceItem struct {
-	Description string
-	Unit        string
-	Quantity    float64
-	UnitPrice   Price
-	Attributes  map[string]string
+type Amount struct {
+	// these ints indicate amounts in groszy's (1/100'ths of 1PLN)
+	Net   int
+	Gross int
+	VAT   int
 }
 
 type Invoice struct {
-	Number     string
-	Items      []*InvoiceItem
-	Attributes map[string]string
+	Number          string
+	Items           []*InvoiceItem
+	TotalPerVATRate map[string]Amount
+	Total           Amount
+	Attributes      map[string]string
 }
