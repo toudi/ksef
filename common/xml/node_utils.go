@@ -36,16 +36,18 @@ func (node *Node) CreateChild(path string, isArray bool) (*Node, bool) {
 	var target *Node = node
 
 	pathParts := strings.Split(path, ".")
-	numParts := len(pathParts)
+	// numParts := len(pathParts)
+
+	// fmt.Printf("path parts: %v\n", pathParts)
 	// targetName := pathParts[numParts-1]
 
-	for i := range pathParts {
-		fmt.Printf("target is %s\n", target.Name)
-		if i < numParts-1 {
-			fmt.Printf("i = %d; numParts-1=%d\n", i, numParts-1)
-			target, created = target.GetOrCreateChild(pathParts[i+1], isArray)
-			fmt.Printf("set target to %s\n", target.Name)
-		}
+	for _, nodeName := range pathParts {
+		// fmt.Printf("target is %s\n", target.Name)
+		// if i < numParts-1 {
+		// fmt.Printf("i = %d; nodeName=%s\n", i, nodeName)
+		target, created = target.GetOrCreateChild(nodeName, isArray)
+		// fmt.Printf("set target to %s\n", target.Name)
+		// }
 	}
 
 	// target, created = target.appendChild(targetName, isArray)
@@ -54,7 +56,7 @@ func (node *Node) CreateChild(path string, isArray bool) (*Node, bool) {
 }
 
 func (node *Node) LocateNode(path string) (*Node, error) {
-	fmt.Printf("locateNode %s\n", path)
+	// fmt.Printf("locateNode %s\n", path)
 	var target *Node = node
 	var found bool
 

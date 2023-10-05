@@ -1,5 +1,7 @@
 package common
 
+import "time"
+
 type VAT struct {
 	Rate        int
 	Description string
@@ -20,6 +22,7 @@ type Amount struct {
 
 type Invoice struct {
 	Number          string
+	Issued          time.Time
 	Items           []*InvoiceItem
 	TotalPerVATRate map[string]Amount
 	Total           Amount

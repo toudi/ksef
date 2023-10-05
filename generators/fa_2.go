@@ -9,13 +9,19 @@ import (
 	"time"
 )
 
-var fieldToVATTotalMapping = map[string][]string{
+var fieldToVATTotalMapping = FieldToVATRatesMapping{
 	"P_14_1": {"22", "23"},
 	"P_14_2": {"8", "7"},
 	"P_14_3": {"5"},
 }
 
-func FA_2_Invoice_to_xml_tree(invoice *common.Invoice) *xml.Node {
+var fieldToNetTotalMapping = FieldToVATRatesMapping{
+	"P_13_1": {"22", "23"},
+	"P_13_2": {"8", "7"},
+	"P_13_3": {"5"},
+}
+
+func FA_2_Invoice_to_xml_tree(invoice *common.Invoice) (*xml.Node, error) {
 	var root = &xml.Node{Name: "Faktura"}
 
 	root.SetValue("Faktura.#xmlns:etd", "http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2022/01/05/eD/DefinicjeTypy/")
@@ -28,26 +34,34 @@ func FA_2_Invoice_to_xml_tree(invoice *common.Invoice) *xml.Node {
 	root.SetValue("Faktura.Naglowek.WariantFormularza", "2")
 	root.SetValue("Faktura.Naglowek.SystemInfo", "WSI Pegasus")
 
-	var totalPerField map[string]float64 = make(map[string]float64)
+	root.SetValue("Faktura.Fa.P_1", invoice.Issued.Format("2006-01-02"))
+	root.SetValue("Faktura.Fa.P_2", invoice.Number)
 
-	for field, vatRatesList := range fieldToVATTotalMapping {
-		for _, rate := range vatRatesList {
-			totalPerVatRate, exists := invoice.TotalPerVATRate[rate]
-			if exists {
-				totalPerFieldEntry, exists := totalPerField[field]
-				if !exists {
-					totalPerFieldEntry = 0
-				}
-				totalPerFieldEntry += float64(totalPerVatRate.VAT)
-				totalPerField[field] = totalPerFieldEntry
-			}
+	populateTotalNetAmounts(root, invoice, fieldToNetTotalMapping)
+	populateTotalVATAmounts(root, invoice, fieldToVATTotalMapping)
+
+	faNode, _ := root.LocateNode("Faktura.Fa")
+
+	for i, item := range invoice.Items {
+		faChildNode, _ := faNode.CreateChild("FaWiersz", true)
+		faChildNode.SetValue("NrWierszaFa", fmt.Sprintf("%d", i+1))
+		faChildNode.SetValue("P_7", item.Description)
+		if item.Unit != "" {
+			faChildNode.SetValue("P_8A", item.Unit)
 		}
-		if totalPerFieldEntry, exists := totalPerField[field]; exists {
-			root.SetValue("Faktura.Fa."+field, fmt.Sprintf("%.2f", totalPerFieldEntry/100))
+		faChildNode.SetValue("P_8B", common.RenderFloatNumber(item.Quantity))
+		faChildNode.SetValue("P_12", fmt.Sprintf("%d", item.UnitPrice.Vat.Rate))
+		if !item.UnitPrice.IsGross {
+			faChildNode.SetValue("P_9A", common.RenderAmountFromCurrencyUnits(item.UnitPrice.Value, 2))
+		} else {
+			faChildNode.SetValue("P_9B", common.RenderAmountFromCurrencyUnits(item.UnitPrice.Value, 2))
+		}
+		if err := faChildNode.SetData("", item.Attributes); err != nil {
+			return nil, fmt.Errorf("unable to set attributes for Faktura.Fa.Fawiersz: %v", err)
 		}
 	}
 
-	return root
+	return root, nil
 }
 
 func FA_2(invoice *xml.Node, dest string) error {
