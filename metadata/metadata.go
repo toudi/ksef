@@ -92,7 +92,7 @@ func (m *Metadata) Prepare(sourcePath string) error {
 		"filename": path.Base,
 	}
 
-	tmpl, err := template.New("fa_1_1_metadata.xml").Funcs(funcMap).ParseFiles("szablony/fa_1_1_metadata.xml")
+	tmpl, err := template.New("fa_2_metadata.xml").Funcs(funcMap).ParseFiles("szablony/fa_1_1_metadata.xml")
 	if err != nil {
 		return fmt.Errorf("cannot parse template: %v", err)
 	}

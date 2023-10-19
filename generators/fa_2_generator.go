@@ -45,7 +45,6 @@ func (fg *FA2Generator) LineHandler(section string, data map[string]string) erro
 func (fg *FA2Generator) newInvoice() *xml.Node {
 	var root = &xml.Node{Name: "Faktura"}
 
-	root.SetValue("Faktura.#xmlns:etd", "http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2022/01/05/eD/DefinicjeTypy/")
 	root.SetValue("Faktura.#xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
 	root.SetValue("Faktura.#xmlns:xsd", "http://www.w3.org/2001/XMLSchema")
 	root.SetValue("Faktura.#xmlns", "http://crd.gov.pl/wzor/2023/06/29/12648/")

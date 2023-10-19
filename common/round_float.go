@@ -12,7 +12,7 @@ func RoundFloat(val float64, precision uint) float64 {
 
 func AmountInGrosze(val float64) int {
 	amountRounded := RoundFloat(val, 2)
-	amountInGrosze := amountRounded * 100
+	amountInGrosze := math.Round(amountRounded * 100)
 	return int(amountInGrosze)
 }
 

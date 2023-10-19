@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<i:InitRequest 
+  xmlns="http://ksef.mf.gov.pl/schema/gtw/svc/types/2021/10/01/0001"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:i="http://ksef.mf.gov.pl/schema/gtw/svc/batch/init/request/2021/10/01/0001"
+  xmlns:b="http://ksef.mf.gov.pl/schema/gtw/svc/batch/types/2021/10/01/0001"
+>
+  <i:Identifier xsi:type="SubjectIdentifierByCompanyType">
+    <Identifier>{{ .Issuer }}</Identifier>
+  </i:Identifier>
+  <i:DocumentType>
+    <Service>KSeF</Service>
+    <FormCode>
+      <SystemCode>FA (2)</SystemCode>
+      <SchemaVersion>1-0E</SchemaVersion>
+      <TargetNamespace>http://crd.gov.pl/wzor/2023/06/29/12648/</TargetNamespace>
+      <Value>FA</Value>
+    </FormCode>
+  </i:DocumentType>
+  <i:Encryption>
+    <EncryptionKey>
+      <Encoding>Base64</Encoding>
+      <Algorithm>AES</Algorithm>
+      <Size>256</Size>
+      <Value>{{ base64 .Cipher.EncryptionKey }}</Value>
+    </EncryptionKey>
+    <EncryptionInitializationVector>
+      <Encoding>Base64</Encoding>
+      <Bytes>16</Bytes>
+      <Value>{{ base64 .Cipher.IV }}</Value>
+    </EncryptionInitializationVector>
+    <EncryptionAlgorithmKey>
+      <Algorithm>RSA</Algorithm>
+      <Mode>ECB</Mode>
+      <Padding>PKCS#1</Padding>
+    </EncryptionAlgorithmKey>
+    <EncryptionAlgorithmData>
+      <Algorithm>AES</Algorithm>
+      <Mode>CBC</Mode>
+      <Padding>PKCS#7</Padding>
+    </EncryptionAlgorithmData>
+  </i:Encryption>
+  <i:PackageSignature>
+    <i:Package>
+      <b:PackageType>split</b:PackageType>
+      <b:CompressionType>zip</b:CompressionType>
+      <b:Value>metadata.zip</b:Value>
+    </i:Package>
+    <i:PackageFileHash>
+      <HashSHA>
+        <Algorithm>SHA-256</Algorithm>
+        <Encoding>Base64</Encoding>
+        <Value>{{ base64 .Archive.Hash }}</Value>
+      </HashSHA>
+      <FileSize>{{ .Archive.Size }}</FileSize>
+    </i:PackageFileHash>
+    <i:PackagePartsList>
+      <i:PackagePartSignature>
+        <b:OrdinalNumber>1</b:OrdinalNumber>
+        <b:PartFileName>metadata.zip.aes</b:PartFileName>
+        <b:PartFileHash>
+          <HashSHA>
+            <Algorithm>SHA-256</Algorithm>
+            <Encoding>Base64</Encoding>
+            <Value>{{ base64 .EncryptedArchive.Hash }}</Value>
+          </HashSHA>
+          <FileSize>{{ .EncryptedArchive.Size }}</FileSize>
+        </b:PartFileHash>
+      </i:PackagePartSignature>
+    </i:PackagePartsList>
+  </i:PackageSignature>
+</i:InitRequest>

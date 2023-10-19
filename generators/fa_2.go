@@ -24,7 +24,6 @@ var fieldToNetTotalMapping = FieldToVATRatesMapping{
 func FA_2_Invoice_to_xml_tree(invoice *common.Invoice) (*xml.Node, error) {
 	var root = &xml.Node{Name: "Faktura"}
 
-	root.SetValue("Faktura.#xmlns:etd", "http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2022/01/05/eD/DefinicjeTypy/")
 	root.SetValue("Faktura.#xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
 	root.SetValue("Faktura.#xmlns:xsd", "http://www.w3.org/2001/XMLSchema")
 	root.SetValue("Faktura.#xmlns", "http://crd.gov.pl/wzor/2023/06/29/12648/")
@@ -50,7 +49,8 @@ func FA_2_Invoice_to_xml_tree(invoice *common.Invoice) (*xml.Node, error) {
 			faChildNode.SetValue("P_8A", item.Unit)
 		}
 		faChildNode.SetValue("P_8B", common.RenderFloatNumber(item.Quantity))
-		faChildNode.SetValue("P_12", fmt.Sprintf("%d", item.UnitPrice.Vat.Rate))
+		faChildNode.SetValue("P_11", common.RenderAmountFromCurrencyUnits(item.Amount().Net, 2))
+		faChildNode.SetValue("P_12", item.UnitPrice.Vat.Description)
 		if !item.UnitPrice.IsGross {
 			faChildNode.SetValue("P_9A", common.RenderAmountFromCurrencyUnits(item.UnitPrice.Value, 2))
 		} else {
