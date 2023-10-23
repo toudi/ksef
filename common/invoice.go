@@ -21,10 +21,11 @@ type Amount struct {
 }
 
 type Invoice struct {
-	Number          string
-	Issued          time.Time
-	Items           []*InvoiceItem
-	TotalPerVATRate map[string]Amount
-	Total           Amount
-	Attributes      map[string]string
+	Number           string
+	Issued           time.Time
+	Items            []*InvoiceItem
+	TotalPerVATRate  map[string]Amount
+	Total            Amount
+	Attributes       map[string]string
+	BasedOnNetPrices bool
 }

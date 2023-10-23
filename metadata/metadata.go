@@ -4,7 +4,7 @@ import (
 	"crypto/aes"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -35,14 +35,14 @@ type MetadataTemplateVars struct {
 	Issuer string
 }
 
-func (m *Metadata) Prepare(sourcePath string) error {
+func (m *Metadata) Prepare(sourcePath string, metadataTemplate fs.FS) error {
 	var err error
 	archive, err := Archive_init(sourcePath)
 	if err != nil {
 		return fmt.Errorf("cannot create archive file: %v", err)
 	}
 
-	files, err := ioutil.ReadDir(sourcePath)
+	files, err := os.ReadDir(sourcePath)
 	if err != nil {
 		return fmt.Errorf("cannot read list of files from %s: %v", sourcePath, err)
 	}
@@ -92,11 +92,11 @@ func (m *Metadata) Prepare(sourcePath string) error {
 		"filename": path.Base,
 	}
 
-	tmpl, err := template.New("fa_2_metadata.xml").Funcs(funcMap).ParseFiles("szablony/fa_1_1_metadata.xml")
+	tmpl, err := template.New("ksef-metadata.xml").Funcs(funcMap).ParseFS(metadataTemplate)
 	if err != nil {
 		return fmt.Errorf("cannot parse template: %v", err)
 	}
-	outputFile, err := os.Create(filepath.Join(sourcePath, "metadata.xml"))
+	outputFile, err := os.Create(filepath.Join(sourcePath, metadataFileName))
 	if err != nil {
 		return fmt.Errorf("cannot create output file: %v", err)
 	}

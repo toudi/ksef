@@ -3,6 +3,7 @@ package commands
 import (
 	"flag"
 	"fmt"
+	"ksef/common"
 	"ksef/generators"
 )
 
@@ -35,14 +36,14 @@ func init() {
 	GenerateCmd.FlagSet.StringVar(&generateArgs.FileName, "f", "", "nazwa pliku do przetworzenia")
 	GenerateCmd.FlagSet.StringVar(&generateArgs.Output, "o", "", "nazwa pliku wyjściowego")
 	GenerateCmd.FlagSet.StringVar(&generateArgs.Delimiter, "d", ",", "łańcuch znaków rozdzielający pola w CSV")
-	GenerateCmd.FlagSet.StringVar(&generateArgs.GeneratorName, "g", "fa_1_1", "nazwa generatora")
+	GenerateCmd.FlagSet.StringVar(&generateArgs.GeneratorName, "g", "fa-1-1", "nazwa generatora")
 	GenerateCmd.FlagSet.BoolVar(&metadataArgs.testGateway, "t", false, "użyj certyfikatu bramki testowej do generowania podpisu")
 	GenerateCmd.FlagSet.StringVar(&generateArgs.EncodingConversionFile, "e", "", "użyj pliku z konwersją znaków")
 
 	registerCommand(&GenerateCmd.Command)
 }
 
-var _generator *generators.Generator
+var _generator *common.Generator
 
 func generateRun(c *Command) error {
 	if generateArgs.FileName == "" || generateArgs.Output == "" {
@@ -56,6 +57,7 @@ func generateRun(c *Command) error {
 	}
 
 	metadataArgs.path = generateArgs.Output
-	metadataArgs.issuer = generator.Issuer()
+	metadataArgs.generator = generateArgs.GeneratorName
+	metadataArgs.issuer = generator.IssuerTIN()
 	return metadataRun(c)
 }

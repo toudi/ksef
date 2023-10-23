@@ -1,4 +1,4 @@
-package generators
+package fa_2
 
 import (
 	"fmt"
@@ -8,21 +8,7 @@ import (
 	"time"
 )
 
-var sectionRoot = "faktura"
-var sectionInvoice = "faktura.fa"
-
-func getInt(value string, err error) (int, error) {
-	if err != nil {
-		return 0, err
-	}
-	tmpFloat, err := strconv.ParseFloat(value, 32)
-	if err != nil {
-		return 0, err
-	}
-
-	return int(tmpFloat * 100), nil
-}
-func FA_1(invoice *xml.Node, dest string) error {
+func FA_2(invoice *xml.Node, dest string) error {
 	var err error
 	var numItems int
 	var totalAmountNet int
@@ -57,11 +43,7 @@ func FA_1(invoice *xml.Node, dest string) error {
 		"P_13_6": {"0"},
 		"P_13_7": {"zw"},
 	}
-	var totalVATAmountFieldPerVATRatesMapping = map[string][]string{
-		"P_14_1": {"22", "23"},
-		"P_14_2": {"8", "7"},
-		"P_14_3": {"5"},
-	}
+	var totalVATAmountFieldPerVATRatesMapping = map[string][]string{}
 
 	itemsNode, err := invoice.LocateNode("Faktura.Fa.FaWiersze")
 	if err != nil {
@@ -122,13 +104,6 @@ func FA_1(invoice *xml.Node, dest string) error {
 
 	fmt.Printf("totalVatAmount=%v; totalGrossAmount=%v\n", totalVatAmount, totalAmountGross)
 
-	itemsNode.Children = append(itemsNode.Children, &xml.Node{Name: "LiczbaWierszyFaktury", Value: fmt.Sprint(numItems)})
-	if invoiceIsBasedOnGross {
-		itemsNode.Children = append(itemsNode.Children, &xml.Node{Name: "WartoscWierszyFaktury2", Value: fmt.Sprintf("%.2f", float32(totalAmountGross)/100)})
-	} else {
-		itemsNode.Children = append(itemsNode.Children, &xml.Node{Name: "WartoscWierszyFaktury1", Value: fmt.Sprintf("%.2f", float32(totalAmountNet)/100)})
-	}
-
 	invoice.SetValue("Faktura.Fa.P_14_1", fmt.Sprintf("%.2f", float32(totalVatAmount)/100))
 	invoice.SetValue("Faktura.Fa.P_15", fmt.Sprintf("%.2f", float32(totalAmountGross)/100))
 
@@ -155,7 +130,7 @@ func FA_1(invoice *xml.Node, dest string) error {
 
 	//itemsNode.Children = append(itemsNode.Children, &xml.Node{Name: "WartoscWierszyFaktury2", Value: fmt.Sprintf("%.2f", float32(totalAmountGross/100))})
 
-	if err = invoice.ApplyOrdering(FA_1ChildrenOrder); err != nil {
+	if err = invoice.ApplyOrdering(FA_2ChildrenOrder); err != nil {
 		return fmt.Errorf("unable to apply ordering: %v", err)
 	}
 	destFile, err := os.OpenFile(dest, os.O_CREATE|os.O_RDWR, 0644)
@@ -164,7 +139,7 @@ func FA_1(invoice *xml.Node, dest string) error {
 	}
 	destFile.Truncate(0)
 	defer destFile.Close()
-	destFile.WriteString(`<?xml version="1.0"?>`)
+	destFile.WriteString(`<?xml version="1.0" encoding="UTF-8"?>`)
 	destFile.WriteString("\n")
 	return invoice.DumpToFile(destFile, 0)
 }

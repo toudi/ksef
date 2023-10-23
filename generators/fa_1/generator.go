@@ -1,7 +1,8 @@
-package generators
+package fa_1
 
 import (
 	"fmt"
+	"ksef/common"
 	"ksef/common/xml"
 	"strings"
 )
@@ -46,14 +47,6 @@ func (fg *FA1Generator) newInvoice() *xml.Node {
 	var root = &xml.Node{Name: "Faktura"}
 
 	// root.SetValue("Faktura.#xmlns:etd", "http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2021/06/09/eD/DefinicjeTypy/")
-	root.SetValue("Faktura.#xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
-	root.SetValue("Faktura.#xmlns:xsd", "http://www.w3.org/2001/XMLSchema")
-	root.SetValue("Faktura.#xmlns", "http://crd.gov.pl/wzor/2021/11/29/11089/")
-	root.SetValue("Faktura.Naglowek.KodFormularza", "FA")
-	root.SetValue("Faktura.Naglowek.KodFormularza#kodSystemowy", "FA (1)")
-	root.SetValue("Faktura.Naglowek.KodFormularza#wersjaSchemy", "1-0E")
-	root.SetValue("Faktura.Naglowek.WariantFormularza", "1")
-	root.SetValue("Faktura.Naglowek.SystemInfo", "WSI Pegasus")
 
 	for key, value := range fg.commonData {
 		root.SetValue(key, value)
@@ -75,11 +68,26 @@ func (fg *FA1Generator) Save(dest string) error {
 	return nil
 }
 
-func (fg *FA1Generator) Issuer() string {
+func (fg *FA1Generator) IssuerTIN() string {
 	return fg.commonData["Faktura.Podmiot1.DaneIdentyfikacyjne.NIP"]
 }
 
-func init() {
-	var _generator = &FA1Generator{currentInvoiceIndex: -1}
-	registerGenerator("fa_1_1", _generator)
+func (fg *FA1Generator) InvoiceToXMLTree(invoice *common.Invoice) (*xml.Node, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func GeneratorFactory() common.Generator {
+	return &FA1Generator{
+		currentInvoiceIndex: -1,
+		commonData: map[string]string{
+			"Faktura.#xmlns:xsi":                          "http://www.w3.org/2001/XMLSchema-instance",
+			"Faktura.#xmlns:xsd":                          "http://www.w3.org/2001/XMLSchema",
+			"Faktura.#xmlns":                              "http://crd.gov.pl/wzor/2021/11/29/11089/",
+			"Faktura.Naglowek.KodFormularza":              "FA",
+			"Faktura.Naglowek.KodFormularza#kodSystemowy": "FA (1)",
+			"Faktura.Naglowek.KodFormularza#wersjaSchemy": "1-0E",
+			"Faktura.Naglowek.WariantFormularza":          "1",
+			"Faktura.Naglowek.SystemInfo":                 "WSI Pegasus",
+		},
+	}
 }

@@ -3,20 +3,17 @@ package generators
 import (
 	"fmt"
 	"ksef"
+	"ksef/common"
+	"ksef/generators/fa_1"
+	"ksef/generators/fa_2"
 	"os"
 )
 
-type Generator interface {
-	LineHandler(string, map[string]string) error
-	Save(string) error
-	Issuer() string
-}
+var registry map[string]common.Generator
 
-var registry map[string]Generator
-
-func registerGenerator(name string, g Generator) error {
+func registerGenerator(name string, g common.Generator) error {
 	if registry == nil {
-		registry = make(map[string]Generator, 0)
+		registry = make(map[string]common.Generator, 0)
 	}
 
 	registry[name] = g
@@ -24,8 +21,8 @@ func registerGenerator(name string, g Generator) error {
 	return nil
 }
 
-func Run(generatorName string, delimiter string, inputFile string, outputDirectory string, encodingConversionFile string) (Generator, error) {
-	var g Generator
+func Run(generatorName string, delimiter string, inputFile string, outputDirectory string, encodingConversionFile string) (common.Generator, error) {
+	var g common.Generator
 	g, exists := registry[generatorName]
 	if !exists {
 		return nil, fmt.Errorf("unknown generator")
@@ -52,4 +49,18 @@ func Run(generatorName string, delimiter string, inputFile string, outputDirecto
 	}
 
 	return g, g.Save(outputDirectory)
+}
+
+func Generator(id string) (common.Generator, error) {
+	generator, exists := registry[id]
+	if !exists {
+		return nil, fmt.Errorf("unknown generator: %s", id)
+	}
+
+	return generator, nil
+}
+
+func init() {
+	registerGenerator("fa-1-1", fa_1.GeneratorFactory())
+	registerGenerator("fa-2", fa_2.GeneratorFactory())
 }

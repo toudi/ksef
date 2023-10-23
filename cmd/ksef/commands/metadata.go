@@ -3,6 +3,7 @@ package commands
 import (
 	"flag"
 	"fmt"
+	"ksef/generators"
 	"ksef/metadata"
 )
 
@@ -12,6 +13,7 @@ type metadataCommand struct {
 
 type metadataArgsType struct {
 	path        string
+	generator   string
 	testGateway bool
 	issuer      string
 }
@@ -31,6 +33,7 @@ func init() {
 	}
 
 	MetadataCommand.FlagSet.BoolVar(&metadataArgs.testGateway, "t", false, "użyj bramki testowej")
+	MetadataCommand.FlagSet.StringVar(&metadataArgs.generator, "g", "fa-2", "nazwa generatora")
 	MetadataCommand.FlagSet.StringVar(&metadataArgs.path, "p", "", "ścieżka do wygenerowanych plików")
 	MetadataCommand.FlagSet.StringVar(&metadataArgs.issuer, "i", "", "numer NIP wystawcy faktur")
 
@@ -50,5 +53,11 @@ func metadataRun(c *Command) error {
 		meta.CertificateFile = "klucze/test/publicKey.pem"
 	}
 
-	return meta.Prepare(metadataArgs.path)
+	generator, err := generators.Generator(metadataArgs.generator)
+	if err != nil {
+		// there's only one possible error which is - the generator does not exist
+		return err
+	}
+
+	return generator.PopulateMetadata(meta, metadataArgs.path)
 }

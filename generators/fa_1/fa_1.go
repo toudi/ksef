@@ -1,70 +1,28 @@
-package generators
+package fa_1
 
 import (
 	"fmt"
-	"ksef/common"
 	"ksef/common/xml"
 	"os"
 	"strconv"
 	"time"
 )
 
-var fieldToVATTotalMapping = FieldToVATRatesMapping{
-	"P_14_1": {"22", "23"},
-	"P_14_2": {"8", "7"},
-	"P_14_3": {"5"},
-}
+var sectionRoot = "faktura"
+var sectionInvoice = "faktura.fa"
 
-var fieldToNetTotalMapping = FieldToVATRatesMapping{
-	"P_13_1": {"22", "23"},
-	"P_13_2": {"8", "7"},
-	"P_13_3": {"5"},
-}
-
-func FA_2_Invoice_to_xml_tree(invoice *common.Invoice) (*xml.Node, error) {
-	var root = &xml.Node{Name: "Faktura"}
-
-	root.SetValue("Faktura.#xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance")
-	root.SetValue("Faktura.#xmlns:xsd", "http://www.w3.org/2001/XMLSchema")
-	root.SetValue("Faktura.#xmlns", "http://crd.gov.pl/wzor/2023/06/29/12648/")
-	root.SetValue("Faktura.Naglowek.KodFormularza", "FA")
-	root.SetValue("Faktura.Naglowek.KodFormularza#kodSystemowy", "FA (2)")
-	root.SetValue("Faktura.Naglowek.KodFormularza#wersjaSchemy", "1-0E")
-	root.SetValue("Faktura.Naglowek.WariantFormularza", "2")
-	root.SetValue("Faktura.Naglowek.SystemInfo", "WSI Pegasus")
-
-	root.SetValue("Faktura.Fa.P_1", invoice.Issued.Format("2006-01-02"))
-	root.SetValue("Faktura.Fa.P_2", invoice.Number)
-
-	populateTotalNetAmounts(root, invoice, fieldToNetTotalMapping)
-	populateTotalVATAmounts(root, invoice, fieldToVATTotalMapping)
-
-	faNode, _ := root.LocateNode("Faktura.Fa")
-
-	for i, item := range invoice.Items {
-		faChildNode, _ := faNode.CreateChild("FaWiersz", true)
-		faChildNode.SetValue("NrWierszaFa", fmt.Sprintf("%d", i+1))
-		faChildNode.SetValue("P_7", item.Description)
-		if item.Unit != "" {
-			faChildNode.SetValue("P_8A", item.Unit)
-		}
-		faChildNode.SetValue("P_8B", common.RenderFloatNumber(item.Quantity))
-		faChildNode.SetValue("P_11", common.RenderAmountFromCurrencyUnits(item.Amount().Net, 2))
-		faChildNode.SetValue("P_12", item.UnitPrice.Vat.Description)
-		if !item.UnitPrice.IsGross {
-			faChildNode.SetValue("P_9A", common.RenderAmountFromCurrencyUnits(item.UnitPrice.Value, 2))
-		} else {
-			faChildNode.SetValue("P_9B", common.RenderAmountFromCurrencyUnits(item.UnitPrice.Value, 2))
-		}
-		if err := faChildNode.SetData("", item.Attributes); err != nil {
-			return nil, fmt.Errorf("unable to set attributes for Faktura.Fa.Fawiersz: %v", err)
-		}
+func getInt(value string, err error) (int, error) {
+	if err != nil {
+		return 0, err
+	}
+	tmpFloat, err := strconv.ParseFloat(value, 32)
+	if err != nil {
+		return 0, err
 	}
 
-	return root, nil
+	return int(tmpFloat * 100), nil
 }
-
-func FA_2(invoice *xml.Node, dest string) error {
+func FA_1(invoice *xml.Node, dest string) error {
 	var err error
 	var numItems int
 	var totalAmountNet int
@@ -99,7 +57,11 @@ func FA_2(invoice *xml.Node, dest string) error {
 		"P_13_6": {"0"},
 		"P_13_7": {"zw"},
 	}
-	var totalVATAmountFieldPerVATRatesMapping = map[string][]string{}
+	var totalVATAmountFieldPerVATRatesMapping = map[string][]string{
+		"P_14_1": {"22", "23"},
+		"P_14_2": {"8", "7"},
+		"P_14_3": {"5"},
+	}
 
 	itemsNode, err := invoice.LocateNode("Faktura.Fa.FaWiersze")
 	if err != nil {
@@ -160,6 +122,13 @@ func FA_2(invoice *xml.Node, dest string) error {
 
 	fmt.Printf("totalVatAmount=%v; totalGrossAmount=%v\n", totalVatAmount, totalAmountGross)
 
+	itemsNode.Children = append(itemsNode.Children, &xml.Node{Name: "LiczbaWierszyFaktury", Value: fmt.Sprint(numItems)})
+	if invoiceIsBasedOnGross {
+		itemsNode.Children = append(itemsNode.Children, &xml.Node{Name: "WartoscWierszyFaktury2", Value: fmt.Sprintf("%.2f", float32(totalAmountGross)/100)})
+	} else {
+		itemsNode.Children = append(itemsNode.Children, &xml.Node{Name: "WartoscWierszyFaktury1", Value: fmt.Sprintf("%.2f", float32(totalAmountNet)/100)})
+	}
+
 	invoice.SetValue("Faktura.Fa.P_14_1", fmt.Sprintf("%.2f", float32(totalVatAmount)/100))
 	invoice.SetValue("Faktura.Fa.P_15", fmt.Sprintf("%.2f", float32(totalAmountGross)/100))
 
@@ -186,7 +155,7 @@ func FA_2(invoice *xml.Node, dest string) error {
 
 	//itemsNode.Children = append(itemsNode.Children, &xml.Node{Name: "WartoscWierszyFaktury2", Value: fmt.Sprintf("%.2f", float32(totalAmountGross/100))})
 
-	if err = invoice.ApplyOrdering(FA_2ChildrenOrder); err != nil {
+	if err = invoice.ApplyOrdering(FA_1ChildrenOrder); err != nil {
 		return fmt.Errorf("unable to apply ordering: %v", err)
 	}
 	destFile, err := os.OpenFile(dest, os.O_CREATE|os.O_RDWR, 0644)
@@ -195,7 +164,7 @@ func FA_2(invoice *xml.Node, dest string) error {
 	}
 	destFile.Truncate(0)
 	defer destFile.Close()
-	destFile.WriteString(`<?xml version="1.0" encoding="UTF-8"?>`)
+	destFile.WriteString(`<?xml version="1.0"?>`)
 	destFile.WriteString("\n")
 	return invoice.DumpToFile(destFile, 0)
 }
