@@ -71,3 +71,7 @@ func (f *FieldToVATRatesMapping) Populate(root *xml.Node) {
 		root.SetValue("Faktura.Fa."+totalFieldName, fmt.Sprintf("%.2f", totalValue/100))
 	}
 }
+
+func (f *FieldToVATRatesMapping) Zero() {
+	f.Totals = make(map[string]float64)
+}

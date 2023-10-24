@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"ksef/common"
 	"ksef/common/xml"
+	"time"
 )
 
 // this function is meant to be used when you have a invoice.Invoice object as your source
@@ -13,8 +14,15 @@ import (
 func (fg *FA2Generator) InvoiceToXMLTree(invoice *common.Invoice) (*xml.Node, error) {
 	var root = &xml.Node{Name: "Faktura"}
 
-	root.SetValue("Faktura.Fa.P_1", invoice.Issued.Format("2006-01-02"))
-	root.SetValue("Faktura.Fa.P_2", invoice.Number)
+	root.SetValuesFromMap(invoice.Attributes)
+
+	if !invoice.Issued.IsZero() {
+		root.SetValue("Faktura.Fa.P_1", invoice.Issued.Format("2006-01-02"))
+	}
+	if invoice.Number != "" {
+		root.SetValue("Faktura.Fa.P_2", invoice.Number)
+	}
+	root.SetValue("Faktura.Naglowek.DataWytworzeniaFa", fg.runTimestamp.Format(time.RFC3339))
 
 	faNode, _ := root.LocateNode("Faktura.Fa")
 
@@ -33,13 +41,17 @@ func (fg *FA2Generator) InvoiceToXMLTree(invoice *common.Invoice) (*xml.Node, er
 		} else {
 			faChildNode.SetValue("P_9B", common.RenderAmountFromCurrencyUnits(item.UnitPrice.Value, 2))
 		}
-		if err := faChildNode.SetData("", item.Attributes); err != nil {
-			return nil, fmt.Errorf("unable to set attributes for Faktura.Fa.Fawiersz: %v", err)
-		}
+		faChildNode.SetValuesFromMap(item.Attributes)
 		fieldToVatRatesMapping.Accumulate(item)
 	}
 
 	fieldToVatRatesMapping.Populate(root)
+	faNode.SetValue("P_15", common.RenderAmountFromCurrencyUnits(invoice.Total.Gross, 2))
+	if err := root.ApplyOrdering(FA_2ChildrenOrder); err != nil {
+		return nil, fmt.Errorf("unable to apply schema order: %v", err)
+	}
+
+	fieldToVatRatesMapping.Zero()
 
 	return root, nil
 }

@@ -95,7 +95,7 @@ func getNodeAndAttrib(name string) (string, string) {
 	return name, ""
 }
 
-func (node *Node) SetValue(path string, value string) error {
+func (node *Node) SetValue(path string, value string) {
 	pathParts := strings.Split(path, ".")
 
 	var nodeName string
@@ -126,16 +126,18 @@ func (node *Node) SetValue(path string, value string) error {
 	} else {
 		target.Value = value
 	}
-
-	return nil
 }
 
-func (node *Node) SetData(path string, data map[string]string) error {
+func (node *Node) SetValuesFromMap(data map[string]string) {
+	for key, value := range data {
+		node.SetValue(key, value)
+	}
+}
+
+func (node *Node) SetData(path string, data map[string]string) {
 	for key, value := range data {
 		node.SetValue(path+"."+key, value)
 	}
-
-	return nil
 }
 
 func (node *Node) ValueOf(path string) (string, error) {

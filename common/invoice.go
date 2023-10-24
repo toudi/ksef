@@ -29,3 +29,10 @@ type Invoice struct {
 	Attributes       map[string]string
 	BasedOnNetPrices bool
 }
+
+func (i *Invoice) Clear() {
+	i.Items = make([]*InvoiceItem, 0)
+	i.TotalPerVATRate = make(map[string]Amount)
+	i.Attributes = make(map[string]string)
+	i.Total = Amount{}
+}

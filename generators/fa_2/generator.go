@@ -1,18 +1,18 @@
 package fa_2
 
 import (
-	"fmt"
 	"ksef/common"
 	"ksef/common/xml"
 	"strings"
+	"time"
 )
 
 type FA2Generator struct {
-	commonData          map[string]string
-	invoices            []*xml.Node
-	currentInvoiceIndex int
-	netBased            bool
-	state               int
+	commonData   map[string]string
+	invoices     []*xml.Node
+	netBased     bool
+	state        int
+	runTimestamp time.Time
 	// whether all the prices are based on net amount
 }
 
@@ -27,6 +27,10 @@ func (fg *FA2Generator) isCommonData(section string) bool {
 	return sectionLower == "faktura" || sectionLower == "faktura.naglowek" || strings.HasPrefix(sectionLower, "faktura.podmiot")
 }
 
+func (fg *FA2Generator) isItemSection(section string) bool {
+	return strings.ToLower(section) == "faktura.fa.fawiersze.fawiersz"
+}
+
 func (fg *FA2Generator) newInvoice() *xml.Node {
 	var root = &xml.Node{Name: "Faktura"}
 
@@ -38,15 +42,15 @@ func (fg *FA2Generator) newInvoice() *xml.Node {
 }
 
 func (fg *FA2Generator) Save(dest string) error {
-	var err error
-	var i int
-	var invoice *xml.Node
+	// var err error
+	// var i int
+	// var invoice *xml.Node
 
-	for i, invoice = range fg.invoices {
-		if err = FA_2(invoice, fmt.Sprintf("%s/faktura_%d.xml", dest, i)); err != nil {
-			return fmt.Errorf("unable to generate invoice %d: %v", i, err)
-		}
-	}
+	// for i, invoice = range fg.invoices {
+	// 	if err = FA_2(invoice, fmt.Sprintf("%s/faktura_%d.xml", dest, i)); err != nil {
+	// 		return fmt.Errorf("unable to generate invoice %d: %v", i, err)
+	// 	}
+	// }
 	return nil
 }
 
@@ -56,7 +60,6 @@ func (fg *FA2Generator) IssuerTIN() string {
 
 func GeneratorFactory() common.Generator {
 	return &FA2Generator{
-		currentInvoiceIndex: -1,
 		commonData: map[string]string{
 			"Faktura.#xmlns:xsi":                          "http://www.w3.org/2001/XMLSchema-instance",
 			"Faktura.#xmlns:xsd":                          "http://www.w3.org/2001/XMLSchema",
@@ -67,5 +70,6 @@ func GeneratorFactory() common.Generator {
 			"Faktura.Naglowek.WariantFormularza":          "2",
 			"Faktura.Naglowek.SystemInfo":                 "WSI Pegasus",
 		},
+		runTimestamp: time.Now(),
 	}
 }

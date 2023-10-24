@@ -1,4 +1,4 @@
-package fa_2
+package inputprocessors
 
 // describe state that the generator is in
 const (

@@ -3,8 +3,9 @@ package commands
 import (
 	"flag"
 	"fmt"
+	"ksef"
 	"ksef/common"
-	"ksef/generators"
+	inputprocessors "ksef/common/input_processors"
 )
 
 type generateCommand struct {
@@ -27,18 +28,18 @@ func init() {
 		Command: Command{
 			Name:        "generate",
 			FlagSet:     flag.NewFlagSet("generate", flag.ExitOnError),
-			Description: "Konwertuje plik CSV do pliku KSEF (XML)",
+			Description: "Konwertuje plik CSV/XLSX do pliku KSEF (XML)",
 			Run:         generateRun,
 			Args:        generateArgs,
 		},
 	}
 
 	GenerateCmd.FlagSet.StringVar(&generateArgs.FileName, "f", "", "nazwa pliku do przetworzenia")
-	GenerateCmd.FlagSet.StringVar(&generateArgs.Output, "o", "", "nazwa pliku wyjściowego")
-	GenerateCmd.FlagSet.StringVar(&generateArgs.Delimiter, "d", ",", "łańcuch znaków rozdzielający pola w CSV")
-	GenerateCmd.FlagSet.StringVar(&generateArgs.GeneratorName, "g", "fa-1-1", "nazwa generatora")
+	GenerateCmd.FlagSet.StringVar(&generateArgs.Output, "o", "", "nazwa katalogu wyjściowego")
+	GenerateCmd.FlagSet.StringVar(&generateArgs.Delimiter, "d", ",", "łańcuch znaków rozdzielający pola (tylko dla CSV)")
+	GenerateCmd.FlagSet.StringVar(&generateArgs.GeneratorName, "g", "fa-2", "nazwa generatora")
 	GenerateCmd.FlagSet.BoolVar(&metadataArgs.testGateway, "t", false, "użyj certyfikatu bramki testowej do generowania podpisu")
-	GenerateCmd.FlagSet.StringVar(&generateArgs.EncodingConversionFile, "e", "", "użyj pliku z konwersją znaków")
+	GenerateCmd.FlagSet.StringVar(&generateArgs.EncodingConversionFile, "e", "", "użyj pliku z konwersją znaków (tylko dla CSV)")
 
 	registerCommand(&GenerateCmd.Command)
 }
@@ -51,13 +52,22 @@ func generateRun(c *Command) error {
 		return nil
 	}
 
-	generator, err := generators.Run(generateArgs.GeneratorName, generateArgs.Delimiter, generateArgs.FileName, generateArgs.Output, generateArgs.EncodingConversionFile)
+	var conversionParameters inputprocessors.InputProcessorConfig
+	conversionParameters.CSV.Delimiter = generateArgs.Delimiter
+	conversionParameters.CSV.EncodingConversionFile = generateArgs.EncodingConversionFile
+	conversionParameters.Generator = generateArgs.GeneratorName
+	sei, err := ksef.SEI_Init(generateArgs.Output, conversionParameters)
 	if err != nil {
-		return fmt.Errorf("błąd generowania danych wejściowych: %v", err)
+		return err
+	}
+	if err = sei.ProcessSourceFile(generateArgs.FileName); err != nil {
+		return fmt.Errorf("error calling processSourceFile: %v", err)
 	}
 
-	metadataArgs.path = generateArgs.Output
-	metadataArgs.generator = generateArgs.GeneratorName
-	metadataArgs.issuer = generator.IssuerTIN()
-	return metadataRun(c)
+	return nil
+
+	// metadataArgs.path = generateArgs.Output
+	// metadataArgs.generator = generateArgs.GeneratorName
+	// metadataArgs.issuer = sei.IssuerTIN
+	// return metadataRun(c)
 }
