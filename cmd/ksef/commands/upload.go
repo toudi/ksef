@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -39,13 +39,13 @@ type batchInitResponseType struct {
 	} `json:"packageSignature"`
 }
 
-type batchUploadResponseType struct {
+type finishResponseType struct {
 	ReferenceNumber string `json:"referenceNumber"`
-	Timestamp       string `json:"timestamp"`
+	//Timestamp       string `json:"timestamp"`
 }
 
 var batchInitResponse batchInitResponseType
-var batchUploadResponse batchUploadResponseType
+var finishResponse finishResponseType
 
 func init() {
 	UploadCommand = &uploadCommand{
@@ -97,7 +97,7 @@ func uploadRun(c *Command) error {
 	defer initResponse.Body.Close()
 	fmt.Printf("initResponse status: %d\n", initResponse.StatusCode)
 	if initResponse.StatusCode/100 != 2 {
-		responseContent, err := ioutil.ReadAll(initResponse.Body)
+		responseContent, err := io.ReadAll(initResponse.Body)
 		if err != nil {
 			return fmt.Errorf("error reading response:%v", err)
 		}
@@ -108,6 +108,8 @@ func uploadRun(c *Command) error {
 	if err != nil {
 		return fmt.Errorf("error decoding JSON response: %v", err)
 	}
+
+	fmt.Printf("batch init response: %+v\n", batchInitResponse)
 
 	// step 2 - upload encrypted archive
 	fmt.Printf("step 2 - PUT to %v\n", batchInitResponse.PackageSignature.PackagePartSignatureList[0].Url)
@@ -135,7 +137,7 @@ func uploadRun(c *Command) error {
 		return fmt.Errorf("could not send encrypted archive: %v", err)
 	}
 	defer batchResponse.Body.Close()
-	batchResponseBody, err := ioutil.ReadAll(batchResponse.Body)
+	batchResponseBody, err := io.ReadAll(batchResponse.Body)
 	if err != nil {
 		return fmt.Errorf("could not read batch upload response: %v", err)
 	}
@@ -147,8 +149,14 @@ func uploadRun(c *Command) error {
 
 	// step 3 - call finish upload
 
+	finishResponse.ReferenceNumber = batchInitResponse.ReferenceNumber
+	var finishResponseBuffer bytes.Buffer
+	if err = json.NewEncoder(&finishResponseBuffer).Encode(finishResponse); err != nil {
+		return fmt.Errorf("cannot encode finishResponse to JSON")
+	}
+
 	fmt.Printf("step 3 - POST to %v\n", gateway+"batch/Finish")
-	finishUpload, err := http.NewRequest("POST", gateway+"batch/Finish", bytes.NewBuffer(batchResponseBody))
+	finishUpload, err := http.NewRequest("POST", gateway+"batch/Finish", &finishResponseBuffer)
 	finishUpload.Header.Set("Content-Type", "application/json")
 
 	if err != nil {
@@ -159,7 +167,7 @@ func uploadRun(c *Command) error {
 		return fmt.Errorf("could not finish upload: %v", err)
 	}
 	defer finishResponse.Body.Close()
-	responseBody, err := ioutil.ReadAll(finishResponse.Body)
+	responseBody, err := io.ReadAll(finishResponse.Body)
 	if err != nil {
 		return fmt.Errorf("could not read response from finishUpload: %v", err)
 	}
@@ -172,6 +180,5 @@ func uploadRun(c *Command) error {
 	}
 
 	// step 4 - persist the url for fetching UPO.
-	ioutil.WriteFile(filepath.Join(workdir, "metadata.ref"), []byte(fmt.Sprintf("%scommon/Status/%s", gateway, batchInitResponse.ReferenceNumber)), 0644)
-	return nil
+	return os.WriteFile(filepath.Join(workdir, "metadata.ref"), []byte(fmt.Sprintf("%scommon/Status/%s", gateway, batchInitResponse.ReferenceNumber)), 0644)
 }

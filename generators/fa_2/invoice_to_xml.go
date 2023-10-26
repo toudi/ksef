@@ -14,6 +14,7 @@ import (
 func (fg *FA2Generator) InvoiceToXMLTree(invoice *common.Invoice) (*xml.Node, error) {
 	var root = &xml.Node{Name: "Faktura"}
 
+	root.SetValuesFromMap(fg.commonData)
 	root.SetValuesFromMap(invoice.Attributes)
 
 	if !invoice.Issued.IsZero() {
@@ -34,7 +35,11 @@ func (fg *FA2Generator) InvoiceToXMLTree(invoice *common.Invoice) (*xml.Node, er
 			faChildNode.SetValue("P_8A", item.Unit)
 		}
 		faChildNode.SetValue("P_8B", common.RenderFloatNumber(item.Quantity))
-		faChildNode.SetValue("P_11", common.RenderAmountFromCurrencyUnits(item.Amount().Net, 2))
+		if !item.UnitPrice.IsGross {
+			faChildNode.SetValue("P_11", common.RenderAmountFromCurrencyUnits(item.Amount().Net, 2))
+		} else {
+			faChildNode.SetValue("P_11A", common.RenderAmountFromCurrencyUnits(item.Amount().Gross, 2))
+		}
 		faChildNode.SetValue("P_12", item.UnitPrice.Vat.Description)
 		if !item.UnitPrice.IsGross {
 			faChildNode.SetValue("P_9A", common.RenderAmountFromCurrencyUnits(item.UnitPrice.Value, 2))

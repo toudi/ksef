@@ -65,6 +65,10 @@ func (s *SEI) AddInvoice(invoice *common.Invoice) error {
 
 	s.numInvoices += 1
 
+	if s.IssuerTIN == "" {
+		s.IssuerTIN = s.generator.IssuerTIN()
+	}
+
 	return err
 }
 
@@ -106,7 +110,7 @@ func (s *SEI) saveInvoice(root *xml.Node) error {
 		return err
 	}
 	defer destFile.Close()
-	if _, err = destFile.WriteString("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"); err != nil {
+	if _, err = destFile.WriteString("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"); err != nil {
 		return err
 	}
 	return root.DumpToFile(destFile, 0)

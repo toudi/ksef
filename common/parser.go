@@ -1,7 +1,6 @@
 package common
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -31,10 +30,10 @@ type Parser struct {
 }
 
 func (p *Parser) ProcessLine(fields []string) error {
-	fmt.Printf("received fields: %v\n", fields)
 	var err error
 	if p.invoice == nil {
 		p.invoice = &Invoice{}
+		p.invoice.Clear()
 	}
 	if p.headerMap == nil {
 		p.headerMap = make(map[string]map[int]string)

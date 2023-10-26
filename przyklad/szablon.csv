@@ -18,6 +18,10 @@
 "KodWaluty";"P_1";"P_1M";"P_2";"P_6";"RodzajFaktury";
 "PLN";2022-01-01;"Mielno";"FV 00/11/22";2022-01-02;"VAT";
 ;
+"Sekcja";"Faktura.Fa.Adnotacje";
+"P_16";"P_17";"P_18";"P_18A";"Zwolnienie.P_19N";"NoweSrodkiTransportu.P_22N";"P_23";"PMarzy.P_PMarzyN";
+"2";"2";"2";"2";"1";"1";"2";"1";
+;
 "Sekcja";"Faktura.Podmiot2.DaneIdentyfikacyjne";
 "NIP";"Nazwa";
 2222222222;"AAA Firma";
@@ -31,8 +35,8 @@
 1;2020-01-01;6;
 ;
 "Sekcja";"Faktura.Fa.FaWiersze.FaWiersz";
-"P_7";"P_8A";"P_8B";"P_9A";"P_12";"P_12_Procedura";
-"Nazwa towaru";"szt";150;"123";23;7;
+"P_7";"P_8A";"P_8B";"P_9A";"P_12";
+"Nazwa towaru";"szt";150;"123";23;
 ;
 "-- ignore --";"kolejna faktura rozpoczyna się od sekcji faktura.fa";
 ;
@@ -42,7 +46,7 @@
 ;
 "Sekcja";"Faktura.Podmiot2.DaneIdentyfikacyjne";
 "NIP";"Nazwa";
-1112223334;"ABC Sp. Z o.o.";
+3333333333;"ABC Sp. Z o.o.";
 ;
 "Sekcja";"Faktura.Podmiot2.Adres";
 "KodKraju";"AdresL1";"AdresL2";
@@ -53,5 +57,5 @@
 1;2020-01-01;6;
 ;
 "Sekcja";"Faktura.Fa.FaWiersze.FaWiersz";
-"P_7";"P_8A";"P_8B";"P_9A";"P_9B";"P_11";"P_12";"P_12_Procedura";
-"Nazwa towaru";"szt";150;"100";"123";150;23;7;
+"P_7";"P_8A";"P_8B";"P_9B";"P_12";
+"Nazwa towaru";"szt";150;"123";23;

@@ -64,10 +64,8 @@ func generateRun(c *Command) error {
 		return fmt.Errorf("error calling processSourceFile: %v", err)
 	}
 
-	return nil
-
-	// metadataArgs.path = generateArgs.Output
-	// metadataArgs.generator = generateArgs.GeneratorName
-	// metadataArgs.issuer = sei.IssuerTIN
-	// return metadataRun(c)
+	metadataArgs.path = generateArgs.Output
+	metadataArgs.generator = generateArgs.GeneratorName
+	metadataArgs.issuer = sei.IssuerTIN
+	return metadataRun(c)
 }

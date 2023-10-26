@@ -92,7 +92,7 @@ func (m *Metadata) Prepare(sourcePath string, metadataTemplate fs.FS) error {
 		"filename": path.Base,
 	}
 
-	tmpl, err := template.New("ksef-metadata.xml").Funcs(funcMap).ParseFS(metadataTemplate)
+	tmpl, err := template.New("metadata.xml").Funcs(funcMap).ParseFS(metadataTemplate, "metadata.xml")
 	if err != nil {
 		return fmt.Errorf("cannot parse template: %v", err)
 	}

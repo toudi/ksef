@@ -11,31 +11,26 @@ func (fg *FA2Generator) LineHandler(invoice *common.Invoice, section string, dat
 	var err error
 
 	if fg.isCommonData(section) {
-		if fg.commonData == nil {
-			fg.commonData = make(map[string]string)
-		}
 		for key, value := range data {
 			fg.commonData[section+"."+key] = value
 		}
 		return nil
-	}
-	if fg.createNewInvoice(section) {
+	} else if fg.createNewInvoice(section) {
 		if len(invoice.Items) > 0 {
 			if err = invoiceReady(); err != nil {
 				return err
 			}
+			invoice.Clear()
 		}
-		invoice.Clear()
-		fmt.Printf("new invoice: %v\n", data)
 		for key, value := range fg.commonData {
 			invoice.Attributes[key] = value
 		}
 		for key, value := range data {
 			invoice.Attributes[fmt.Sprintf("Faktura.Fa.%s", key)] = value
 		}
-	}
-	if fg.isItemSection(section) {
+	} else if fg.isItemSection(section) {
 		item := &common.InvoiceItem{Attributes: make(map[string]string)}
+		var unitPrice int64
 		for field, value := range data {
 			field_lowercase := strings.ToLower(field)
 			switch field_lowercase {
@@ -48,11 +43,16 @@ func (fg *FA2Generator) LineHandler(invoice *common.Invoice, section string, dat
 					return fmt.Errorf("cannot parse item quantity: %v", err)
 				}
 			case "p_9a", "unit-price-net":
-				var unitPrice int64
 				if unitPrice, err = strconv.ParseInt(value, 10, 64); err != nil {
 					return fmt.Errorf("cannot parse item net price: %v", err)
 				}
 				item.UnitPrice.Value = int(unitPrice)
+			case "p_9b", "unit-price-gross":
+				if unitPrice, err = strconv.ParseInt(value, 10, 64); err != nil {
+					return fmt.Errorf("cannot parse item net price: %v", err)
+				}
+				item.UnitPrice.Value = int(unitPrice)
+				item.UnitPrice.IsGross = true
 			case "p_12", "vat-description":
 				item.UnitPrice.Vat.Description = value
 				if vatRate, err := strconv.ParseInt(value, 10, 32); err == nil {
@@ -65,6 +65,10 @@ func (fg *FA2Generator) LineHandler(invoice *common.Invoice, section string, dat
 		}
 		if err = invoice.AddItem(item); err != nil {
 			return err
+		}
+	} else {
+		for key, value := range data {
+			invoice.Attributes[section+"."+key] = value
 		}
 	}
 	return nil
