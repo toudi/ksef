@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<auth:InitSessionTokenRequest
+    xmlns="http://ksef.mf.gov.pl/schema/gtw/svc/online/types/2021/10/01/0001"
+    xmlns:types="http://ksef.mf.gov.pl/schema/gtw/svc/types/2021/10/01/0001"
+    xmlns:auth="http://ksef.mf.gov.pl/schema/gtw/svc/online/auth/request/2021/10/01/0001">
+    <auth:Context>
+        <Challenge>{{ .Challenge }}</Challenge>
+        <Identifier xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:type="types:SubjectIdentifierByCompanyType">
+            <types:Identifier>{{ .Issuer }}</types:Identifier>
+        </Identifier>
+        <DocumentType>
+            <types:Service>KSeF</types:Service>
+            <types:FormCode>
+                <types:SystemCode>FA (2)</types:SystemCode>
+                <types:SchemaVersion>1-0E</types:SchemaVersion>
+                <types:TargetNamespace>http://crd.gov.pl/wzor/2023/06/29/12648/</types:TargetNamespace>
+                <types:Value>FA</types:Value>
+            </types:FormCode>
+        </DocumentType>
+        <Token>{{ base64 .EncryptedToken }}</Token>
+    </auth:Context>
+</auth:InitSessionTokenRequest>

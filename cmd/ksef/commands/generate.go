@@ -38,7 +38,6 @@ func init() {
 	GenerateCmd.FlagSet.StringVar(&generateArgs.Output, "o", "", "nazwa katalogu wyjściowego")
 	GenerateCmd.FlagSet.StringVar(&generateArgs.Delimiter, "d", ",", "łańcuch znaków rozdzielający pola (tylko dla CSV)")
 	GenerateCmd.FlagSet.StringVar(&generateArgs.GeneratorName, "g", "fa-2", "nazwa generatora")
-	GenerateCmd.FlagSet.BoolVar(&metadataArgs.testGateway, "t", false, "użyj certyfikatu bramki testowej do generowania podpisu")
 	GenerateCmd.FlagSet.StringVar(&generateArgs.EncodingConversionFile, "e", "", "użyj pliku z konwersją znaków (tylko dla CSV)")
 
 	registerCommand(&GenerateCmd.Command)
@@ -64,8 +63,5 @@ func generateRun(c *Command) error {
 		return fmt.Errorf("error calling processSourceFile: %v", err)
 	}
 
-	metadataArgs.path = generateArgs.Output
-	metadataArgs.generator = generateArgs.GeneratorName
-	metadataArgs.issuer = sei.IssuerTIN
-	return metadataRun(c)
+	return nil
 }

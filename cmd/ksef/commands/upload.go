@@ -6,6 +6,8 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"ksef/common"
+	"ksef/uploader"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -18,13 +20,11 @@ type uploadCommand struct {
 type uploadArgsType struct {
 	testGateway bool
 	path        string
+	interactive bool
 }
 
 var UploadCommand *uploadCommand
 var uploadArgs = &uploadArgsType{}
-
-const testGatewayURL = "https://ksef-test.mf.gov.pl/api/"
-const productionGatewayURL = "https://ksef.mf.gov.pl/api/"
 
 type batchInitResponseType struct {
 	ReferenceNumber  string `json:"referenceNumber"`
@@ -41,7 +41,6 @@ type batchInitResponseType struct {
 
 type finishResponseType struct {
 	ReferenceNumber string `json:"referenceNumber"`
-	//Timestamp       string `json:"timestamp"`
 }
 
 var batchInitResponse batchInitResponseType
@@ -59,23 +58,38 @@ func init() {
 	}
 
 	UploadCommand.FlagSet.BoolVar(&uploadArgs.testGateway, "t", false, "użyj bramki testowej")
+	UploadCommand.FlagSet.BoolVar(&uploadArgs.interactive, "i", false, "użyj sesji interaktywnej")
 	UploadCommand.FlagSet.StringVar(&uploadArgs.path, "p", "", "ścieżka do katalogu z wygenerowanymi fakturami")
 
 	registerCommand(&UploadCommand.Command)
 }
 
 func uploadRun(c *Command) error {
-	if uploadArgs.path == "" {
+	if uploadArgs.path == "" || (uploadArgs.interactive && uploadArgs.NIP == "") {
 		c.FlagSet.Usage()
 		return nil
 	}
 
-	var gateway = productionGatewayURL
-	if uploadArgs.testGateway {
-		gateway = testGatewayURL
+	var uploader *uploader.Uploader = &uploader.Uploader{
+		TestGateway: uploadArgs.testGateway,
 	}
 
+	return uploader.Upload(uploadArgs.path, uploadArgs.interactive)
+
+	var host = common.KSeFHost
+	var certificatFile = "klucze/prod/publicKey.pem"
+	if uploadArgs.testGateway {
+		host = common.KSeFTestHost
+		certificatFile = "klucze/test/publicKey.pem"
+	}
+
+	var gateway = host + "api/"
+
 	var workdir = filepath.Dir(uploadArgs.path)
+
+	if uploadArgs.interactive {
+		return uploadInteractive(host, certificatFile)
+	}
 
 	// step 1 - upload metadata
 
@@ -181,4 +195,7 @@ func uploadRun(c *Command) error {
 
 	// step 4 - persist the url for fetching UPO.
 	return os.WriteFile(filepath.Join(workdir, "metadata.ref"), []byte(fmt.Sprintf("%scommon/Status/%s", gateway, batchInitResponse.ReferenceNumber)), 0644)
+}
+
+func uploadInteractive(host string, certificateFile string) error {
 }

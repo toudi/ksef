@@ -2,9 +2,10 @@ package metadata
 
 import (
 	"crypto/aes"
+	"embed"
 	"encoding/base64"
 	"fmt"
-	"io/fs"
+	"ksef/common"
 	"os"
 	"path"
 	"path/filepath"
@@ -16,7 +17,8 @@ const archiveFileName = metadataFileName + ".zip"
 
 type Metadata struct {
 	CertificateFile string
-	Issuer          string
+	// will be populated from the first encountered invoice
+	Issuer string
 }
 
 type MetadataTemplateVars struct {
@@ -35,7 +37,10 @@ type MetadataTemplateVars struct {
 	Issuer string
 }
 
-func (m *Metadata) Prepare(sourcePath string, metadataTemplate fs.FS) error {
+//go:embed "batch_metadata.xml"
+var batchMetadataFile embed.FS
+
+func (m *Metadata) Prepare(sourcePath string) error {
 	var err error
 	archive, err := Archive_init(sourcePath)
 	if err != nil {
@@ -51,8 +56,15 @@ func (m *Metadata) Prepare(sourcePath string, metadataTemplate fs.FS) error {
 
 	for _, file := range files {
 		fileName = file.Name()
+
 		if filepath.Ext(fileName) != ".xml" || filepath.Base(fileName) == metadataFileName {
 			continue
+		}
+
+		if m.Issuer == "" {
+			if m.Issuer, err = ParseIssuerFromInvoice(sourcePath + string(os.PathSeparator) + fileName); err != nil {
+				return fmt.Errorf("unable to parse issuer from invoice: %v", err)
+			}
 		}
 
 		_, err = archive.addFile(fileName)
@@ -68,7 +80,7 @@ func (m *Metadata) Prepare(sourcePath string, metadataTemplate fs.FS) error {
 		return fmt.Errorf("cannot encrypt archive: %v", err)
 	}
 
-	encryptedKey, err := encryptedArchive.encryptKeyWithCertificate(m.CertificateFile)
+	encryptedKey, err := common.EncryptMessageWithCertificate(m.CertificateFile, encryptedArchive.cipher.Key)
 	if err != nil {
 		return fmt.Errorf("cannot encrypt the key with ceritifcate file %s: %v", m.CertificateFile, err)
 	}
@@ -92,7 +104,7 @@ func (m *Metadata) Prepare(sourcePath string, metadataTemplate fs.FS) error {
 		"filename": path.Base,
 	}
 
-	tmpl, err := template.New("metadata.xml").Funcs(funcMap).ParseFS(metadataTemplate, "metadata.xml")
+	tmpl, err := template.New("batch_metadata.xml").Funcs(funcMap).ParseFS(batchMetadataFile, "batch_metadata.xml")
 	if err != nil {
 		return fmt.Errorf("cannot parse template: %v", err)
 	}
