@@ -18,6 +18,29 @@
                 <types:Value>FA</types:Value>
             </types:FormCode>
         </DocumentType>
+        <Encryption>
+            <types:EncryptionKey>
+                <types:Encoding>Base64</types:Encoding>
+                <types:Algorithm>AES</types:Algorithm>
+                <types:Size>256</types:Size>
+                <types:Value>{{ base64 .Cipher.EncryptionKey }}</types:Value>
+            </types:EncryptionKey>
+            <types:EncryptionInitializationVector>
+                <types:Encoding>Base64</types:Encoding>
+                <types:Bytes>16</types:Bytes>
+                <types:Value>{{ base64 .Cipher.IV }}</types:Value>
+            </types:EncryptionInitializationVector>
+            <types:EncryptionAlgorithmKey>
+                <types:Algorithm>RSA</types:Algorithm>
+                <types:Mode>ECB</types:Mode>
+                <types:Padding>PKCS#1</types:Padding>
+            </types:EncryptionAlgorithmKey>
+            <types:EncryptionAlgorithmData>
+                <types:Algorithm>AES</types:Algorithm>
+                <types:Mode>CBC</types:Mode>
+                <types:Padding>PKCS#7</types:Padding>
+            </types:EncryptionAlgorithmData>
+        </Encryption>
         <Token>{{ base64 .EncryptedToken }}</Token>
     </auth:Context>
 </auth:InitSessionTokenRequest>

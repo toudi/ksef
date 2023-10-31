@@ -2,14 +2,15 @@ package uploader
 
 import (
 	"bytes"
+	"crypto/aes"
 	"embed"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"io"
 	"ksef/common"
 	"net/http"
+	"text/template"
 	"time"
 )
 
@@ -18,7 +19,7 @@ type authorisationResponseType struct {
 	Challenge string    `json:"challenge"`
 }
 
-//go:embed "interactive_auth_request.xml"
+//go:embed "interactive_auth_challenge.xml"
 var templateInitToken embed.FS
 
 func (u *Uploader) initSession() (*Session, error) {
@@ -51,6 +52,9 @@ func (u *Uploader) sendEncryptedToken(authorisationResponse authorisationRespons
 	var challengePlaintext = fmt.Sprintf("%s|%d", u.token, authorisationResponse.Timestamp.UnixMilli())
 
 	encryptedBytes, err := common.EncryptMessageWithCertificate(u.certificateFile, []byte(challengePlaintext))
+	if err != nil {
+		return nil, fmt.Errorf("błąd szyfrowania tokenu: %v", err)
+	}
 
 	var funcMap = template.FuncMap{
 		"base64": base64.StdEncoding.EncodeToString,
@@ -62,19 +66,35 @@ func (u *Uploader) sendEncryptedToken(authorisationResponse authorisationRespons
 		return nil, fmt.Errorf("błąd inicjalizacji szablonu: %v", err)
 	}
 	var authChallengeDataBuffer bytes.Buffer
-	type templateData struct {
+	type templateDataType struct {
 		Issuer         string
 		Challenge      string
 		EncryptedToken []byte
+		Cipher         struct {
+			IV            []byte
+			EncryptionKey []byte
+		}
 	}
+
+	var templateData templateDataType = templateDataType{
+		Issuer:         u.issuer,
+		Challenge:      authorisationResponse.Challenge,
+		EncryptedToken: encryptedBytes,
+	}
+
+	encryptedKeyBytes, err := common.EncryptMessageWithCertificate(u.certificateFile, u.cipher.Key)
+	if err != nil {
+		return nil, fmt.Errorf("błąd szyfrowania klucza za pomocą klucza RSA ministerstwa: %v", err)
+	}
+	templateData.Cipher.EncryptionKey = make([]byte, len(encryptedKeyBytes))
+	templateData.Cipher.IV = make([]byte, aes.BlockSize)
+
+	copy(templateData.Cipher.IV, u.cipher.IV)
+	copy(templateData.Cipher.EncryptionKey, encryptedKeyBytes)
 
 	if err = tmpl.Execute(
 		&authChallengeDataBuffer,
-		templateData{
-			Issuer:         u.issuer,
-			Challenge:      authorisationResponse.Challenge,
-			EncryptedToken: encryptedBytes,
-		},
+		templateData,
 	); err != nil {
 		return nil, fmt.Errorf("błąd generowania szablonu authRequest: %v\n", err)
 	}
@@ -84,11 +104,13 @@ func (u *Uploader) sendEncryptedToken(authorisationResponse authorisationRespons
 		return nil, fmt.Errorf("błąd wywołanai initToken: %v\n", err)
 	}
 	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	fmt.Printf("body: %s\n", string(body))
+
 	if resp.StatusCode/100 != 2 {
 		return nil, fmt.Errorf("nieoczekiway kod odpowiedzi: %d vs 2xx", resp.StatusCode)
 	}
 
-	body, _ := io.ReadAll(resp.Body)
 	var session Session
 
 	if err = json.Unmarshal(body, &session); err != nil {

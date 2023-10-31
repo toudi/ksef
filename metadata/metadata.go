@@ -12,9 +12,6 @@ import (
 	"text/template"
 )
 
-const metadataFileName = "metadata.xml"
-const archiveFileName = metadataFileName + ".zip"
-
 type Metadata struct {
 	CertificateFile string
 	// will be populated from the first encountered invoice
@@ -57,7 +54,7 @@ func (m *Metadata) Prepare(sourcePath string) error {
 	for _, file := range files {
 		fileName = file.Name()
 
-		if filepath.Ext(fileName) != ".xml" || filepath.Base(fileName) == metadataFileName {
+		if filepath.Ext(fileName) != ".xml" || filepath.Base(fileName) == "metadata.xml" {
 			continue
 		}
 
@@ -108,7 +105,7 @@ func (m *Metadata) Prepare(sourcePath string) error {
 	if err != nil {
 		return fmt.Errorf("cannot parse template: %v", err)
 	}
-	outputFile, err := os.Create(filepath.Join(sourcePath, metadataFileName))
+	outputFile, err := os.Create(filepath.Join(sourcePath, "metadata.xml"))
 	if err != nil {
 		return fmt.Errorf("cannot create output file: %v", err)
 	}

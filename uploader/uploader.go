@@ -3,6 +3,7 @@ package uploader
 import (
 	"fmt"
 	"ksef/common"
+	"ksef/common/aes"
 	"ksef/metadata"
 	"os"
 )
@@ -13,6 +14,7 @@ type Uploader struct {
 	host            string
 	certificateFile string
 	token           string
+	cipher          *aes.Cipher
 }
 
 func (u *Uploader) Upload(sourcePath string, interactive bool) error {
@@ -24,6 +26,10 @@ func (u *Uploader) Upload(sourcePath string, interactive bool) error {
 	if u.TestGateway {
 		u.host = common.KSeFTestHost
 		u.certificateFile = common.KSeFTestCertificate
+	}
+
+	if u.cipher, err = aes.CipherInit(32); err != nil {
+		return fmt.Errorf("unable to init encryption cipher: %v", err)
 	}
 
 	if interactive {
