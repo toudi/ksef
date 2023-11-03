@@ -1,13 +1,9 @@
-package uploader
+package api
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 )
 
@@ -29,7 +25,7 @@ type invoicePayloadType struct {
 	} `json:"invoicePayload"`
 }
 
-func (u *Uploader) interactiveSendFile(filePath string, invoicePayload *invoicePayloadType, session *Session) error {
+func (i *InteractiveSession) sendInvoice(filePath string, invoicePayload *invoicePayloadType) error {
 	invoiceContent, err := os.ReadFile(filePath)
 	if err != nil {
 		return fmt.Errorf("unable to read invoice content: %v", err)
@@ -42,7 +38,7 @@ func (u *Uploader) interactiveSendFile(filePath string, invoicePayload *invoiceP
 	invoicePayload.InvoiceHash.HashSHA.Value = base64.StdEncoding.EncodeToString(hasher.Sum(nil))
 
 	// encrypt file
-	encryptedContent := u.cipher.Encrypt(invoiceContent, true)
+	encryptedContent := i.api.cipher.Encrypt(invoiceContent, true)
 
 	hasher.Reset()
 	hasher.Write(encryptedContent)
@@ -51,28 +47,13 @@ func (u *Uploader) interactiveSendFile(filePath string, invoicePayload *invoiceP
 	invoicePayload.InvoicePayload.EncryptedInvoiceHash.FileSize = len(encryptedContent)
 	invoicePayload.InvoicePayload.EncryptedInvoiceHash.HashSHA.Value = base64.StdEncoding.EncodeToString(hasher.Sum(nil))
 
-	var invoiceSendPayload bytes.Buffer
-	err = json.NewEncoder(&invoiceSendPayload).Encode(invoicePayload)
+	invoiceSendResponse, err := i.api.requestFactory.JSONRequest("PUT", EndpointSendInvoice, &invoicePayload, nil)
 	if err != nil {
-		return fmt.Errorf("błąd wysyłki faktury: %v", err)
+		return fmt.Errorf("error sending invoice: %v", err)
 	}
-
-	invoiceSendRequest, err := http.NewRequest("PUT", u.host+"api/online/Invoice/Send", &invoiceSendPayload)
-	if err != nil {
-		return fmt.Errorf("błąd tworzenia requestu Invoice/Send: %v", err)
+	if invoiceSendResponse.StatusCode/100 != 2 {
+		return fmt.Errorf("unexpected response code: %d != 2xx", invoiceSendResponse.StatusCode)
 	}
-	invoiceSendRequest.Header.Set("SessionToken", session.Token.Value)
-	invoiceSendRequest.Header.Set("Content-Type", "application/json")
-	response, err := http.DefaultClient.Do(invoiceSendRequest)
-
-	if err != nil || response.StatusCode/100 != 2 {
-		defer response.Body.Close()
-		responseBody, _ := io.ReadAll(response.Body)
-		fmt.Printf("send body: %s\n", string(responseBody))
-
-		return fmt.Errorf("błąd przesyłania faktury: %v", err)
-	}
-	fmt.Printf("Przesyłanie faktury: %d\n", response.StatusCode)
 
 	return nil
 }

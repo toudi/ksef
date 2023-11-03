@@ -1,4 +1,4 @@
-package metadata
+package common
 
 import (
 	"encoding/xml"
@@ -6,13 +6,13 @@ import (
 	"os"
 )
 
-type Invoice struct {
+type xmlInvoice struct {
 	XMLName xml.Name `xml:"Faktura"`
 	Issuer  string   `xml:"Podmiot1>DaneIdentyfikacyjne>NIP"`
 }
 
-func ParseIssuerFromInvoice(sourceFile string) (string, error) {
-	var invoice Invoice
+func parseInvoiceIssuer(sourceFile string) (string, error) {
+	var invoice xmlInvoice
 	xmlContents, err := os.ReadFile(sourceFile)
 	if err != nil {
 		return "", fmt.Errorf("unable to read invoice file: %v", err)

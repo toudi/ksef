@@ -3,7 +3,7 @@ package commands
 import (
 	"flag"
 	"fmt"
-	"ksef/metadata"
+	"ksef/api"
 )
 
 type metadataCommand struct {
@@ -43,10 +43,16 @@ func metadataRun(c *Command) error {
 
 	fmt.Printf("generowanie metadanych\n")
 
-	meta := &metadata.Metadata{CertificateFile: "klucze/prod/publicKey.pem"}
+	var environment = api.ProductionEnvironment
 	if metadataArgs.testGateway {
-		meta.CertificateFile = "klucze/test/publicKey.pem"
+		environment = api.TestEnvironment
 	}
 
-	return meta.Prepare(metadataArgs.path)
+	gateway, err := api.API_Init(environment)
+	if err != nil {
+		return fmt.Errorf("unknown environment: %d", environment)
+	}
+
+	batchSession := gateway.BatchSessionInit()
+	return batchSession.GenerateMetadata(metadataArgs.path)
 }

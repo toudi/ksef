@@ -3,9 +3,7 @@ package commands
 import (
 	"flag"
 	"fmt"
-	"ksef/common"
-
-	"github.com/zalando/go-keyring"
+	"ksef/api"
 )
 
 type saveTokenCommand struct {
@@ -45,16 +43,16 @@ func saveTokenRun(c *Command) error {
 		return nil
 	}
 
-	var gateway = common.KSeFHost
+	var environment = api.ProductionEnvironment
 	if saveTokenArgs.testGateway {
-		gateway = common.KSeFTestHost
+		environment = api.TestEnvironment
 	}
 
-	err := keyring.Set(gateway, saveTokenArgs.NIP, saveTokenArgs.token)
-	fmt.Printf("Err for keyring.set: %v\n", err)
+	gateway, err := api.API_Init(environment)
+	if err != nil {
+		return fmt.Errorf("unknown environment: %v", environment)
+	}
 
-	fmt.Printf("try to read the password:\n")
-	token, err := keyring.Get(gateway, saveTokenArgs.NIP)
-	fmt.Printf("token=%s; err=%v\n", token, err)
-	return nil
+	session := gateway.InteractiveSessionInit()
+	return session.PersistToken(saveTokenArgs.NIP, saveTokenArgs.token)
 }

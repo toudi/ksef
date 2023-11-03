@@ -1,4 +1,4 @@
-package metadata
+package api
 
 import (
 	"archive/zip"
@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"ksef/common/aes"
 	"os"
 	"path"
@@ -19,6 +18,12 @@ type Archive struct {
 	writer   *zip.Writer
 	hash     []byte
 	filesize int
+}
+
+type EncryptedArchive struct {
+	cipher *aes.Cipher
+	size   int
+	hash   []byte
 }
 
 type FileMeta struct {
@@ -58,7 +63,7 @@ func (a *Archive) addFile(fileName string) (*FileMeta, error) {
 	if err != nil {
 		return nil, err
 	}
-	fileContents, err := ioutil.ReadFile(filepath.Join(a.dir, fileName))
+	fileContents, err := os.ReadFile(fileName)
 	if err != nil {
 		return nil, err
 	}
@@ -78,16 +83,11 @@ func (a *Archive) encryptedArchiveFileName() string {
 	return a.filename() + ".aes"
 }
 
-func (a *Archive) encrypt() (*EncryptedArchive, error) {
+func (a *Archive) encrypt(cipher *aes.Cipher) (*EncryptedArchive, error) {
 	var err error
 
-	cipher, err := aes.CipherInit(32)
-	if err != nil {
-		return nil, fmt.Errorf("cannot initialize AES cipher: %v", err)
-	}
-
 	// read .zip file
-	srcFileBytes, err := ioutil.ReadFile(a.filename())
+	srcFileBytes, err := os.ReadFile(a.filename())
 	hash := sha256.New()
 	hash.Write(srcFileBytes)
 	checksum := hash.Sum(nil)
