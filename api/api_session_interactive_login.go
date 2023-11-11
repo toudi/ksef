@@ -90,6 +90,7 @@ func (i *InteractiveSession) login(issuer string) error {
 	}
 
 	i.api.requestFactory.headers.Add("SessionToken", initTokenResponse.Token.Value)
+	i.referenceNo = initTokenResponse.ReferenceNumber
 
 	return nil
 }

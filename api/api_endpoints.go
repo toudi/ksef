@@ -8,6 +8,7 @@ const EndpointLogout = "online/Session/Terminate"
 const EndpointSendInvoice = "online/Invoice/Send"
 const EndpointBatchInit = "batch/Init"
 const EndpointBatchFinish = "batch/Finish"
+const EndpointStatus = "common/Status/%s"
 
 func (a *API) apiEndpoint(path string) string {
 	endpoint := &url.URL{Host: a.environment.host, Path: "/api/" + path, Scheme: "https"}

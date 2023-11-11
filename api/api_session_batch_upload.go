@@ -29,7 +29,7 @@ type finishResponseType struct {
 var batchInitResponse batchInitResponseType
 var finishResponsePayload finishResponseType
 
-func (b *BatchSession) UploadInvoices(sourcePath string) error {
+func (b *BatchSession) UploadInvoices(sourcePath string, statusFileFormat string) error {
 	signedMetadataFile, err := locateBatchMetadataFile(sourcePath)
 
 	if err != nil {
@@ -93,8 +93,11 @@ func (b *BatchSession) UploadInvoices(sourcePath string) error {
 		return fmt.Errorf("bad response from finishUpload: %d", finishResponse.StatusCode)
 	}
 
-	// step 4 - persist the url for fetching UPO.
-	return os.WriteFile(filepath.Join(sourcePath, "metadata.ref"), []byte(fmt.Sprintf("https://%s/common/Status/%s", b.api.environment.host, batchInitResponse.ReferenceNumber)), 0644)
+	// step 4 - persist status for fetching UPO.
+	return saveStatusInfo(StatusInfoFile{
+		ReferenceNo: batchInitResponse.ReferenceNumber,
+		Environment: b.api.environmentAlias,
+	}, sourcePath, statusFileFormat)
 }
 
 func locateBatchMetadataFile(sourcePath string) (string, error) {

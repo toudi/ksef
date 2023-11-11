@@ -1,40 +1,29 @@
 package commands
 
 import (
-	"bytes"
-	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"mime/multipart"
-	"net/http"
-	"net/textproto"
+	"ksef/api"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 type statusCommand struct {
 	Command
 }
 type statusArgsType struct {
-	path string
+	path   string
+	output string
+	xml    bool
 }
 
 var StatusCommand *statusCommand
 var statusArgs statusArgsType
-
-type statusResponseType struct {
-	ProcessingCode  int    `json:"processingCode"`
-	Upo             string `json:"upo"`
-	ReferenceNumber string `json:"ReferenceNumber"`
-}
-
-var statusResponse statusResponseType
 
 func init() {
 	StatusCommand = &statusCommand{
@@ -48,6 +37,8 @@ func init() {
 	}
 
 	StatusCommand.FlagSet.StringVar(&statusArgs.path, "p", "", "ścieżka do pliku statusu")
+	StatusCommand.FlagSet.StringVar(&statusArgs.output, "o", "", "ścieżka do zapisu UPO (domyślnie katalog pliku statusu + {nrRef}.pdf)")
+	StatusCommand.FlagSet.BoolVar(&statusArgs.xml, "xml", false, "zapis UPO jako plik XML")
 
 	registerCommand(&StatusCommand.Command)
 }
@@ -58,90 +49,51 @@ func statusRun(c *Command) error {
 		return nil
 	}
 
-	var workdir = filepath.Dir(statusArgs.path)
+	var statusInfo api.StatusInfoFile
 
-	statusUrlBytes, err := ioutil.ReadFile(statusArgs.path)
+	extension := strings.ToLower(filepath.Ext(statusArgs.path))
+
+	if extension != ".yaml" && extension != ".json" {
+		return errors.New("unsupported file format. expecting one of .yaml, .json")
+	}
+
+	fileContents, err := os.ReadFile(statusArgs.path)
+
 	if err != nil {
-		return fmt.Errorf("could not read %s: %v", statusArgs.path, err)
+		return fmt.Errorf("unable to read status file contents: %v", err)
 	}
 
-	statusReq, err := http.NewRequest("GET", string(statusUrlBytes), nil)
+	if extension == ".yaml" {
+		if err = yaml.Unmarshal(fileContents, &statusInfo); err != nil {
+			return fmt.Errorf("unable to parse status from yaml: %v", err)
+		}
+	} else if extension == ".json" {
+		if err = json.Unmarshal(fileContents, &statusInfo); err != nil {
+			return fmt.Errorf("unable to parse status from json: %v", err)
+		}
+	}
+
+	if statusInfo.Environment == "" || statusInfo.ReferenceNo == "" {
+		return fmt.Errorf("file deserialized correctly, but either environment or referenceNo are empty: %+v", statusInfo)
+	}
+
+	gateway, err := api.API_Init(statusInfo.Environment)
 	if err != nil {
-		return fmt.Errorf("could not prepare GET request: %v", err)
-	}
-	statusHTTPResponse, err := http.DefaultClient.Do(statusReq)
-	if err != nil || statusHTTPResponse.StatusCode/100 != 2 {
-		return fmt.Errorf("could not execute HTTP request: %v", err)
-	}
-	defer statusHTTPResponse.Body.Close()
-	err = json.NewDecoder(statusHTTPResponse.Body).Decode(&statusResponse)
-	if err != nil {
-		return fmt.Errorf("cannot decode HTTP response to JSON struct: %v", err)
+		return fmt.Errorf("cannot initialize gateway: %v", err)
 	}
 
-	fmt.Printf("GET %s returned status %d\n", statusReq.URL, statusHTTPResponse.StatusCode)
-
-	upoXml, _ := base64.StdEncoding.DecodeString(statusResponse.Upo)
-
-	body := &bytes.Buffer{}
-
-	writer := multipart.NewWriter(body)
-	h := make(textproto.MIMEHeader)
-	h.Set("Content-Disposition", fmt.Sprintf(`form-data; name="%s"; filename="%s"`, "file", statusResponse.ReferenceNumber+".xml"))
-	h.Set("Content-Type", "text/xml")
-	part, _ := writer.CreatePart(h)
-
-	io.Copy(part, bytes.NewReader(upoXml))
-	writer.Close()
-
-	htmlUpoReq, err := http.NewRequest("POST", fmt.Sprintf("https://%s/web/api/session/get-upo-html-view", statusReq.Host), body)
-	htmlUpoReq.Header.Set("Content-Type", writer.FormDataContentType())
-
-	htmlUpoResponse, err := http.DefaultClient.Do(htmlUpoReq)
-	if err != nil || htmlUpoResponse.StatusCode/100 != 2 {
-		content, _ := ioutil.ReadAll(htmlUpoResponse.Body)
-		fmt.Printf("%s\n", string(content))
-		htmlUpoResponse.Body.Close()
-		return fmt.Errorf("cannot fetch HTML UPO: %d / %v", htmlUpoResponse.StatusCode, err)
-	}
-	defer htmlUpoResponse.Body.Close()
-
-	var upoHtmlFilename = filepath.Join(workdir, statusResponse.ReferenceNumber+"-upo.html")
-	var upoPDFFilename = filepath.Join(workdir, statusResponse.ReferenceNumber+"-upo.pdf")
-
-	htmlUpo, err := os.Create(upoHtmlFilename)
-	if err != nil {
-		return fmt.Errorf("cannot create HTML upo file: %v", err)
-	}
-	defer htmlUpo.Close()
-
-	// base64 decode the upo:
-	upoBase64Content, err := ioutil.ReadAll(htmlUpoResponse.Body)
-	if err != nil {
-		return fmt.Errorf("cannot read base64-encoded upo: %v", err)
-	}
-	upoHtmlContent, err := base64.StdEncoding.DecodeString(strings.ReplaceAll(string(upoBase64Content), `"`, ""))
-	if err != nil {
-		return fmt.Errorf("cannot decode base64 upo: %v", err)
-	}
-	htmlUpo.WriteString(string(upoHtmlContent))
-
-	// check if we can covert it to pdf
-	var canConvertToPDF bool = false
-	var converter string = "wkhtmltopdf"
-
-	if runtime.GOOS == "windows" {
-		converter = "wkhtmltopdf.exe"
-		_, err = os.Stat(converter)
-		canConvertToPDF = !os.IsNotExist(err)
-	} else {
-		_cmd, err := exec.LookPath("wkhtmltopdf")
-		canConvertToPDF = (_cmd != "" && err == nil)
+	var outputFormat = api.UPOFormatPDF
+	if statusArgs.xml {
+		outputFormat = api.UPOFormatXML
 	}
 
-	if canConvertToPDF {
-		cmd := exec.Command(converter, upoHtmlFilename, upoPDFFilename)
-		return cmd.Run()
+	if statusArgs.output == "" {
+		statusArgs.output = filepath.Join(filepath.Dir(statusArgs.path), fmt.Sprintf("%s.%s", statusInfo.ReferenceNo, outputFormat))
 	}
+
+	if err = gateway.DownloadUPO(statusInfo.ReferenceNo, outputFormat, statusArgs.output); err != nil {
+		return fmt.Errorf("unable to download UPO: %v", err)
+	}
+
 	return nil
 }

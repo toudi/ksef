@@ -6,8 +6,9 @@ import (
 )
 
 type InteractiveSession struct {
-	token string
-	api   *API
+	token       string
+	api         *API
+	referenceNo string
 }
 
 func (a *API) InteractiveSessionInit() *InteractiveSession {
@@ -18,7 +19,7 @@ func (a *API) InteractiveSessionInit() *InteractiveSession {
 
 var invoicePayload invoicePayloadType
 
-func (i *InteractiveSession) UploadInvoices(sourcePath string) error {
+func (i *InteractiveSession) UploadInvoices(sourcePath string, statusFileFormat string) error {
 	var err error
 
 	collection, err := common.InvoiceCollection(sourcePath)
@@ -43,7 +44,10 @@ func (i *InteractiveSession) UploadInvoices(sourcePath string) error {
 	i.token = ""
 	i.api.cipher = nil
 
-	return nil
+	return saveStatusInfo(StatusInfoFile{
+		ReferenceNo: i.referenceNo,
+		Environment: i.api.environmentAlias,
+	}, sourcePath, statusFileFormat)
 }
 
 func init() {

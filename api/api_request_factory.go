@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"text/template"
 )
 
@@ -26,7 +27,12 @@ func (rf *RequestFactory) SetHeader(header string, value string) {
 }
 
 func (rf *RequestFactory) Request(method string, endpoint string, payload io.Reader) (*http.Request, error) {
-	request, err := http.NewRequest(method, rf.api.apiEndpoint(endpoint), payload)
+	// if it's not a public URL already ..
+	if !strings.HasPrefix(endpoint, "http") {
+		// convert it to one
+		endpoint = rf.api.apiEndpoint(endpoint)
+	}
+	request, err := http.NewRequest(method, endpoint, payload)
 	if err != nil {
 		return nil, fmt.Errorf("error creating HTTP request: %v", err)
 	}

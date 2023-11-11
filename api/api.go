@@ -7,8 +7,10 @@ import (
 )
 
 const (
-	ProductionEnvironment uint8 = iota
-	TestEnvironment       uint8 = iota
+	ProductionEnvironment string = "prod"
+	TestEnvironment       string = "test"
+	StatusFileFormatYAML  string = "yaml"
+	StatusFileFormatJSON  string = "json"
 )
 
 type environmentConfigType struct {
@@ -21,7 +23,7 @@ type cipherTemplateVarsType struct {
 	EncryptionKey []byte
 }
 
-var environmentConfig = map[uint8]environmentConfigType{
+var environmentConfig = map[string]environmentConfigType{
 	ProductionEnvironment: {host: "ksef.mf.gov.pl", rsaPublicKey: "klucze/prod/publicKey.pem"},
 	TestEnvironment:       {host: "ksef-test.mf.gov.pl", rsaPublicKey: "klucze/test/publicKey.pem"},
 }
@@ -30,16 +32,17 @@ var errUnknownEnvironment = errors.New("unknown environment")
 
 type API struct {
 	environment        environmentConfigType
+	environmentAlias   string
 	cipher             *aes.Cipher
 	cipherTemplateVars cipherTemplateVarsType
 	requestFactory     *RequestFactory
 }
 
-func API_Init(environment uint8) (*API, error) {
+func API_Init(environment string) (*API, error) {
 	if config, exists := environmentConfig[environment]; exists {
 		var err error
 
-		api := &API{environment: config}
+		api := &API{environment: config, environmentAlias: environment}
 
 		if api.cipher, err = aes.CipherInit(32); err != nil {
 			return nil, fmt.Errorf("unable to initialize cipher: %v", err)

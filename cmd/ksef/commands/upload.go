@@ -14,6 +14,7 @@ type uploadArgsType struct {
 	testGateway bool
 	path        string
 	interactive bool
+	statusJSON  bool
 }
 
 var UploadCommand *uploadCommand
@@ -33,6 +34,7 @@ func init() {
 	UploadCommand.FlagSet.BoolVar(&uploadArgs.testGateway, "t", false, "użyj bramki testowej")
 	UploadCommand.FlagSet.BoolVar(&uploadArgs.interactive, "i", false, "użyj sesji interaktywnej")
 	UploadCommand.FlagSet.StringVar(&uploadArgs.path, "p", "", "ścieżka do katalogu z wygenerowanymi fakturami")
+	UploadCommand.FlagSet.BoolVar(&uploadArgs.statusJSON, "sj", false, "użyj formatu JSON do zapisu pliku statusu (domyślnie YAML)")
 
 	registerCommand(&UploadCommand.Command)
 }
@@ -53,12 +55,17 @@ func uploadRun(c *Command) error {
 		return fmt.Errorf("nieznane środowisko: %v", environment)
 	}
 
+	var statusFileFormat = api.StatusFileFormatYAML
+	if uploadArgs.statusJSON {
+		statusFileFormat = api.StatusFileFormatJSON
+	}
+
 	if uploadArgs.interactive {
 		interactiveSession := gateway.InteractiveSessionInit()
-		return interactiveSession.UploadInvoices(uploadArgs.path)
+		return interactiveSession.UploadInvoices(uploadArgs.path, statusFileFormat)
 	}
 
 	batchSession := gateway.BatchSessionInit()
-	return batchSession.UploadInvoices(uploadArgs.path)
+	return batchSession.UploadInvoices(uploadArgs.path, statusFileFormat)
 
 }
