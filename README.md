@@ -90,7 +90,7 @@ Aby skorzystać z trybu interaktywnego należy uprzednio wygenerować token na s
 ./ksef upload -i -p katalog-z-plikami-xml [-t]
 ```
 
-Niezależnie od wybranego trybu wysyłki, program utworzy plik `status.ref` który posłuży do sprawdzenia statusu i pobrania UPO (w przypadku pozytywnego przetworzenia faktur)
+Niezależnie od wybranego trybu wysyłki, program utworzy plik `status.{yaml,json}` który posłuży do sprawdzenia statusu i pobrania UPO (w przypadku pozytywnego przetworzenia faktur). Domyślny format dla pliku statusu to YAML
 
 ## pobieranie upo
 
@@ -107,7 +107,7 @@ Usage of status:
 Przykładowe wywołanie:
 
 ```bash
-./ksef status -p sciezka-do-pliku-status.ref
+./ksef status -p sciezka-do-pliku-status.{yaml,json}
 ```
 
 jesli status przetworzenia faktur bedzie poprawny, program pobierze upo i wygeneruje plik:
