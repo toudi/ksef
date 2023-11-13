@@ -1,16 +1,10 @@
 package commands
 
 import (
-	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"ksef/api"
-	"os"
 	"path/filepath"
-	"strings"
-
-	"gopkg.in/yaml.v3"
 )
 
 type statusCommand struct {
@@ -49,31 +43,12 @@ func statusRun(c *Command) error {
 		return nil
 	}
 
-	var statusInfo api.StatusInfoFile
-
-	extension := strings.ToLower(filepath.Ext(statusArgs.path))
-
-	if extension != ".yaml" && extension != ".json" {
-		return errors.New("unsupported file format. expecting one of .yaml, .json")
-	}
-
-	fileContents, err := os.ReadFile(statusArgs.path)
-
+	statusInfo, err := api.StatusFromFile(statusArgs.path)
 	if err != nil {
-		return fmt.Errorf("unable to read status file contents: %v", err)
+		return fmt.Errorf("unable to load status from file: %v", err)
 	}
 
-	if extension == ".yaml" {
-		if err = yaml.Unmarshal(fileContents, &statusInfo); err != nil {
-			return fmt.Errorf("unable to parse status from yaml: %v", err)
-		}
-	} else if extension == ".json" {
-		if err = json.Unmarshal(fileContents, &statusInfo); err != nil {
-			return fmt.Errorf("unable to parse status from json: %v", err)
-		}
-	}
-
-	if statusInfo.Environment == "" || statusInfo.ReferenceNo == "" {
+	if statusInfo.Environment == "" || statusInfo.SessionID == "" {
 		return fmt.Errorf("file deserialized correctly, but either environment or referenceNo are empty: %+v", statusInfo)
 	}
 
@@ -88,10 +63,10 @@ func statusRun(c *Command) error {
 	}
 
 	if statusArgs.output == "" {
-		statusArgs.output = filepath.Join(filepath.Dir(statusArgs.path), fmt.Sprintf("%s.%s", statusInfo.ReferenceNo, outputFormat))
+		statusArgs.output = filepath.Join(filepath.Dir(statusArgs.path), fmt.Sprintf("%s.%s", statusInfo.SessionID, outputFormat))
 	}
 
-	if err = gateway.DownloadUPO(statusInfo.ReferenceNo, outputFormat, statusArgs.output); err != nil {
+	if err = gateway.DownloadUPO(statusInfo, outputFormat, statusArgs.output); err != nil {
 		return fmt.Errorf("unable to download UPO: %v", err)
 	}
 

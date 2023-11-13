@@ -44,10 +44,11 @@ func (i *InteractiveSession) UploadInvoices(sourcePath string, statusFileFormat 
 	i.token = ""
 	i.api.cipher = nil
 
-	return saveStatusInfo(StatusInfoFile{
-		ReferenceNo: i.referenceNo,
-		Environment: i.api.environmentAlias,
-	}, sourcePath, statusFileFormat)
+	return (&StatusInfo{
+		selectedFormat: statusFileFormat,
+		SessionID:      i.referenceNo,
+		Environment:    i.api.environmentAlias,
+	}).Save(sourcePath)
 }
 
 func init() {

@@ -94,10 +94,11 @@ func (b *BatchSession) UploadInvoices(sourcePath string, statusFileFormat string
 	}
 
 	// step 4 - persist status for fetching UPO.
-	return saveStatusInfo(StatusInfoFile{
-		ReferenceNo: batchInitResponse.ReferenceNumber,
-		Environment: b.api.environmentAlias,
-	}, sourcePath, statusFileFormat)
+	return (&StatusInfo{
+		selectedFormat: statusFileFormat,
+		SessionID:      batchInitResponse.ReferenceNumber,
+		Environment:    b.api.environmentAlias,
+	}).Save(sourcePath)
 }
 
 func locateBatchMetadataFile(sourcePath string) (string, error) {

@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -22,10 +23,20 @@ type upoStatusType struct {
 	UPOBase64        string `json:"upo"`
 }
 
-func (a *API) DownloadUPO(refNo string, outputFormat string, outputPath string) error {
+type ksefInvoiceIdType struct {
+	InvoiceNumber          string `xml:"NumerFaktury" json:"invoiceNumber" yaml:"invoiceNumber"`
+	KSeFInvoiceReferenceNo string `xml:"NumerKSeFDokumentu" json:"ksefDocumentId" yaml:"ksefDocumentId"`
+}
+
+type UPO struct {
+	XMLName    xml.Name            `xml:"Potwierdzenie"`
+	InvoiceIDS []ksefInvoiceIdType `xml:"Dokument"`
+}
+
+func (a *API) DownloadUPO(status *StatusInfo, outputFormat string, outputPath string) error {
 	var upoStatus upoStatusType
 
-	_, err := a.requestFactory.JSONRequest("GET", fmt.Sprintf(EndpointStatus, refNo), nil, &upoStatus)
+	_, err := a.requestFactory.JSONRequest("GET", fmt.Sprintf(EndpointStatus, status.SessionID), nil, &upoStatus)
 	if err != nil {
 		return fmt.Errorf("get UPO status err=%v", err)
 	}
@@ -41,6 +52,17 @@ func (a *API) DownloadUPO(refNo string, outputFormat string, outputPath string) 
 		return fmt.Errorf("unable to decode UPO XML from base64: %v", err)
 	}
 
+	var upo UPO
+	// parse upo to obtain KSeF reference numbers for the invoice numbers
+	if err = xml.Unmarshal(upoXMLBytes, &upo); err != nil {
+		return fmt.Errorf("unable to parse upo as XML structure: %v", err)
+	}
+
+	status.InvoiceIds = upo.InvoiceIDS
+	if err = status.Save(""); err != nil {
+		return fmt.Errorf("error saving status info: %v", err)
+	}
+
 	if outputFormat == UPOFormatXML {
 		return os.WriteFile(outputPath, upoXMLBytes, 0644)
 	}
@@ -54,7 +76,7 @@ func (a *API) DownloadUPO(refNo string, outputFormat string, outputPath string) 
 	requestBuffer := new(bytes.Buffer)
 	multipartWriter := multipart.NewWriter(requestBuffer)
 	xmlHeader := make(textproto.MIMEHeader)
-	xmlHeader.Set("Content-Disposition", fmt.Sprintf(`form-data; name="%s"; filename="%s.xml"`, "file", refNo))
+	xmlHeader.Set("Content-Disposition", fmt.Sprintf(`form-data; name="%s"; filename="%s.xml"`, "file", status.SessionID))
 	xmlHeader.Set("Content-Type", "text/xml")
 	xmlFile, err := multipartWriter.CreatePart(xmlHeader)
 	if err != nil {
