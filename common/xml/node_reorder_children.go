@@ -24,6 +24,12 @@ func (node *Node) sortChildrenRecurse(path string, ordering map[string]map[strin
 	}
 
 	sort.Slice(children, func(i, j int) bool {
+		if children[i].Name == "FaWiersz" && children[j].Name == "FaWiersz" {
+			var s1 = children[i].Children[0].Value
+			var s2 = children[j].Children[0].Value
+
+			return s1 < s2
+		}
 		return pathOrdering[children[i].Name] < pathOrdering[children[j].Name]
 	})
 
