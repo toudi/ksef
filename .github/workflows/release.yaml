@@ -25,6 +25,7 @@ jobs:
         github_token: ${{ secrets.RELEASE_TOKEN }}
         goos: ${{ matrix.goos }}
         goarch: ${{ matrix.goarch }}
+        pre_command: export GODEBUG=http2client=0
         goversion: "https://dl.google.com/go/go1.21.0.linux-amd64.tar.gz"
         project_path: "./cmd/ksef"
         binary_name: "ksef"
