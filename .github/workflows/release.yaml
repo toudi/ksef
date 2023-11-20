@@ -29,3 +29,4 @@ jobs:
         goversion: "https://dl.google.com/go/go1.21.0.linux-amd64.tar.gz"
         project_path: "./cmd/ksef"
         binary_name: "ksef"
+        extra_files: klucze
