@@ -50,12 +50,15 @@ func (i *InteractiveSession) login(issuer string) error {
 		return fmt.Errorf("unable to call authorisationRequest: %v", err)
 	}
 
-	gatewayToken, err := i.retrieveGateweayToken(issuer)
-	if err != nil || gatewayToken == "" {
-		return fmt.Errorf("cannot retrieve gateway token: %v", err)
+	if i.issuerToken == "" {
+		gatewayToken, err := i.retrieveGateweayToken(issuer)
+		if err != nil || gatewayToken == "" {
+			return fmt.Errorf("cannot retrieve gateway token: %v", err)
+		}
+		i.issuerToken = gatewayToken
 	}
 
-	var challengePlaintext = fmt.Sprintf("%s|%d", gatewayToken, authorisationResponse.Timestamp.UnixMilli())
+	var challengePlaintext = fmt.Sprintf("%s|%d", i.issuerToken, authorisationResponse.Timestamp.UnixMilli())
 	var authorisationChallengeTemplateVars = authorisationChallengeTemplateVarsType{
 		Cipher:    i.api.cipherTemplateVars,
 		Issuer:    issuer,

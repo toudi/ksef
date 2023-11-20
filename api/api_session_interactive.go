@@ -3,12 +3,15 @@ package api
 import (
 	"fmt"
 	"ksef/common"
+	"os"
 )
 
 type InteractiveSession struct {
 	token       string
 	api         *API
 	referenceNo string
+	// token obtained from KSeF web app
+	issuerToken string
 }
 
 func (a *API) InteractiveSessionInit() *InteractiveSession {
@@ -49,6 +52,19 @@ func (i *InteractiveSession) UploadInvoices(sourcePath string, statusFileFormat 
 		SessionID:      i.referenceNo,
 		Environment:    i.api.environmentAlias,
 	}).Save(sourcePath)
+}
+
+// SetIssuerToken populates the issuer token from plaintext
+// this is a fallback mechanism for people that cannot use org.freedesktop.secret
+// service
+func (i *InteractiveSession) SetIssuerToken(tokenSource string) {
+	i.issuerToken = os.Getenv(tokenSource)
+	// if the environment variable was empty then maybe this is a token given as
+	// verbatim ?
+	if i.issuerToken == "" {
+		i.issuerToken = tokenSource
+		// if the issuerToken will still be empty there's nothing that can be done
+	}
 }
 
 func init() {

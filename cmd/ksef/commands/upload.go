@@ -14,6 +14,7 @@ type uploadArgsType struct {
 	testGateway bool
 	path        string
 	interactive bool
+	issuerToken string
 	statusJSON  bool
 }
 
@@ -33,6 +34,7 @@ func init() {
 
 	UploadCommand.FlagSet.BoolVar(&uploadArgs.testGateway, "t", false, "użyj bramki testowej")
 	UploadCommand.FlagSet.BoolVar(&uploadArgs.interactive, "i", false, "użyj sesji interaktywnej")
+	UploadCommand.FlagSet.StringVar(&uploadArgs.issuerToken, "token", "", "Token sesji interaktywnej lub nazwa zmiennej środowiskowej która go zawiera")
 	UploadCommand.FlagSet.StringVar(&uploadArgs.path, "p", "", "ścieżka do katalogu z wygenerowanymi fakturami")
 	UploadCommand.FlagSet.BoolVar(&uploadArgs.statusJSON, "sj", false, "użyj formatu JSON do zapisu pliku statusu (domyślnie YAML)")
 
@@ -62,6 +64,9 @@ func uploadRun(c *Command) error {
 
 	if uploadArgs.interactive {
 		interactiveSession := gateway.InteractiveSessionInit()
+		if uploadArgs.issuerToken != "" {
+			interactiveSession.SetIssuerToken(uploadArgs.issuerToken)
+		}
 		return interactiveSession.UploadInvoices(uploadArgs.path, statusFileFormat)
 	}
 
