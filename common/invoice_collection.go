@@ -38,6 +38,10 @@ func InvoiceCollection(sourcePath string) (*invoiceCollection, error) {
 		}
 	}
 
+	if collection.Issuer == "" {
+		return nil, fmt.Errorf("no issuer found - this should be impossible")
+	}
+
 	return collection, nil
 
 }

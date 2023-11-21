@@ -61,7 +61,9 @@ func (rf *RequestFactory) JSONRequest(method string, endpoint string, payload in
 	}
 	defer httpResponse.Body.Close()
 	if response != nil {
-		err = json.NewDecoder(httpResponse.Body).Decode(response)
+		httpResponseBody, _ := io.ReadAll(httpResponse.Body)
+		fmt.Printf("response body: \n%s\n", string(httpResponseBody))
+		err = json.NewDecoder(bytes.NewReader(httpResponseBody)).Decode(response)
 		if err != nil {
 			return nil, fmt.Errorf("error decoding response: %v", err)
 		}
