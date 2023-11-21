@@ -89,6 +89,8 @@ func (rf *RequestFactory) XMLRequest(method string, endpoint string, templateDir
 		return nil, fmt.Errorf("error rendering authRequest template: %v", err)
 	}
 
+	fmt.Printf("posting xml template: \n%s\n", renderedTemplate.String())
+
 	request, err := rf.Request(method, endpoint, &renderedTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("error creating HTTP request: %v", err)
@@ -101,7 +103,9 @@ func (rf *RequestFactory) XMLRequest(method string, endpoint string, templateDir
 	}
 	defer httpResponse.Body.Close()
 	if response != nil {
-		err = json.NewDecoder(httpResponse.Body).Decode(response)
+		responseBody, _ := io.ReadAll(httpResponse.Body)
+		fmt.Printf("response body: \n%s\n", string(responseBody))
+		err = json.NewDecoder(bytes.NewReader(responseBody)).Decode(response)
 		if err != nil {
 			return nil, fmt.Errorf("error decoding response: %v", err)
 		}

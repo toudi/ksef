@@ -59,6 +59,7 @@ func (i *InteractiveSession) login(issuer string) error {
 	}
 
 	var challengePlaintext = fmt.Sprintf("%s|%d", i.issuerToken, authorisationResponse.Timestamp.UnixMilli())
+	fmt.Printf("challengePlaintext: %s\n", challengePlaintext)
 	var authorisationChallengeTemplateVars = authorisationChallengeTemplateVarsType{
 		Cipher:    i.api.cipherTemplateVars,
 		Issuer:    issuer,
