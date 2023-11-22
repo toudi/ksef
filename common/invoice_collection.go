@@ -23,17 +23,25 @@ func InvoiceCollection(sourcePath string) (*invoiceCollection, error) {
 	}
 
 	var fileName string
+	var fullFileName string
+	var issuer string
 
 	for _, file := range files {
 		fileName = file.Name()
+		fullFileName = filepath.Join(sourcePath, fileName)
 
-		if strings.HasPrefix(fileName, "invoice-") && filepath.Ext(fileName) == ".xml" {
-			collection.Files = append(collection.Files, filepath.Join(sourcePath, fileName))
+		// do not bother to check if the file is not an XML
+		if strings.ToLower(filepath.Ext(fileName)) != ".xml" {
+			continue
+		}
 
+		// let's use the fact that we know how to parse the issuer to detect
+		// whether this is actually a SEI / KSeF invoice file or it happens to
+		// be just some random XML file
+		if issuer, _ = parseInvoiceIssuer(fullFileName); issuer != "" {
+			collection.Files = append(collection.Files, fullFileName)
 			if collection.Issuer == "" {
-				if collection.Issuer, err = parseInvoiceIssuer(collection.Files[len(collection.Files)-1]); err != nil {
-					return nil, fmt.Errorf("cannot parse invoice issuer from %s: %v", fileName, err)
-				}
+				collection.Issuer = issuer
 			}
 		}
 	}
