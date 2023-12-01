@@ -34,7 +34,7 @@ func init() {
 	SaveTokenCommand.FlagSet.StringVar(&saveTokenArgs.NIP, "nip", "", "numer NIP podatnika")
 	SaveTokenCommand.FlagSet.StringVar(&saveTokenArgs.token, "token", "", "token wygenerowany na środowisku KSeF")
 
-	_ = registerCommand(&SaveTokenCommand.Command)
+	registerCommand(&SaveTokenCommand.Command)
 }
 
 func saveTokenRun(c *Command) error {

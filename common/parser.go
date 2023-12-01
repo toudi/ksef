@@ -93,3 +93,13 @@ func (p *Parser) InvoiceReady() error {
 
 	return nil
 }
+
+func (p *Parser) ClearInvoiceData() error {
+	if len(p.invoice.Items) > 0 {
+		if err := p.InvoiceReady(); err != nil {
+			return err
+		}
+	}
+	p.invoice.Clear()
+	return nil
+}

@@ -88,6 +88,8 @@ func (s *SEI) ProcessSourceFile(sourceFile string) error {
 	} else if extension == ".xlsx" {
 		//
 		processor = nil
+	} else if extension == ".yaml" {
+		processor = inputprocessors.YAMLDecoder_Init()
 	}
 	if processor == nil {
 		return errUnknownSourceExtension

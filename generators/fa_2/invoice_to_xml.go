@@ -34,18 +34,18 @@ func (fg *FA2Generator) InvoiceToXMLTree(invoice *common.Invoice) (*xml.Node, er
 		if item.Unit != "" {
 			faChildNode.SetValue("P_8A", item.Unit)
 		}
-		faChildNode.SetValue("P_8B", common.RenderFloatNumber(item.Quantity))
+		faChildNode.SetValue("P_8B", common.RenderAmountFromCurrencyUnits(item.Quantity.Amount, uint8(item.Quantity.DecimalPlaces)))
 		if !item.UnitPrice.IsGross {
 			faChildNode.SetValue("P_11", common.RenderAmountFromCurrencyUnits(item.Amount().Net, 2))
 		} else {
 			faChildNode.SetValue("P_11A", common.RenderAmountFromCurrencyUnits(item.Amount().Gross, 2))
 		}
 		faChildNode.SetValue("P_12", item.UnitPrice.Vat.Description)
+		unitPriceField := "P_9B"
 		if !item.UnitPrice.IsGross {
-			faChildNode.SetValue("P_9A", common.RenderAmountFromCurrencyUnits(item.UnitPrice.Value, 2))
-		} else {
-			faChildNode.SetValue("P_9B", common.RenderAmountFromCurrencyUnits(item.UnitPrice.Value, 2))
+			unitPriceField = "P_9A"
 		}
+		faChildNode.SetValue(unitPriceField, common.RenderAmountFromCurrencyUnits(item.UnitPrice.Amount, uint8(item.UnitPrice.DecimalPlaces)))
 		faChildNode.SetValuesFromMap(item.Attributes)
 		fieldToVatRatesMapping.Accumulate(item)
 	}

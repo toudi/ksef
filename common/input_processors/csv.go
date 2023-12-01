@@ -62,6 +62,13 @@ func (c *CSVFormat) Process(sourceFile string, parser *common.Parser) error {
 			}
 		}
 
+		// check if this is a new invoice in batch mode
+		if len(fields) >= 2 && strings.ToLower(fields[1]) == common.SectionInvoice {
+			if err = parser.ClearInvoiceData(); err != nil {
+				return err
+			}
+		}
+
 		err = parser.ProcessLine(fields)
 		if err != nil {
 			return err

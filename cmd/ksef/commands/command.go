@@ -27,7 +27,7 @@ func (r *commandsRegistry) GetByName(name string) *Command {
 var Registry commandsRegistry
 var MaxCommandName int
 
-func registerCommand(command *Command) error {
+func registerCommand(command *Command) {
 	if Registry == nil {
 		Registry = make(commandsRegistry, 0)
 	}
@@ -36,6 +36,4 @@ func registerCommand(command *Command) error {
 	if len(command.Name) > MaxCommandName {
 		MaxCommandName = len(command.Name)
 	}
-
-	return nil
 }

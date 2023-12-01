@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"ksef"
-	"ksef/common"
 	inputprocessors "ksef/common/input_processors"
 )
 
@@ -28,7 +27,7 @@ func init() {
 		Command: Command{
 			Name:        "generate",
 			FlagSet:     flag.NewFlagSet("generate", flag.ExitOnError),
-			Description: "Konwertuje plik CSV/XLSX do pliku KSEF (XML)",
+			Description: "Konwertuje plik CSV/YAML/XLSX do pliku KSEF (XML)",
 			Run:         generateRun,
 			Args:        generateArgs,
 		},
@@ -42,8 +41,6 @@ func init() {
 
 	registerCommand(&GenerateCmd.Command)
 }
-
-var _generator *common.Generator
 
 func generateRun(c *Command) error {
 	if generateArgs.FileName == "" || generateArgs.Output == "" {

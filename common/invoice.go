@@ -8,8 +8,8 @@ type VAT struct {
 }
 
 type Price struct {
+	MonetaryValue
 	IsGross bool
-	Value   int
 	Vat     VAT
 }
 

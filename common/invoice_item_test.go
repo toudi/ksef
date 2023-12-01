@@ -8,7 +8,7 @@ type Expected struct {
 	Vat   int
 }
 type AmountCalculationTestCase struct {
-	Quantity  float64
+	Quantity  MonetaryValue
 	UnitPrice int
 	IsGross   bool
 	Expected  Expected
@@ -17,7 +17,10 @@ type AmountCalculationTestCase struct {
 func TestCalculatingPricesOnInvoiceItem(t *testing.T) {
 	for _, testCase := range []AmountCalculationTestCase{
 		{
-			Quantity:  2,
+			Quantity: MonetaryValue{
+				Amount:        2,
+				DecimalPlaces: 0,
+			},
 			UnitPrice: 100,
 			IsGross:   false,
 			Expected: Expected{
@@ -27,7 +30,10 @@ func TestCalculatingPricesOnInvoiceItem(t *testing.T) {
 			},
 		},
 		{
-			Quantity:  2,
+			Quantity: MonetaryValue{
+				Amount:        2,
+				DecimalPlaces: 0,
+			},
 			UnitPrice: 100,
 			IsGross:   true,
 			Expected: Expected{
@@ -37,7 +43,10 @@ func TestCalculatingPricesOnInvoiceItem(t *testing.T) {
 			},
 		},
 		{
-			Quantity:  200,
+			Quantity: MonetaryValue{
+				Amount:        200,
+				DecimalPlaces: 0,
+			},
 			UnitPrice: 100,
 			IsGross:   true,
 			Expected: Expected{
@@ -50,8 +59,10 @@ func TestCalculatingPricesOnInvoiceItem(t *testing.T) {
 		item := InvoiceItem{
 			Quantity: testCase.Quantity,
 			UnitPrice: Price{
+				MonetaryValue: MonetaryValue{
+					Amount: testCase.UnitPrice,
+				},
 				IsGross: testCase.IsGross,
-				Value:   testCase.UnitPrice,
 				Vat: VAT{
 					Rate: 23,
 				},
