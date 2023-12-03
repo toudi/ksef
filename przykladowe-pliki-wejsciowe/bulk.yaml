@@ -58,3 +58,57 @@ invoices:
               # unit-price-gross: 123 # P_9B
               # decimal-places: 2 # default value
               vat-rate: 23
+  - Faktura:
+      Podmiot2:
+        DaneIdentyfikacyjne:
+          NIP: 8888888888
+          Nazwa: BBB Spółka
+        Adres:
+          KodKraju: PL
+          AdresL1: ul. Wiśniowa 3/4
+          AdresL2: 11-222 Chlebowo
+      Fa:
+        KodWaluty: PLN
+        P_1: "2022-02-02"
+        P_1M: Suwałki
+        P_2: FV 11/22/33
+        P_6: "2022-02-03"
+        RodzajFaktury: VAT
+        Adnotacje:
+          P_16: 2
+          P_17: 2
+          P_18: 2
+          P_18A: 2
+          Zwolnienie.P_19N: 1
+          NoweSrodkiTransportu.P_22N: 1
+          P_23: 2
+          PMarzy.P_PMarzyN: 1
+        Platnosc:
+          Zaplacono: 1
+          DataZaplaty: "2020-02-04"
+          FormaPlatnosci: 6
+        FaWiersze:
+          - FaWiersz:
+              item: Nazwa towaru # P_7
+              units: szt # P_8A
+              quantity: 150 # P_8B
+              unit-price-net: 123 # P_9A
+              # unit-price-gross: 123 # P_9B
+              # decimal-places: 2 # default value
+              vat-rate: 23
+          - FaWiersz:
+              item: Nazwa towaru 2 # P_7
+              units: szt # P_8A
+              quantity: 150 # P_8B
+              unit-price-net: "1.230005" # P_9A
+              # unit-price-gross: 123 # P_9B
+              decimal-places: 2 # default value
+              vat-rate: 23
+          - FaWiersz:
+              item: Nazwa towaru 3 # P_7
+              units: szt # P_8A
+              quantity: "150.0" # P_8B
+              unit-price-net: 1 # P_9A
+              # unit-price-gross: 123 # P_9B
+              decimal-places: 4
+              vat-rate: 23

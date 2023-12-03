@@ -26,15 +26,15 @@ func (fg *FA2Generator) LineHandler(invoice *common.Invoice, section string, dat
 			case "p_8a", "units":
 				item.Unit = value
 			case "p_8b", "quantity":
-				if err = item.Quantity.LoadFromString(value); err != nil {
+				if err = item.Quantity.LoadFromString(value, data); err != nil {
 					return fmt.Errorf("cannot parse item quantity: %v", err)
 				}
 			case "p_9a", "unit-price-net":
-				if err = item.UnitPrice.LoadFromString(value); err != nil {
+				if err = item.UnitPrice.LoadFromString(value, data); err != nil {
 					return fmt.Errorf("cannot parse item net price: %v", err)
 				}
 			case "p_9b", "unit-price-gross":
-				if err = item.UnitPrice.LoadFromString(value); err != nil {
+				if err = item.UnitPrice.LoadFromString(value, data); err != nil {
 					return fmt.Errorf("cannot parse item gross price: %v", err)
 				}
 				item.UnitPrice.IsGross = true
@@ -43,7 +43,7 @@ func (fg *FA2Generator) LineHandler(invoice *common.Invoice, section string, dat
 				if vatRate, err := strconv.ParseInt(value, 10, 32); err == nil {
 					item.UnitPrice.Vat.Rate = int(vatRate)
 				}
-
+			case "decimal-places":
 			default:
 				item.Attributes[field] = value
 			}
