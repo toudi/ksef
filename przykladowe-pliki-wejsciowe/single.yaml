@@ -48,18 +48,34 @@ Faktura:
       FormaPlatnosci: 6
     FaWiersze:
       - FaWiersz:
-          item: Nazwa towaru # P_7
+          item: Nazwa towaru 1 # P_7
           units: szt # P_8A
-          quantity: 150 # P_8B
+          quantity:
+            value: 150 # P_8B
+            decimal-places: 0
           unit-price-net: 1.23 # P_9A
-          # unit-price-gross: 123 # P_9B
-          # decimal-places: 2 # default value
           vat-rate: 23
       - FaWiersz:
           item: Nazwa towaru 2 # P_7
           units: m3 # P_8A
-          quantity: 1500 # P_8B
+          quantity: "1500" # P_8B
           unit-price-gross: 0.0001 # P_9B
           # unit-price-gross: 123 # P_9B
           # decimal-places: 4 # default value
           vat-rate: 23
+      - FaWiersz:
+          item: Nazwa towaru 3
+          units: m2
+          quantity: "1.02"
+          unit-price-net:
+            value: 1
+            decimal-places: 4
+          vat-rate: 8
+      - FaWiersz:
+          item: Nazwa towaru 4
+          units: m2
+          quantity: "1.02"
+          unit-price-net:
+            value: "1.23"
+            decimal-places: 4
+          vat-rate: 8

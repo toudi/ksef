@@ -49,7 +49,16 @@ func processRecurse(section string, data interface{}, parser *common.Parser) err
 				fullSection = section + "." + keyName
 			}
 			// let's check if this data is also an interface
-			if _, is_a_map := keyDataItem.(map[string]interface{}); is_a_map {
+			if _tmpData, is_a_map := keyDataItem.(map[string]interface{}); is_a_map {
+				parsed_number, is_serialized_number, err := common.ParseMonetaryValue(_tmpData)
+				if err != nil {
+					return fmt.Errorf("error during parseSerializedNumber(): %v", err)
+				}
+				if is_serialized_number {
+					sectionData[keyName] = parsed_number
+					hasScalarData = true
+					continue
+				}
 				if err = processRecurse(fullSection, keyDataItem, parser); err != nil {
 					return fmt.Errorf("error in recursing to processRecurse(): %v", err)
 				}
@@ -65,6 +74,7 @@ func processRecurse(section string, data interface{}, parser *common.Parser) err
 				hasScalarData = true
 			}
 		}
+
 	}
 
 	if hasScalarData {
