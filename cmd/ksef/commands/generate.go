@@ -17,6 +17,7 @@ type generateArgsType struct {
 	Delimiter              string
 	GeneratorName          string
 	EncodingConversionFile string
+	SheetName              string
 }
 
 var GenerateCmd *generateCommand
@@ -36,6 +37,7 @@ func init() {
 	GenerateCmd.FlagSet.StringVar(&generateArgs.FileName, "f", "", "nazwa pliku do przetworzenia")
 	GenerateCmd.FlagSet.StringVar(&generateArgs.Output, "o", "", "nazwa katalogu wyjściowego")
 	GenerateCmd.FlagSet.StringVar(&generateArgs.Delimiter, "d", ",", "łańcuch znaków rozdzielający pola (tylko dla CSV)")
+	GenerateCmd.FlagSet.StringVar(&generateArgs.SheetName, "s", "", "Nazwa skoroszytu do przetworzenia (tylko dla XLSX)")
 	GenerateCmd.FlagSet.StringVar(&generateArgs.GeneratorName, "g", "fa-2", "nazwa generatora")
 	GenerateCmd.FlagSet.StringVar(&generateArgs.EncodingConversionFile, "e", "", "użyj pliku z konwersją znaków (tylko dla CSV)")
 
@@ -51,6 +53,7 @@ func generateRun(c *Command) error {
 	var conversionParameters inputprocessors.InputProcessorConfig
 	conversionParameters.CSV.Delimiter = generateArgs.Delimiter
 	conversionParameters.CSV.EncodingConversionFile = generateArgs.EncodingConversionFile
+	conversionParameters.XLSX.SheetName = generateArgs.SheetName
 	conversionParameters.Generator = generateArgs.GeneratorName
 	sei, err := ksef.SEI_Init(generateArgs.Output, conversionParameters)
 	if err != nil {

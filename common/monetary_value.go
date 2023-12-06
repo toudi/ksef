@@ -36,7 +36,18 @@ func ParseMonetaryValue(data map[string]interface{}) (string, bool, error) {
 		decimalPlacesInt, ok := tmpDecimalPlaces.(int)
 		if !ok {
 			// decimal places is not an int.
-			return "", false, fmt.Errorf("sub-struct does contain decimal-places but it is not an integer")
+			// could it be a string ?
+			decimalPlacesString, ok := tmpDecimalPlaces.(string)
+			var err error
+			if ok {
+				//
+				decimalPlacesInt, err = strconv.Atoi(decimalPlacesString)
+			} else {
+				err = fmt.Errorf("sub-struct contains decimal-places but it's neither int nor string")
+			}
+			if err != nil {
+				return "", false, fmt.Errorf("sub-struct does contain decimal-places but it is not an integer")
+			}
 		}
 		decimalPlaces := decimalPlacesInt
 		if parsedFloatNumber, is_a_float = value.(float64); is_a_float {

@@ -80,10 +80,6 @@ func (c *CSVFormat) Process(sourceFile string, parser *common.Parser) error {
 	return parser.InvoiceReady()
 }
 
-func (c *CSVFormat) FeedLine() ([]string, error) {
-	return []string{}, nil
-}
-
 func (c *CSVFormat) convertEncoding(data string) string {
 	if c.encodingConversion == nil {
 		c.prepareEncodingConversionTable()

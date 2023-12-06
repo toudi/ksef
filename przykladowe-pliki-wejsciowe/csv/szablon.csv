@@ -57,5 +57,5 @@
 1;2020-01-01;6;
 ;
 "Sekcja";"Faktura.Fa.FaWiersze.FaWiersz";
-"P_7";"P_8A";"P_8B";"P_9B";"P_12";
-"Nazwa towaru";"szt";150;"123";23;
+"P_7";"P_8A";"P_8B";"P_9B";"P_12";"P_9B.decimal-places";
+"Nazwa towaru";"szt";150;"123";23;2;

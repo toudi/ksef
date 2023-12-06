@@ -36,7 +36,3 @@ func (y *YAMLDecoder) Process(sourceFile string, parser *common.Parser) error {
 		return y.processSingleInvoiceSource(serializedInvoice, parser)
 	}
 }
-
-func (y *YAMLDecoder) FeedLine() ([]string, error) {
-	return []string{}, nil
-}

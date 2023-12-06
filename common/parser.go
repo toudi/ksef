@@ -1,6 +1,8 @@
 package common
 
 import (
+	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -76,6 +78,29 @@ func (p *Parser) ProcessLine(fields []string) error {
 		}
 
 		if !emptyLine {
+			// check if we have to parse .decimal-places cells
+			for header, value := range data {
+				decimalPlacesTest := strings.Split(header, ".decimal-places")
+				if len(decimalPlacesTest) == 1 {
+					// nope, this is just a regular header
+					continue
+				}
+				// we have a match. we now have to re-parse the value according
+				// to decimal places.
+				tmpStruct := map[string]interface{}{
+					"value":          data[decimalPlacesTest[0]],
+					"decimal-places": value,
+				}
+				if valueAsInt, err := strconv.Atoi(data[decimalPlacesTest[0]]); err == nil {
+					tmpStruct["value"] = valueAsInt
+				}
+				parsedMonetaryValue, success, err := ParseMonetaryValue(tmpStruct)
+				if !success || err != nil {
+					return fmt.Errorf("error during ParseMonetaryValue: %v", err)
+				}
+				data[decimalPlacesTest[0]] = parsedMonetaryValue
+				delete(data, header)
+			}
 			// check if we need to create new invoice
 			if err = p.LineHandler(p.invoice, p.section, data, p.InvoiceReady); err != nil {
 				return err
