@@ -3,7 +3,9 @@ package commands
 import (
 	"flag"
 	"fmt"
-	"ksef/api"
+	"ksef/internal/sei/api/client"
+	"ksef/internal/sei/api/status"
+	"ksef/internal/sei/api/upo"
 	"path/filepath"
 )
 
@@ -43,7 +45,7 @@ func statusRun(c *Command) error {
 		return nil
 	}
 
-	statusInfo, err := api.StatusFromFile(statusArgs.path)
+	statusInfo, err := status.StatusFromFile(statusArgs.path)
 	if err != nil {
 		return fmt.Errorf("unable to load status from file: %v", err)
 	}
@@ -52,21 +54,21 @@ func statusRun(c *Command) error {
 		return fmt.Errorf("file deserialized correctly, but either environment or referenceNo are empty: %+v", statusInfo)
 	}
 
-	gateway, err := api.API_Init(statusInfo.Environment)
+	gateway, err := client.APIClient_Init(statusInfo.Environment)
 	if err != nil {
 		return fmt.Errorf("cannot initialize gateway: %v", err)
 	}
 
-	var outputFormat = api.UPOFormatPDF
+	var outputFormat = upo.UPOFormatPDF
 	if statusArgs.xml {
-		outputFormat = api.UPOFormatXML
+		outputFormat = upo.UPOFormatXML
 	}
 
 	if statusArgs.output == "" {
 		statusArgs.output = filepath.Join(filepath.Dir(statusArgs.path), fmt.Sprintf("%s.%s", statusInfo.SessionID, outputFormat))
 	}
 
-	if err = gateway.DownloadUPO(statusInfo, outputFormat, statusArgs.output); err != nil {
+	if err = upo.DownloadUPO(gateway, statusInfo, outputFormat, statusArgs.output); err != nil {
 		return fmt.Errorf("unable to download UPO: %v", err)
 	}
 

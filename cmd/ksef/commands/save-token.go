@@ -3,7 +3,8 @@ package commands
 import (
 	"flag"
 	"fmt"
-	"ksef/api"
+	"ksef/internal/sei/api/client"
+	"ksef/internal/sei/api/upload/interactive"
 )
 
 type saveTokenCommand struct {
@@ -43,16 +44,16 @@ func saveTokenRun(c *Command) error {
 		return nil
 	}
 
-	var environment = api.ProductionEnvironment
+	var environment = client.ProductionEnvironment
 	if saveTokenArgs.testGateway {
-		environment = api.TestEnvironment
+		environment = client.TestEnvironment
 	}
 
-	gateway, err := api.API_Init(environment)
+	gateway, err := client.APIClient_Init(environment)
 	if err != nil {
 		return fmt.Errorf("unknown environment: %v", environment)
 	}
 
-	session := gateway.InteractiveSessionInit()
+	session := interactive.InteractiveSessionInit(gateway)
 	return session.PersistToken(saveTokenArgs.NIP, saveTokenArgs.token)
 }

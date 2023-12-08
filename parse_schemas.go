@@ -262,7 +262,7 @@ func main() {
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".xsd") {
 			fileNameBase = strings.Replace(file.Name(), ".xsd", "", 1)
-			if err = parseSchema("schemas/"+file.Name(), "generators/"+fileNameBase+"/schema_ordering.go"); err != nil {
+			if err = parseSchema("schemas/"+file.Name(), "internal/sei/generators/"+fileNameBase+"/schema_ordering.go"); err != nil {
 				log.Fatal(err)
 			}
 		}

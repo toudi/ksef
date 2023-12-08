@@ -3,7 +3,9 @@ package commands
 import (
 	"flag"
 	"fmt"
-	"ksef/api"
+	"ksef/internal/logging"
+	"ksef/internal/sei/api/client"
+	"ksef/internal/sei/api/upload/batch"
 )
 
 type metadataCommand struct {
@@ -41,18 +43,18 @@ func metadataRun(c *Command) error {
 		return nil
 	}
 
-	fmt.Printf("generowanie metadanych\n")
+	logging.SeiLogger.Info().Msg("generowanie metadanych")
 
-	var environment = api.ProductionEnvironment
+	var environment = client.ProductionEnvironment
 	if metadataArgs.testGateway {
-		environment = api.TestEnvironment
+		environment = client.TestEnvironment
 	}
 
-	gateway, err := api.API_Init(environment)
+	gateway, err := client.APIClient_Init(environment)
 	if err != nil {
 		return fmt.Errorf("unknown environment: %d", environment)
 	}
 
-	batchSession := gateway.BatchSessionInit()
+	batchSession := batch.BatchSessionInit(gateway)
 	return batchSession.GenerateMetadata(metadataArgs.path)
 }

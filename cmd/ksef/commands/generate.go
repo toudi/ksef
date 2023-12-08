@@ -3,8 +3,8 @@ package commands
 import (
 	"flag"
 	"fmt"
-	"ksef"
-	inputprocessors "ksef/common/input_processors"
+	"ksef/internal/sei"
+	inputprocessors "ksef/internal/sei/input_processors"
 )
 
 type generateCommand struct {
@@ -55,7 +55,7 @@ func generateRun(c *Command) error {
 	conversionParameters.CSV.EncodingConversionFile = generateArgs.EncodingConversionFile
 	conversionParameters.XLSX.SheetName = generateArgs.SheetName
 	conversionParameters.Generator = generateArgs.GeneratorName
-	sei, err := ksef.SEI_Init(generateArgs.Output, conversionParameters)
+	sei, err := sei.SEI_Init(generateArgs.Output, conversionParameters)
 	if err != nil {
 		return err
 	}

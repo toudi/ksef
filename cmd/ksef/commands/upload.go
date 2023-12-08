@@ -3,7 +3,10 @@ package commands
 import (
 	"flag"
 	"fmt"
-	"ksef/api"
+	"ksef/internal/sei/api/client"
+	"ksef/internal/sei/api/status"
+	"ksef/internal/sei/api/upload/batch"
+	"ksef/internal/sei/api/upload/interactive"
 )
 
 type uploadCommand struct {
@@ -47,30 +50,30 @@ func uploadRun(c *Command) error {
 		return nil
 	}
 
-	environment := api.ProductionEnvironment
+	environment := client.ProductionEnvironment
 	if uploadArgs.testGateway {
-		environment = api.TestEnvironment
+		environment = client.TestEnvironment
 	}
 
-	gateway, err := api.API_Init(environment)
+	gateway, err := client.APIClient_Init(environment)
 	if err != nil {
 		return fmt.Errorf("nieznane środowisko: %v", environment)
 	}
 
-	var statusFileFormat = api.StatusFileFormatYAML
+	var statusFileFormat = status.StatusFileFormatYAML
 	if uploadArgs.statusJSON {
-		statusFileFormat = api.StatusFileFormatJSON
+		statusFileFormat = status.StatusFileFormatJSON
 	}
 
 	if uploadArgs.interactive {
-		interactiveSession := gateway.InteractiveSessionInit()
+		interactiveSession := interactive.InteractiveSessionInit(gateway)
 		if uploadArgs.issuerToken != "" {
 			interactiveSession.SetIssuerToken(uploadArgs.issuerToken)
 		}
 		return interactiveSession.UploadInvoices(uploadArgs.path, statusFileFormat)
 	}
 
-	batchSession := gateway.BatchSessionInit()
+	batchSession := batch.BatchSessionInit(gateway)
 	return batchSession.UploadInvoices(uploadArgs.path, statusFileFormat)
 
 }
