@@ -1,6 +1,8 @@
 on:
-  release:
-    types: [created, edited]
+  push:
+    # run only against tags
+    tags:
+      - "*"
 
 permissions:
   contents: write
