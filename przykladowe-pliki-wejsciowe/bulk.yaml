@@ -8,8 +8,8 @@ common:
       SystemInfo: WSI Pegasus
       # the following values are default and can be omitted
       KodFormularza: FA
-      KodFormularza#KodSystemowy: FA (2)
-      KodFormularza#WersjaSchemy: 1-0E
+      KodFormularza#kodSystemowy: FA (2)
+      KodFormularza#wersjaSchemy: 1-0E
       WariantFormularza: 2
     Podmiot1:
       DaneIdentyfikacyjne:

@@ -4,17 +4,47 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	invoicePkg "ksef/internal/invoice"
 	"ksef/internal/sei/api/client"
 	"ksef/internal/sei/api/status"
 	"ksef/internal/sei/api/upload/interactive"
 	"net/http"
+	"os"
 	"path"
 )
 
 const downloadInvoiceXML = "online/Invoice/Get/%s"
 const downloadInvoicePDF = "https://%s/web/api/invoice/get-invoice-pdf-file?ksefReferenceNumber=%s"
 
-func DownloadPDF(apiClient *client.APIClient, statusInfo *status.StatusInfo, invoiceNo string, outputPath string) error {
+func DownloadPDF(apiClient *client.APIClient, statusInfo *status.StatusInfo, invoice string, outputPath string) error {
+	// let's check if the specified `invoice` is actually a source XML file.
+	invoiceStruct, err := invoicePkg.ParseInvoice(invoice)
+	if err != nil {
+		// nope. let's continue with the API route
+		return downloadPDFFromAPI(apiClient, statusInfo, invoice, outputPath)
+	}
+	// yes, it is! let's download the PDF based on that.
+	seiRefNo, err := statusInfo.GetSEIRefNo(invoiceStruct.InvoiceNumber)
+	if err != nil {
+		return fmt.Errorf("unable to find the invoice in status file. was it uploaded?")
+	}
+	sourceInvoiceBytes, err := os.ReadFile(invoice)
+	if err != nil {
+		return fmt.Errorf("unable to read the source file: %v", err)
+	}
+
+	httpSession := client.NewRequestFactory(apiClient)
+	invoiceXMLReader := bytes.NewReader(sourceInvoiceBytes)
+
+	return httpSession.DownloadPDFFromSourceXML(
+		fmt.Sprintf(downloadInvoicePDF, apiClient.Environment.Host, seiRefNo),
+		seiRefNo+".xml",
+		invoiceXMLReader,
+		path.Join(outputPath, seiRefNo+".pdf"),
+	)
+}
+
+func downloadPDFFromAPI(apiClient *client.APIClient, statusInfo *status.StatusInfo, invoice string, outputPath string) error {
 	// we have to initialize the interactive session
 	session := interactive.InteractiveSessionInit(apiClient)
 	if err := session.Login(statusInfo.Issuer); err != nil {
@@ -27,7 +57,7 @@ func DownloadPDF(apiClient *client.APIClient, statusInfo *status.StatusInfo, inv
 
 	httpSession := session.HTTPSession()
 
-	invoiceXMLRequest, err := httpSession.Request("GET", fmt.Sprintf(downloadInvoiceXML, invoiceNo), nil)
+	invoiceXMLRequest, err := httpSession.Request("GET", fmt.Sprintf(downloadInvoiceXML, invoice), nil)
 	if err != nil {
 		return fmt.Errorf("unable to download invoice in XML Format: %v", err)
 	}
@@ -46,9 +76,9 @@ func DownloadPDF(apiClient *client.APIClient, statusInfo *status.StatusInfo, inv
 
 	invoiceXMLReader := bytes.NewReader(invoiceXML.Bytes())
 	return httpSession.DownloadPDFFromSourceXML(
-		fmt.Sprintf(downloadInvoicePDF, apiClient.Environment.Host, invoiceNo),
-		invoiceNo+".xml",
+		fmt.Sprintf(downloadInvoicePDF, apiClient.Environment.Host, invoice),
+		invoice+".xml",
 		invoiceXMLReader,
-		path.Join(outputPath, invoiceNo+".pdf"),
+		path.Join(outputPath, invoice+".pdf"),
 	)
 }

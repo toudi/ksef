@@ -106,8 +106,8 @@ func (i *InteractiveSession) Login(issuer string) error {
 	}
 
 	i.session.SetHeader("SessionToken", initTokenResponse.Token.Value)
-	fmt.Printf("set token %s\n", initTokenResponse.Token.Value)
-	fmt.Printf("set ref no: %s\n", initTokenResponse.ReferenceNumber)
+	// fmt.Printf("set token %s\n", initTokenResponse.Token.Value)
+	// fmt.Printf("set ref no: %s\n", initTokenResponse.ReferenceNumber)
 	i.referenceNo = initTokenResponse.ReferenceNumber
 
 	return nil
