@@ -7,7 +7,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
+	"net/textproto"
+	"net/url"
 	"os"
 	"strings"
 	"text/template"
@@ -50,6 +53,7 @@ func (rf *RequestFactory) JSONRequest(method string, endpoint string, payload in
 		return nil, fmt.Errorf("error encoding JSON: %v", err)
 	}
 	request, err := rf.Request(method, endpoint, &encodedPayload)
+	// fmt.Printf("request URL: %s\n", request.URL.String())
 	if err != nil {
 		return nil, fmt.Errorf("error creating HTTP request: %v", err)
 	}
@@ -62,7 +66,7 @@ func (rf *RequestFactory) JSONRequest(method string, endpoint string, payload in
 	defer httpResponse.Body.Close()
 	if response != nil {
 		httpResponseBody, _ := io.ReadAll(httpResponse.Body)
-		fmt.Printf("response body: \n%s\n", string(httpResponseBody))
+		// fmt.Printf("response body: \n%s\n", string(httpResponseBody))
 		err = json.NewDecoder(bytes.NewReader(httpResponseBody)).Decode(response)
 		if err != nil {
 			return nil, fmt.Errorf("error decoding response: %v", err)
@@ -91,7 +95,7 @@ func (rf *RequestFactory) XMLRequest(method string, endpoint string, templateDir
 		return nil, fmt.Errorf("error rendering authRequest template: %v", err)
 	}
 
-	fmt.Printf("posting xml template: \n%s\n", renderedTemplate.String())
+	// fmt.Printf("posting xml template: \n%s\n", renderedTemplate.String())
 
 	request, err := rf.Request(method, endpoint, &renderedTemplate)
 	if err != nil {
@@ -106,7 +110,7 @@ func (rf *RequestFactory) XMLRequest(method string, endpoint string, templateDir
 	defer httpResponse.Body.Close()
 	if response != nil {
 		responseBody, _ := io.ReadAll(httpResponse.Body)
-		fmt.Printf("response body: \n%s\n", string(responseBody))
+		// fmt.Printf("response body: \n%s\n", string(responseBody))
 		err = json.NewDecoder(bytes.NewReader(responseBody)).Decode(response)
 		if err != nil {
 			return nil, fmt.Errorf("error decoding response: %v", err)
@@ -148,4 +152,52 @@ func (rf *RequestFactory) SendFile(method string, endpoint string, fileName stri
 	}
 
 	return response, nil
+}
+
+func (rf *RequestFactory) DownloadPDFFromSourceXML(endpoint string, sourceXMLFileName string, sourceXMLFile io.Reader, outputPath string) error {
+	pdfURL, err := url.Parse(endpoint)
+	if err != nil {
+		return fmt.Errorf("unable to parse url for PDF")
+	}
+
+	requestBuffer := new(bytes.Buffer)
+	multipartWriter := multipart.NewWriter(requestBuffer)
+	xmlHeader := make(textproto.MIMEHeader)
+	xmlHeader.Set("Content-Disposition", fmt.Sprintf(`form-data; name="%s"; filename="%s.xml"`, "file", sourceXMLFileName))
+	xmlHeader.Set("Content-Type", "text/xml")
+	xmlFile, err := multipartWriter.CreatePart(xmlHeader)
+	if err != nil {
+		return fmt.Errorf("unable to create xml file writer: %v", err)
+	}
+	if _, err = io.Copy(xmlFile, sourceXMLFile); err != nil {
+		return fmt.Errorf("unable to write xml bytes to HTTP request: %v", err)
+	}
+	if err = multipartWriter.Close(); err != nil {
+		return fmt.Errorf("unable to close multipartWriter: %v", err)
+	}
+
+	pdfDownloadRequest, err := http.NewRequest("POST", pdfURL.String(), requestBuffer)
+	if err != nil {
+		return fmt.Errorf("unable to prepare pdf download request: %v", err)
+	}
+	pdfDownloadRequest.Header.Add("Content-Type", multipartWriter.FormDataContentType())
+
+	response, err := http.DefaultClient.Do(pdfDownloadRequest)
+	if err != nil {
+		return fmt.Errorf("unable to perform download request: %v", err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != 200 {
+		return fmt.Errorf("unexpected response from pdf download: %d != 200", response.StatusCode)
+	}
+
+	pdfFile, err := os.Create(outputPath)
+	if err != nil {
+		return fmt.Errorf("unable to create PDF file: %v", err)
+	}
+	defer pdfFile.Close()
+
+	_, err = io.Copy(pdfFile, response.Body)
+
+	return err
 }

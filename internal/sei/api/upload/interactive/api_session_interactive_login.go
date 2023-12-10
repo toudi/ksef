@@ -46,7 +46,7 @@ type authorisationChallengeTemplateVarsType struct {
 	EncryptedToken []byte
 }
 
-func (i *InteractiveSession) login(issuer string) error {
+func (i *InteractiveSession) Login(issuer string) error {
 	var err error
 
 	authorisationRequest.ContextIdentifier.Identifier = issuer
@@ -106,6 +106,8 @@ func (i *InteractiveSession) login(issuer string) error {
 	}
 
 	i.session.SetHeader("SessionToken", initTokenResponse.Token.Value)
+	fmt.Printf("set token %s\n", initTokenResponse.Token.Value)
+	fmt.Printf("set ref no: %s\n", initTokenResponse.ReferenceNumber)
 	i.referenceNo = initTokenResponse.ReferenceNumber
 
 	return nil

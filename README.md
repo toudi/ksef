@@ -1,14 +1,18 @@
 kompilacja programu:
 
-go build ksef/cmd/main.go
+```
+go build -o ksef ksef/cmd/main.go
+```
 
-w celu rekompilacji schematów:
+w celu rekompilacji schematów (robisz to tylko jeśli chcesz dodać własny schemat oraz generator - fa(2) wymagany przez ministerstwo jest już sparsowany):
 
+```
 go run parse_schemas.go
+```
 
-wówczas program sparsuje schematy z katalogu "schemas" i wygeneruje odpowiednie struktury w katalogu "generators"
+wówczas program sparsuje schematy z katalogu "schemas" i wygeneruje odpowiednie struktury w katalogu "internal/sei/generators"
 
-Jeśli zastanawiasz się po kiego grzyba jest ten generowany kod spieszę odpowiedzieć, że niestety ministerstwo używa typu sequence a on wymusza aby elementy w drzewie występowały w określonej kolejności (sic!) miałem więc do wyboru albo zaimplementować struktury w ten sposób, żeby ręcznie wklepać je do kodu w golang albo zaimplementować je w sposób ogólniejszy aby to użytkownik programu wypełniał te pola / atrybuty które wie, że potrzebuje a program na podstawie sparsowania schemy posortuje atrybuty według kolejności i XML przejdzie walidację.
+Jeśli zastanawiasz się po kiego grzyba jest ten generowany kod spieszę odpowiedzieć, że niestety ministerstwo używa typu sequence a on wymusza aby elementy w drzewie występowały w określonej kolejności (sic!) miałem więc do wyboru albo zaimplementować struktury w ten sposób, żeby ręcznie wklepać je do kodu w golang albo zaimplementować je w sposób ogólniejszy aby to użytkownik programu wypełniał te pola / atrybuty które wie, że potrzebuje (bo zdecydowana większość pól i tak jest pusta / opcjonalna) a program na podstawie sparsowanej schemy posortuje atrybuty według kolejności i XML przejdzie walidację. struktury generowane przez parse_schemas to nic innego jak tylko definicja kolejności w drzewie. po wygenerowaniu faktury mogę przepuścić ją przez funkcję sortującą przesortować elementy drzewa XML tak aby były w takiej kolejności jak w źródłowym pliku .xsd. Oczywiście tu pojawia się pytanie czy trzeba zapisywać stan tego parsowania na dysku - bo teoretycznie można by to robić w locie. Stwierdziłem, źe po pierwsze nie chcę marnować mocy procesora a po drugie ta kolejność i tak się przecież nie zmieni - a jeśli się zmieni to i tak będzie to nowy schemat, prawdopodobnie z nowym plikiem .xsd
 
 ## zapis tokenu
 
@@ -54,9 +58,9 @@ Przykładowe wywołanie:
 
 w katalogu docelowym program stworzy pliki:
 
-* metadata.xml [surowy plik metadanych który należy podpisać. Podpisanego pliku użyjesz w kolejnym kroku (`wysyłka faktur`)]
-* metadata.zip [surowy plik archiwum, nie jest on wysyłany na serwer]
-* metadata.zip.aes [plik archiwum zaszyfrowany odpowiednim kluczem ministerstwa, zależnym od wybranego trybu (testowy / produkcja) - to ten plik jest przesyłany]
+- metadata.xml [surowy plik metadanych który należy podpisać. Podpisanego pliku użyjesz w kolejnym kroku (`wysyłka faktur`)]
+- metadata.zip [surowy plik archiwum, nie jest on wysyłany na serwer]
+- metadata.zip.aes [plik archiwum zaszyfrowany odpowiednim kluczem ministerstwa, zależnym od wybranego trybu (testowy / produkcja) - to ten plik jest przesyłany]
 
 ### podpisywanie pliku metadanych
 
@@ -76,6 +80,7 @@ Aby podpisać plik metadanych użyj trybu "Osadzonego". Możesz użyć do tego c
 Przewidziane zostały dwa tryby wysyłki faktur.
 
 ### tryb wsadowy
+
 Aby skorzystać z trybu wsadowego upewnij się, że podisałeś plik metadanych (patrz sekcja `metadane`). Następnie wywołaj ksef w poniższy sposób:
 
 ```bash

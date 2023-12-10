@@ -32,7 +32,7 @@ func (i *InteractiveSession) UploadInvoices(sourcePath string, statusFileFormat 
 	if err != nil {
 		return fmt.Errorf("cannot parse invoice collection: %v", err)
 	}
-	if err = i.login(collection.Issuer); err != nil {
+	if err = i.Login(collection.Issuer); err != nil {
 		return fmt.Errorf("cannot login to gateway: %v", err)
 	}
 
@@ -43,7 +43,7 @@ func (i *InteractiveSession) UploadInvoices(sourcePath string, statusFileFormat 
 		}
 	}
 
-	if err = i.logout(); err != nil {
+	if err = i.Logout(); err != nil {
 		return fmt.Errorf("cannot logout: %v", err)
 	}
 
@@ -51,6 +51,7 @@ func (i *InteractiveSession) UploadInvoices(sourcePath string, statusFileFormat 
 		SelectedFormat: statusFileFormat,
 		SessionID:      i.referenceNo,
 		Environment:    i.apiClient.EnvironmentAlias,
+		Issuer:         collection.Issuer,
 	}).Save(sourcePath)
 }
 
@@ -65,6 +66,10 @@ func (i *InteractiveSession) SetIssuerToken(tokenSource string) {
 		i.issuerToken = tokenSource
 		// if the issuerToken will still be empty there's nothing that can be done
 	}
+}
+
+func (i *InteractiveSession) HTTPSession() *client.RequestFactory {
+	return i.session
 }
 
 func init() {

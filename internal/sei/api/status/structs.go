@@ -10,5 +10,6 @@ type StatusInfo struct {
 	SourcePath     string              `json:"-" yaml:"-"`
 	Environment    string              `json:"env" yaml:"env"`
 	SessionID      string              `json:"sessionId" yaml:"sessionId"`
+	Issuer         string              `json:"issuer" yaml:"issuer"`
 	InvoiceIds     []KsefInvoiceIdType `json:"invoiceIds,omitempty" yaml:"invoiceIds,omitempty"`
 }

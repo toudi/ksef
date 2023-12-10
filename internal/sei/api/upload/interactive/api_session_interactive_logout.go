@@ -8,7 +8,7 @@ import (
 
 const endpointLogout = "online/Session/Terminate"
 
-func (i *InteractiveSession) logout() error {
+func (i *InteractiveSession) Logout() error {
 	terminateRequest, err := i.session.Request("GET", endpointLogout, nil)
 	if err != nil {
 		return fmt.Errorf("unable to perform request: %v", err)
