@@ -261,7 +261,7 @@ func main() {
 
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".xsd") {
-			fileNameBase = strings.Replace(file.Name(), ".xsd", "", 1)
+			fileNameBase = strings.ToLower(strings.Replace(file.Name(), ".xsd", "", 1))
 			if err = parseSchema("schemas/"+file.Name(), "internal/sei/generators/"+fileNameBase+"/schema_ordering.go"); err != nil {
 				log.Fatal(err)
 			}
