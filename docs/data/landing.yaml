@@ -1,0 +1,25 @@
+# Hero
+hero:
+  enable: true
+  weight: 10
+  template: hero
+
+  badge:
+    text: v0.1.0
+    color: primary # primary, secondary, success, danger, warning, info, light, dark
+    pill: false # boolean
+    soft: true # boolean
+
+  title: "KSeF"
+  subtitle: Klient KSeF
+
+  ctaButton:
+    icon: rocket_launch
+    btnText: "Co może pójść nie tak?"
+    url: "/docs/"
+
+features:
+  template: features
+
+image_compare:
+  template: image_compare
