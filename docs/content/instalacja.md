@@ -1,8 +1,4 @@
----
-weight: 100
-title: "Instalacja"
-toc: true
----
+# Instalacja programu
 
 Aby pobrać najnowszą wersję klienta KSeF masz dwie opcje:
 
