@@ -1,8 +1,6 @@
----
-title: UPO
-toc: true
-weight: 999
----
+# Pobieranie UPO
+
+Z oczywistych względów, aby pobrać UPO musisz najpierw wysłać faktury do KSeF. Program stworzy wtedy plik statusu wraz z numerami przesłanych faktur.
 
 Aby pobrać UPO z ministerstwa, skorzystaj z komendy `status`
 

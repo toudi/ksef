@@ -1,13 +1,4 @@
----
-weight: 999
-title: "Generowanie faktur"
-description: ""
-icon: "article"
-date: "2023-12-12T01:49:22+01:00"
-lastmod: "2023-12-12T01:49:22+01:00"
-draft: true
-toc: true
----
+# Generowanie faktur
 
 W tym rozdziale zajmiemy się generowaniem faktur. Program obsługuje kilka formatów plików wejściowych.
 
@@ -30,11 +21,15 @@ Usage of generate:
 
 ## Uwagi techniczne
 
-{{< alert context="info" text="Kolejność pól nie ma znaczenia. Program podczas konwersji sortuje pola według schematu przewidzianego przez ministerstwo." />}}
+::: info
+Kolejność pól nie ma znaczenia. Program podczas konwersji sortuje pola według schematu przewidzianego przez ministerstwo
+:::
 
-{{< alert context="info" text="Większość z pól przewidzianych przez ministerstwo i tak jest opcjonalna więc w plikach źródłowych uzupełniaj tylko te których potrzebujesz" />}}
+::: info
+Większość z pól przewidzianych przez ministerstwo i tak jest opcjonalna więc w plikach źródłowych uzupełniaj tylko te których potrzebujesz
+:::
 
-{{% alert context="info" %}}
+::: info
 Korzystaj z mnemoników. Zamiast mało przyjaznych nazw pól takich jak `P_7`, `P_12` możesz posłużyć się mnemonikami które program w locie przetłumaczy na oczekiwane przez ministerstwo:
 
 | mnemonik         | pole | znaczenie               |
@@ -46,7 +41,7 @@ Korzystaj z mnemoników. Zamiast mało przyjaznych nazw pól takich jak `P_7`, `
 | unit-price-gross | P_9B | Cena jednostkowa brutto |
 | vat-rate         | P_12 | Stawka VAT              |
 
-{{% /alert %}}
+:::
 
 ## CSV z sekcjami
 
@@ -64,7 +59,7 @@ Przykłady wywołania:
 ./ksef generate -f plik.csv -d ';' -o katalog-wyjsciowy
 ```
 
-{{% alert context="info" %}}
+::: info
 Jeśli Twój system wejściowy zapisuje kwoty za pomocą liczb całkowitych, możesz je równiez w ten sposób wyeksportować. W tym celu oprócz wyeksportowania wartości w wybranym przez Ciebie polu utwórz kolejne z dopiskiem `.decimal-places` i wstaw tam mnożnik. Dla przykładu, zapis:<br />
 
 ```
@@ -82,7 +77,7 @@ podczas gdy zapis
 ```
 
 Oznaczać będzie liczbę `0.0123`
-{{% /alert %}}
+:::
 
 ## XLSX / Excell 2007+ / Libreoffice
 
@@ -92,7 +87,7 @@ Ten format przewidziałem dla integracji gdzie źródłem danych są faktury wys
 
 Tu dochodzimy do formatu gdzie integracja najprawdopodobniej umożliwia zastosowanie biblioteki generującej dane wyjściowe
 
-{{% alert context="info" %}}
+::: info
 YAML umożliwia zapisywanie liczb zmiennoprzecinkowych. Tym niemniej, bezpieczniejszym sposobem może być albo wyeksportowanie kwoty jako string albo w formie bazowej. Sprowadzając rzecz do konkretów, kwotę `1.23` możesz zapisać w następujące sposoby:
 
 ```yaml
@@ -109,4 +104,4 @@ unit-price-net:
   decimal-places: 2
 ```
 
-{{% /alert %}}
+:::

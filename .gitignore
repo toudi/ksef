@@ -13,3 +13,11 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+dist/
+.DS_Store
+docs/.vitepress/cache
+docs/.vitepress/dist
+docs/*.pdf
+docs/node_modules
+

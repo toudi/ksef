@@ -1,13 +1,4 @@
----
-weight: 999
-title: "Wizualizacja PDF faktury"
-description: ""
-icon: "article"
-date: "2023-12-12T01:49:22+01:00"
-lastmod: "2023-12-12T01:49:22+01:00"
-draft: true
-toc: true
----
+# Pobieranie wizualizacji PDF faktury
 
 KSeF umożliwia pobranie wizualizacji PDF faktury (zapewne w celu wysłania jej kontrahentowi). Klient obsługuje dwa przypadki pobrania PDF'a z fakturą
 

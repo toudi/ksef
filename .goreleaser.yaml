@@ -4,6 +4,7 @@ before:
   hooks:
     # You may remove this if you don't use go modules.
     - go mod tidy
+    - sh -c "cd docs && npm ci && npm run export-pdf"
 
 builds:
   - env:
@@ -21,12 +22,14 @@ builds:
         goarch: arm64
 
 release:
+  extra_files:
+    - glob: ./docs/ksef-dokumentacja-uzytkownika.pdf
+
   footer: |
     # :open_file_folder: Files Checksum
     ```
     {{ .Checksums }}
     ```
-
 archives:
   - format: tar.gz
     # this name template makes the OS and Arch compatible with the results of `uname`.
@@ -44,6 +47,8 @@ archives:
     files:
       - przykladowe-pliki-wejsciowe
       - klucze
+      - src: docs/ksef-dokumentacja-uzytkownika.pdf
+        dst: ksef-dokumentacja-uzytkownika.pdf
 
 changelog:
   sort: asc

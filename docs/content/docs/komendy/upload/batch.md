@@ -1,3 +1,0 @@
----
-title: Wysyłka wsadowa (batch)
----

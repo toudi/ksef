@@ -1,11 +1,6 @@
 ---
 weight: 100
 title: "Instalacja"
-description: ""
-icon: "article"
-date: "2023-12-12T01:42:35+01:00"
-lastmod: "2023-12-12T01:42:35+01:00"
-draft: true
 toc: true
 ---
 
