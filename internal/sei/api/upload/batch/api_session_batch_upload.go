@@ -3,10 +3,11 @@ package batch
 import (
 	"bytes"
 	"fmt"
+	registryPkg "ksef/internal/registry"
 	"ksef/internal/sei/api/client"
-	"ksef/internal/sei/api/status"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 )
 
@@ -35,7 +36,7 @@ const (
 	endpointBatchFinish = "batch/Finish"
 )
 
-func (b *BatchSession) UploadInvoices(sourcePath string, statusFileFormat string) error {
+func (b *BatchSession) UploadInvoices(sourcePath string) error {
 	signedMetadataFile, err := locateBatchMetadataFile(sourcePath)
 
 	if err != nil {
@@ -102,11 +103,10 @@ func (b *BatchSession) UploadInvoices(sourcePath string, statusFileFormat string
 	}
 
 	// step 4 - persist status for fetching UPO.
-	return (&status.StatusInfo{
-		SelectedFormat: statusFileFormat,
-		SessionID:      batchInitResponse.ReferenceNumber,
-		Environment:    b.apiClient.EnvironmentAlias,
-	}).Save(sourcePath)
+	registry := registryPkg.NewRegistry()
+	registry.Environment = b.apiClient.EnvironmentAlias
+	registry.SessionID = batchInitResponse.ReferenceNumber
+	return registry.Save(path.Join(sourcePath, "registry.yaml"))
 }
 
 func locateBatchMetadataFile(sourcePath string) (string, error) {

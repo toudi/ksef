@@ -3,9 +3,10 @@ package interactive
 import (
 	"fmt"
 	"ksef/internal/invoice"
+	registryPkg "ksef/internal/registry"
 	"ksef/internal/sei/api/client"
-	"ksef/internal/sei/api/status"
 	"os"
+	"path"
 )
 
 type InteractiveSession struct {
@@ -25,7 +26,7 @@ func InteractiveSessionInit(apiClient *client.APIClient) *InteractiveSession {
 
 var invoicePayload invoicePayloadType
 
-func (i *InteractiveSession) UploadInvoices(sourcePath string, statusFileFormat string) error {
+func (i *InteractiveSession) UploadInvoices(sourcePath string) error {
 	var err error
 
 	collection, err := invoice.InvoiceCollection(sourcePath)
@@ -47,12 +48,12 @@ func (i *InteractiveSession) UploadInvoices(sourcePath string, statusFileFormat 
 		return fmt.Errorf("cannot logout: %v", err)
 	}
 
-	return (&status.StatusInfo{
-		SelectedFormat: statusFileFormat,
-		SessionID:      i.referenceNo,
-		Environment:    i.apiClient.EnvironmentAlias,
-		Issuer:         collection.Issuer,
-	}).Save(sourcePath)
+	registry := registryPkg.NewRegistry()
+	registry.SessionID = i.referenceNo
+	registry.Environment = i.apiClient.EnvironmentAlias
+	registry.Issuer = collection.Issuer
+
+	return registry.Save(path.Join(sourcePath, "registry.yaml"))
 }
 
 // SetIssuerToken populates the issuer token from plaintext
@@ -69,6 +70,9 @@ func (i *InteractiveSession) SetIssuerToken(tokenSource string) {
 }
 
 func (i *InteractiveSession) HTTPSession() *client.RequestFactory {
+	if i.session == nil {
+		i.session = client.NewRequestFactory(i.apiClient)
+	}
 	return i.session
 }
 

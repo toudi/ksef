@@ -1,0 +1,105 @@
+package registry
+
+import (
+	"errors"
+	"fmt"
+	"os"
+	"path"
+	"time"
+
+	"gopkg.in/yaml.v3"
+)
+
+type QueryCriteria struct {
+	DateFrom    time.Time `json:"invoicingDateFrom" yaml:"invoicingDateFrom"`
+	DateTo      time.Time `json:"invoicingDateTo" yaml:"invoicingDateTo"`
+	SubjectType string    `json:"subjectType" yaml:"subjectType"`
+	Type        string    `json:"type" yaml:"type"`
+}
+
+type invoiceSubjectQueryResponse struct {
+	IssuedBy struct {
+		TIN string `json:"identifier"`
+	} `json:"issuedByIdentifier"`
+	Issuer struct {
+		FullName string `json:"fullName"`
+	} `json:"issuedByName"`
+}
+
+type InvoiceSubject struct {
+	invoiceSubjectQueryResponse `yaml:"-"`
+	TIN                         string `yaml:"NIP"`
+	FullName                    string `yaml:"fullName"`
+}
+
+type Invoice struct {
+	ReferenceNumber    string         `json:"invoiceReferenceNumber" yaml:"referenceNumber,omitempty"`
+	SEIReferenceNumber string         `json:"ksefReferenceNumber" yaml:"ksefReferenceNumber,omitempty"`
+	InvoicingDate      string         `json:"invoicingDate" yaml:"invoicingDate,omitempty"`
+	SubjectFrom        InvoiceSubject `json:"subjectBy,omitempty" yaml:"subjectFrom,omitempty"`
+	SubjectTo          InvoiceSubject `json:"subjectTo,omitempty" yaml:"subjectTo,omitempty"`
+	InvoiceType        string         `json:"invoiceType" yaml:"invoiceType,omitempty"`
+	Net                string         `json:"net" yaml:"net,omitempty"`
+	Vat                string         `json:"vat" yaml:"vat,omitempty"`
+	Gross              string         `json:"gross" yaml:"gross,omitempty"`
+}
+
+type InvoiceRegistry struct {
+	QueryCriteria QueryCriteria   `json:"queryCriteria" yaml:"queryCriteria,omitempty"`
+	Environment   string          `yaml:"environment"`
+	Invoices      []Invoice       `yaml:"invoices"`
+	Issuer        string          `yaml:"issuer,omitempty"`
+	SessionID     string          `yaml:"sessionId,omitempty"`
+	seiRefNoIndex map[string]bool `yaml:"-"`
+}
+
+func NewRegistry() *InvoiceRegistry {
+	_registry := &InvoiceRegistry{
+		seiRefNoIndex: make(map[string]bool),
+	}
+
+	return _registry
+}
+
+func (r *InvoiceRegistry) Save(fileName string) error {
+	destPath := path.Dir(fileName)
+	if err := os.MkdirAll(destPath, 0755); err != nil {
+		return fmt.Errorf("unable to create registry dir: %v", err)
+	}
+	destFile, err := os.Create(fileName)
+	if err != nil {
+		return fmt.Errorf("unable to create registry file: %v", err)
+	}
+	return yaml.NewEncoder(destFile).Encode(r)
+}
+
+func LoadRegistry(fileName string) (*InvoiceRegistry, error) {
+	var registry InvoiceRegistry
+	registry.seiRefNoIndex = make(map[string]bool)
+	reader, err := os.Open(fileName)
+	if err != nil {
+		return nil, fmt.Errorf("unable to open registry file: %v", err)
+	}
+	if err = yaml.NewDecoder(reader).Decode(&registry); err != nil {
+		return nil, fmt.Errorf("unable to decode invoice registry: %v", err)
+	}
+	for _, invoice := range registry.Invoices {
+		registry.seiRefNoIndex[invoice.SEIReferenceNumber] = true
+	}
+	return &registry, nil
+}
+
+func (r *InvoiceRegistry) Contains(refNo string) bool {
+	_, exists := r.seiRefNoIndex[refNo]
+	return exists
+}
+
+func (r *InvoiceRegistry) GetSEIRefNo(invoiceNo string) (string, error) {
+	for _, invoice := range r.Invoices {
+		if invoice.ReferenceNumber == invoiceNo || invoice.SEIReferenceNumber == invoiceNo {
+			return invoice.SEIReferenceNumber, nil
+		}
+	}
+
+	return "", errors.New("invoice number could not be found")
+}

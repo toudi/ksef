@@ -3,8 +3,8 @@ package commands
 import (
 	"flag"
 	"fmt"
+	registryPkg "ksef/internal/registry"
 	"ksef/internal/sei/api/client"
-	"ksef/internal/sei/api/status"
 	"ksef/internal/sei/api/upo"
 	"path/filepath"
 )
@@ -45,16 +45,16 @@ func statusRun(c *Command) error {
 		return nil
 	}
 
-	statusInfo, err := status.StatusFromFile(statusArgs.path)
+	registry, err := registryPkg.LoadRegistry(statusArgs.path)
 	if err != nil {
 		return fmt.Errorf("unable to load status from file: %v", err)
 	}
 
-	if statusInfo.Environment == "" || statusInfo.SessionID == "" {
-		return fmt.Errorf("file deserialized correctly, but either environment or referenceNo are empty: %+v", statusInfo)
+	if registry.Environment == "" || registry.SessionID == "" {
+		return fmt.Errorf("file deserialized correctly, but either environment or referenceNo are empty: %+v", registry)
 	}
 
-	gateway, err := client.APIClient_Init(statusInfo.Environment)
+	gateway, err := client.APIClient_Init(registry.Environment)
 	if err != nil {
 		return fmt.Errorf("cannot initialize gateway: %v", err)
 	}
@@ -65,10 +65,10 @@ func statusRun(c *Command) error {
 	}
 
 	if statusArgs.output == "" {
-		statusArgs.output = filepath.Join(filepath.Dir(statusArgs.path), fmt.Sprintf("%s.%s", statusInfo.SessionID, outputFormat))
+		statusArgs.output = filepath.Join(filepath.Dir(statusArgs.path), fmt.Sprintf("%s.%s", registry.SessionID, outputFormat))
 	}
 
-	if err = upo.DownloadUPO(gateway, statusInfo, outputFormat, statusArgs.output); err != nil {
+	if err = upo.DownloadUPO(gateway, registry, outputFormat, statusArgs.output); err != nil {
 		return fmt.Errorf("unable to download UPO: %v", err)
 	}
 

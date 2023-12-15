@@ -27,6 +27,7 @@ export default defineConfig({
             {text: 'Sesja wsadowa (batch)', link: '/content/komendy/upload/batch'},
             {text: 'Sesja interaktywna', link: '/content/komendy/upload/interaktywna'},
           ]},
+          { text: 'Pobieranie faktur', link: '/content/komendy/download'},
           { text: 'Pobieranie UPO', link: '/content/komendy/upo'},
           { text: 'Wizualizacja PDF', link: '/content/komendy/wizualizacja-pdf'},
         ]

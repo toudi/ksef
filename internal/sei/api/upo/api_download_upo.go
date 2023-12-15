@@ -6,6 +6,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	registryPkg "ksef/internal/registry"
 	"ksef/internal/sei/api/client"
 	"ksef/internal/sei/api/status"
 	"mime/multipart"
@@ -13,6 +14,7 @@ import (
 	"net/textproto"
 	"net/url"
 	"os"
+	"path"
 )
 
 const (
@@ -32,11 +34,11 @@ type UPO struct {
 
 const endpointStatus = "common/Status/%s"
 
-func DownloadUPO(a *client.APIClient, status *status.StatusInfo, outputFormat string, outputPath string) error {
+func DownloadUPO(a *client.APIClient, registry *registryPkg.InvoiceRegistry, outputFormat string, outputPath string) error {
 	var upoStatus upoStatusType
 	session := client.NewRequestFactory(a)
 
-	_, err := session.JSONRequest("GET", fmt.Sprintf(endpointStatus, status.SessionID), nil, &upoStatus)
+	_, err := session.JSONRequest("GET", fmt.Sprintf(endpointStatus, registry.SessionID), nil, &upoStatus)
 	if err != nil {
 		return fmt.Errorf("get UPO status err=%v", err)
 	}
@@ -58,8 +60,14 @@ func DownloadUPO(a *client.APIClient, status *status.StatusInfo, outputFormat st
 		return fmt.Errorf("unable to parse upo as XML structure: %v", err)
 	}
 
-	status.InvoiceIds = upo.InvoiceIDS
-	if err = status.Save(""); err != nil {
+	for _, invoiceId := range upo.InvoiceIDS {
+		registry.Invoices = append(registry.Invoices, registryPkg.Invoice{
+			ReferenceNumber:    invoiceId.InvoiceNumber,
+			SEIReferenceNumber: invoiceId.KSeFInvoiceReferenceNo,
+		})
+	}
+
+	if err = registry.Save(path.Join(path.Dir(outputPath), "registry.yaml")); err != nil {
 		return fmt.Errorf("error saving status info: %v", err)
 	}
 
@@ -76,7 +84,7 @@ func DownloadUPO(a *client.APIClient, status *status.StatusInfo, outputFormat st
 	requestBuffer := new(bytes.Buffer)
 	multipartWriter := multipart.NewWriter(requestBuffer)
 	xmlHeader := make(textproto.MIMEHeader)
-	xmlHeader.Set("Content-Disposition", fmt.Sprintf(`form-data; name="%s"; filename="%s.xml"`, "file", status.SessionID))
+	xmlHeader.Set("Content-Disposition", fmt.Sprintf(`form-data; name="%s"; filename="%s.xml"`, "file", registry.SessionID))
 	xmlHeader.Set("Content-Type", "text/xml")
 	xmlFile, err := multipartWriter.CreatePart(xmlHeader)
 	if err != nil {

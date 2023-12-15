@@ -53,7 +53,7 @@ func (rf *RequestFactory) JSONRequest(method string, endpoint string, payload in
 		return nil, fmt.Errorf("error encoding JSON: %v", err)
 	}
 	request, err := rf.Request(method, endpoint, &encodedPayload)
-	// fmt.Printf("request URL: %s\n", request.URL.String())
+	fmt.Printf("request URL: %s\n", request.URL.String())
 	if err != nil {
 		return nil, fmt.Errorf("error creating HTTP request: %v", err)
 	}

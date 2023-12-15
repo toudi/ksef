@@ -3,19 +3,20 @@ package commands
 import (
 	"flag"
 	"fmt"
+	"ksef/internal/registry"
 	"ksef/internal/sei/api/client"
-	"ksef/internal/sei/api/pdf"
-	"ksef/internal/sei/api/status"
+	"ksef/internal/sei/api/upload/interactive"
 	"path/filepath"
+	"strings"
 )
 
 type downloadPDFCommand struct {
 	Command
 }
 type downloadPDFArgsType struct {
-	path      string
-	output    string
-	invoiceNo string
+	internalArgs registry.DownloadPDFArgs
+	issuerToken  string
+	path         string
 }
 
 var DownloadPDFCommand *downloadPDFCommand
@@ -32,40 +33,44 @@ func init() {
 		},
 	}
 
-	DownloadPDFCommand.FlagSet.StringVar(&downloadPDFArgs.path, "p", "", "ścieżka do pliku statusu")
-	DownloadPDFCommand.FlagSet.StringVar(&downloadPDFArgs.output, "o", "", "ścieżka do zapisu PDF (domyślnie katalog pliku statusu + {nrRef}.pdf)")
-	DownloadPDFCommand.FlagSet.StringVar(&downloadPDFArgs.invoiceNo, "i", "", "numer faktury do pobrania")
+	DownloadPDFCommand.FlagSet.StringVar(&downloadPDFArgs.path, "p", "", "ścieżka do pliku rejestru")
+	DownloadPDFCommand.FlagSet.StringVar(&downloadPDFArgs.internalArgs.Output, "o", "", "ścieżka do zapisu PDF (domyślnie katalog pliku statusu + {nrRef}.pdf)")
+	DownloadPDFCommand.FlagSet.StringVar(&downloadPDFArgs.internalArgs.Invoice, "i", "", "numer faktury do pobrania. Wartość * oznacza pobranie wszystkich faktur z rejestru")
+	DownloadPDFCommand.FlagSet.StringVar(&downloadPDFArgs.issuerToken, "token", "", "Token sesji interaktywnej lub nazwa zmiennej środowiskowej która go zawiera")
+	// DownloadPDFCommand.FlagSet.StringVar(&downloadPDFArgs.internalArgs.Token, "token", "", "token sesji")
+	DownloadPDFCommand.FlagSet.BoolVar(&downloadPDFArgs.internalArgs.SaveXml, "xml", false, "zapisz źródłowy plik XML")
 
 	registerCommand(&DownloadPDFCommand.Command)
 }
 
 func downloadPDFRun(c *Command) error {
-	if downloadPDFArgs.path == "" || downloadPDFArgs.invoiceNo == "" {
+	if downloadPDFArgs.path == "" || downloadPDFArgs.internalArgs.Invoice == "" {
+		fmt.Printf("downloadPDFArgs: %+v\n", downloadPDFArgs)
 		DownloadPDFCommand.FlagSet.Usage()
 		return nil
 	}
 
-	statusInfo, err := status.StatusFromFile(downloadPDFArgs.path)
+	registry, err := registry.LoadRegistry(downloadPDFArgs.path)
 	if err != nil {
-		return fmt.Errorf("unable to load status from file: %v", err)
+		return fmt.Errorf("unable to load registry from file: %v", err)
 	}
 
-	if statusInfo.Environment == "" || statusInfo.SessionID == "" {
-		return fmt.Errorf("file deserialized correctly, but either environment or referenceNo are empty: %+v", statusInfo)
+	if registry.Environment == "" {
+		return fmt.Errorf("file deserialized correctly, but environment is empty")
 	}
 
-	gateway, err := client.APIClient_Init(statusInfo.Environment)
+	gateway, err := client.APIClient_Init(registry.Environment)
 	if err != nil {
 		return fmt.Errorf("cannot initialize gateway: %v", err)
 	}
 
-	if downloadPDFArgs.output == "" {
-		downloadPDFArgs.output = filepath.Dir(downloadPDFArgs.path)
+	if downloadPDFArgs.internalArgs.Output == "" {
+		downloadPDFArgs.internalArgs.Output = filepath.Dir(downloadPDFArgs.path)
 	}
 
-	if err = pdf.DownloadPDF(gateway, statusInfo, downloadPDFArgs.invoiceNo, downloadPDFArgs.output); err != nil {
-		return fmt.Errorf("unable to download PDF: %v", err)
+	if strings.HasSuffix(strings.ToLower(downloadPDFArgs.internalArgs.Invoice), ".xml") {
+		return registry.DownloadPDF(gateway, &downloadPDFArgs.internalArgs)
 	}
 
-	return nil
+	return interactive.DownloadPDFFromAPI(gateway, &downloadPDFArgs.internalArgs, registry)
 }

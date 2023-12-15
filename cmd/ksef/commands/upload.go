@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"ksef/internal/sei/api/client"
-	"ksef/internal/sei/api/status"
 	"ksef/internal/sei/api/upload/batch"
 	"ksef/internal/sei/api/upload/interactive"
 )
@@ -18,7 +17,6 @@ type uploadArgsType struct {
 	path        string
 	interactive bool
 	issuerToken string
-	statusJSON  bool
 }
 
 var UploadCommand *uploadCommand
@@ -39,7 +37,6 @@ func init() {
 	UploadCommand.FlagSet.BoolVar(&uploadArgs.interactive, "i", false, "użyj sesji interaktywnej")
 	UploadCommand.FlagSet.StringVar(&uploadArgs.issuerToken, "token", "", "Token sesji interaktywnej lub nazwa zmiennej środowiskowej która go zawiera")
 	UploadCommand.FlagSet.StringVar(&uploadArgs.path, "p", "", "ścieżka do katalogu z wygenerowanymi fakturami")
-	UploadCommand.FlagSet.BoolVar(&uploadArgs.statusJSON, "sj", false, "użyj formatu JSON do zapisu pliku statusu (domyślnie YAML)")
 
 	registerCommand(&UploadCommand.Command)
 }
@@ -60,20 +57,15 @@ func uploadRun(c *Command) error {
 		return fmt.Errorf("nieznane środowisko: %v", environment)
 	}
 
-	var statusFileFormat = status.StatusFileFormatYAML
-	if uploadArgs.statusJSON {
-		statusFileFormat = status.StatusFileFormatJSON
-	}
-
 	if uploadArgs.interactive {
 		interactiveSession := interactive.InteractiveSessionInit(gateway)
 		if uploadArgs.issuerToken != "" {
 			interactiveSession.SetIssuerToken(uploadArgs.issuerToken)
 		}
-		return interactiveSession.UploadInvoices(uploadArgs.path, statusFileFormat)
+		return interactiveSession.UploadInvoices(uploadArgs.path)
 	}
 
 	batchSession := batch.BatchSessionInit(gateway)
-	return batchSession.UploadInvoices(uploadArgs.path, statusFileFormat)
+	return batchSession.UploadInvoices(uploadArgs.path)
 
 }
