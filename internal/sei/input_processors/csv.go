@@ -42,6 +42,8 @@ func (c *CSVFormat) Process(sourceFile string, parser *parser.Parser) error {
 
 	scanner := bufio.NewScanner(csvFile)
 
+	var lineNo = 1
+
 	for scanner.Scan() {
 		line := scanner.Text()
 
@@ -52,7 +54,7 @@ func (c *CSVFormat) Process(sourceFile string, parser *parser.Parser) error {
 
 		fields, err := csvReader.Read()
 		if err != nil {
-			return fmt.Errorf("error during reading CSV: %v", err)
+			return fmt.Errorf("error during reading CSV at line %d: %v", lineNo, err)
 		}
 
 		if c.encodingConversion != nil {
@@ -72,6 +74,8 @@ func (c *CSVFormat) Process(sourceFile string, parser *parser.Parser) error {
 		if err != nil {
 			return err
 		}
+
+		lineNo += 1
 	}
 
 	// notify the parser that we've finished processing the file so there is

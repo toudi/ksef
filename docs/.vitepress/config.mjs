@@ -29,6 +29,7 @@ export default defineConfig({
           ]},
           { text: 'Pobieranie faktur', link: '/content/komendy/download'},
           { text: 'Pobieranie UPO', link: '/content/komendy/upo'},
+          { text: 'Identyfikator płatności', link: '/content/komendy/payment-id'},
           { text: 'Wizualizacja PDF', link: '/content/komendy/wizualizacja-pdf'},
         ]
       }

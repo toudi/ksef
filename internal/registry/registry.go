@@ -1,7 +1,6 @@
 package registry
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -44,18 +43,31 @@ type Invoice struct {
 	Gross              string         `json:"gross" yaml:"gross,omitempty"`
 }
 
+type InvoiceRefId struct {
+	ReferenceNumber    string `json:"invoiceRefNo" yaml:"invoiceRefNo"`
+	SEIReferenceNumber string `json:"ksefInvoiceRefNo" yaml:"ksefInvoiceRefNo"`
+}
+
+type PaymentId struct {
+	SEIPaymentRefNo string   `yaml:"ksefPaymentRefNo"`
+	InvoiceIDS      []string `yaml:"ksefInvoiceRefNumbers"`
+}
+
 type InvoiceRegistry struct {
-	QueryCriteria QueryCriteria   `json:"queryCriteria" yaml:"queryCriteria,omitempty"`
-	Environment   string          `yaml:"environment"`
-	Invoices      []Invoice       `yaml:"invoices"`
-	Issuer        string          `yaml:"issuer,omitempty"`
-	SessionID     string          `yaml:"sessionId,omitempty"`
-	seiRefNoIndex map[string]bool `yaml:"-"`
+	QueryCriteria QueryCriteria  `json:"queryCriteria" yaml:"queryCriteria,omitempty"`
+	Environment   string         `yaml:"environment"`
+	Invoices      []Invoice      `yaml:"invoices"`
+	Issuer        string         `yaml:"issuer,omitempty"`
+	SessionID     string         `yaml:"sessionId,omitempty"`
+	seiRefNoIndex map[string]int `yaml:"-"`
+	refNoIndex    map[string]int `yaml:"-"`
+	PaymentIds    []PaymentId    `yaml:"payment-ids"`
 }
 
 func NewRegistry() *InvoiceRegistry {
 	_registry := &InvoiceRegistry{
-		seiRefNoIndex: make(map[string]bool),
+		seiRefNoIndex: make(map[string]int),
+		refNoIndex:    make(map[string]int),
 	}
 
 	return _registry
@@ -75,7 +87,8 @@ func (r *InvoiceRegistry) Save(fileName string) error {
 
 func LoadRegistry(fileName string) (*InvoiceRegistry, error) {
 	var registry InvoiceRegistry
-	registry.seiRefNoIndex = make(map[string]bool)
+	registry.seiRefNoIndex = make(map[string]int)
+	registry.refNoIndex = make(map[string]int)
 	reader, err := os.Open(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open registry file: %v", err)
@@ -83,23 +96,9 @@ func LoadRegistry(fileName string) (*InvoiceRegistry, error) {
 	if err = yaml.NewDecoder(reader).Decode(&registry); err != nil {
 		return nil, fmt.Errorf("unable to decode invoice registry: %v", err)
 	}
-	for _, invoice := range registry.Invoices {
-		registry.seiRefNoIndex[invoice.SEIReferenceNumber] = true
+	for index, invoice := range registry.Invoices {
+		registry.seiRefNoIndex[invoice.SEIReferenceNumber] = index
+		registry.refNoIndex[invoice.ReferenceNumber] = index
 	}
 	return &registry, nil
-}
-
-func (r *InvoiceRegistry) Contains(refNo string) bool {
-	_, exists := r.seiRefNoIndex[refNo]
-	return exists
-}
-
-func (r *InvoiceRegistry) GetSEIRefNo(invoiceNo string) (string, error) {
-	for _, invoice := range r.Invoices {
-		if invoice.ReferenceNumber == invoiceNo || invoice.SEIReferenceNumber == invoiceNo {
-			return invoice.SEIReferenceNumber, nil
-		}
-	}
-
-	return "", errors.New("invoice number could not be found")
 }
