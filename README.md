@@ -2,6 +2,10 @@
 
 Dokumentację znajdziesz w katalogu `docs`. Masz kilka możliwości jej odczytania:
 
+## Wersja online
+
+Dostępna pod adresem https://ksef.po-godzinach.info/
+
 ## Lokalne przebudowanie
 
 ```shell

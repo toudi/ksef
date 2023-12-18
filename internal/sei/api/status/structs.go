@@ -5,6 +5,7 @@ import "errors"
 type KsefInvoiceIdType struct {
 	InvoiceNumber          string `xml:"NumerFaktury" json:"invoiceNumber" yaml:"invoiceNumber"`
 	KSeFInvoiceReferenceNo string `xml:"NumerKSeFDokumentu" json:"ksefDocumentId" yaml:"ksefDocumentId"`
+	DocumentChecksum       string `xml:"SkrotDokumentu"`
 }
 
 type StatusInfo struct {

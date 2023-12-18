@@ -15,6 +15,8 @@ import (
 	"net/url"
 	"os"
 	"path"
+
+	qrsvg "github.com/wamuir/svg-qr-code"
 )
 
 const (
@@ -33,6 +35,7 @@ type UPO struct {
 }
 
 const endpointStatus = "common/Status/%s"
+const qrcodeUrl = "https://%s/web/verify/%s/%s"
 
 func DownloadUPO(a *client.APIClient, registry *registryPkg.InvoiceRegistry, outputFormat string, outputPath string) error {
 	var upoStatus upoStatusType
@@ -64,7 +67,19 @@ func DownloadUPO(a *client.APIClient, registry *registryPkg.InvoiceRegistry, out
 		registry.Invoices = append(registry.Invoices, registryPkg.Invoice{
 			ReferenceNumber:    invoiceId.InvoiceNumber,
 			SEIReferenceNumber: invoiceId.KSeFInvoiceReferenceNo,
+			SEIQRCode: fmt.Sprintf(
+				qrcodeUrl,
+				a.Environment.Host,
+				invoiceId.KSeFInvoiceReferenceNo,
+				url.QueryEscape(invoiceId.DocumentChecksum),
+			),
 		})
+		qr, err := qrsvg.New(registry.Invoices[len(registry.Invoices)-1].SEIQRCode)
+		if err == nil {
+			// if there's an error outputting the qrcode there's nothing we can do
+			// about it anyway.
+			_ = os.WriteFile(path.Join(path.Dir(outputPath), invoiceId.KSeFInvoiceReferenceNo+".svg"), []byte(qr.String()), 0644)
+		}
 	}
 
 	if err = registry.Save(path.Join(path.Dir(outputPath), "registry.yaml")); err != nil {

@@ -26,6 +26,7 @@ export default defineConfig({
           { text: 'Wysyłka faktur', items: [
             {text: 'Sesja wsadowa (batch)', link: '/content/komendy/upload/batch'},
             {text: 'Sesja interaktywna', link: '/content/komendy/upload/interaktywna'},
+            {text: 'Kody QR', link: '/content/qrcode'},
           ]},
           { text: 'Pobieranie faktur', link: '/content/komendy/download'},
           { text: 'Pobieranie UPO', link: '/content/komendy/upo'},
