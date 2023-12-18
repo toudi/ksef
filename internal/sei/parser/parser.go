@@ -76,7 +76,7 @@ func (p *Parser) ProcessLine(fields []string) error {
 
 			emptyLine = false
 
-			data[header] = value
+			data[header] = strings.TrimSpace(value)
 		}
 
 		if !emptyLine {

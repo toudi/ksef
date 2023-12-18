@@ -19,10 +19,16 @@ type CSVFormat struct {
 }
 
 func CSVDecoder_Init(config csvConfig) (InputProcessor, error) {
-	return &CSVFormat{
+	decoder := &CSVFormat{
 		delimiter:              config.Delimiter,
 		encodingConversionFile: config.EncodingConversionFile,
-	}, nil
+	}
+
+	if decoder.encodingConversionFile != "" {
+		decoder.prepareEncodingConversionTable()
+	}
+
+	return decoder, nil
 }
 
 func (c *CSVFormat) Process(sourceFile string, parser *parser.Parser) error {
