@@ -34,7 +34,7 @@ type InvoiceSubject struct {
 type Invoice struct {
 	ReferenceNumber    string         `json:"invoiceReferenceNumber" yaml:"referenceNumber,omitempty"`
 	SEIReferenceNumber string         `json:"ksefReferenceNumber" yaml:"ksefReferenceNumber,omitempty"`
-	SEIQRCode          string         `yaml:"qrcode-url" json:"-"`
+	SEIQRCode          string         `yaml:"qrcode-url,omitempty" json:"-"`
 	InvoicingDate      string         `json:"invoicingDate" yaml:"invoicingDate,omitempty"`
 	SubjectFrom        InvoiceSubject `json:"subjectBy,omitempty" yaml:"subjectFrom,omitempty"`
 	SubjectTo          InvoiceSubject `json:"subjectTo,omitempty" yaml:"subjectTo,omitempty"`
