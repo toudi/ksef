@@ -15,7 +15,6 @@ type downloadPDFCommand struct {
 }
 type downloadPDFArgsType struct {
 	internalArgs registry.DownloadPDFArgs
-	issuerToken  string
 	path         string
 }
 
@@ -36,7 +35,7 @@ func init() {
 	DownloadPDFCommand.FlagSet.StringVar(&downloadPDFArgs.path, "p", "", "ścieżka do pliku rejestru")
 	DownloadPDFCommand.FlagSet.StringVar(&downloadPDFArgs.internalArgs.Output, "o", "", "ścieżka do zapisu PDF (domyślnie katalog pliku statusu + {nrRef}.pdf)")
 	DownloadPDFCommand.FlagSet.StringVar(&downloadPDFArgs.internalArgs.Invoice, "i", "", "numer faktury do pobrania. Wartość * oznacza pobranie wszystkich faktur z rejestru")
-	DownloadPDFCommand.FlagSet.StringVar(&downloadPDFArgs.issuerToken, "token", "", "Token sesji interaktywnej lub nazwa zmiennej środowiskowej która go zawiera")
+	DownloadPDFCommand.FlagSet.StringVar(&downloadPDFArgs.internalArgs.IssuerToken, "token", "", "Token sesji interaktywnej lub nazwa zmiennej środowiskowej która go zawiera")
 	// DownloadPDFCommand.FlagSet.StringVar(&downloadPDFArgs.internalArgs.Token, "token", "", "token sesji")
 	DownloadPDFCommand.FlagSet.BoolVar(&downloadPDFArgs.internalArgs.SaveXml, "xml", false, "zapisz źródłowy plik XML")
 
@@ -45,7 +44,6 @@ func init() {
 
 func downloadPDFRun(c *Command) error {
 	if downloadPDFArgs.path == "" || downloadPDFArgs.internalArgs.Invoice == "" {
-		fmt.Printf("downloadPDFArgs: %+v\n", downloadPDFArgs)
 		DownloadPDFCommand.FlagSet.Usage()
 		return nil
 	}
