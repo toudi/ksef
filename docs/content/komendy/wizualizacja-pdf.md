@@ -35,7 +35,7 @@ Wówczas program odczyta numer faktury z XML'a, sprawdzi pod jakim numerem KSeF 
 
 Sytuacja jest gorsza ale nie beznadziejna. Program zainicjuje sesję interaktywną i pobierze źródłowy XML z KSeF a następnie użyje bramki ministerstwa do pobrania PDF. Szkopuł w tym, że aby pobrać XML trzeba chwilę poczekać na zakończenie sprawdzania uwierzytelnień. Jest to proces asynchroniczny i u mnie potrafiło to zająć grubo ponad 20 sekund.
 
-## Pobieranie faktur zsynchronizowanych komendą `sync`
+## Pobieranie faktur zsynchronizowanych komendą `download`
 
 Tutaj istnieje kilka możliwości:
 
