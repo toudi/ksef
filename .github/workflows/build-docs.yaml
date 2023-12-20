@@ -25,10 +25,10 @@ jobs:
     - if: ${{ steps.cache-npm.outputs.cache-hit != 'true' }}
       name: List the state of node modules
       continue-on-error: true
-      run: npm list
+      run: npm ci
       working-directory: ./docs
     - name: build docs
-      run: npm ci && npm run docs:build
+      run: npm run docs:build
       working-directory: ./docs
     - name: rsync deployments
       uses: burnett01/rsync-deployments@6.0.0
