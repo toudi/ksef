@@ -34,10 +34,17 @@ type UPO struct {
 	InvoiceIDS []status.KsefInvoiceIdType `xml:"Dokument"`
 }
 
+type DownloadUPOParams struct {
+	OutputPath   string
+	Output       string
+	Mkdir        bool
+	OutputFormat string
+}
+
 const endpointStatus = "common/Status/%s"
 const qrcodeUrl = "https://%s/web/verify/%s/%s"
 
-func DownloadUPO(a *client.APIClient, registry *registryPkg.InvoiceRegistry, outputFormat string, outputPath string) error {
+func DownloadUPO(a *client.APIClient, registry *registryPkg.InvoiceRegistry, params *DownloadUPOParams) error {
 	var upoStatus upoStatusType
 	session := client.NewRequestFactory(a)
 
@@ -78,16 +85,16 @@ func DownloadUPO(a *client.APIClient, registry *registryPkg.InvoiceRegistry, out
 		if err == nil {
 			// if there's an error outputting the qrcode there's nothing we can do
 			// about it anyway.
-			_ = os.WriteFile(path.Join(path.Dir(outputPath), invoiceId.KSeFInvoiceReferenceNo+".svg"), []byte(qr.String()), 0644)
+			_ = os.WriteFile(path.Join(params.OutputPath, invoiceId.KSeFInvoiceReferenceNo+".svg"), []byte(qr.String()), 0644)
 		}
 	}
 
-	if err = registry.Save(path.Join(path.Dir(outputPath), "registry.yaml")); err != nil {
+	if err = registry.Save(""); err != nil {
 		return fmt.Errorf("error saving status info: %v", err)
 	}
 
-	if outputFormat == UPOFormatXML {
-		return os.WriteFile(outputPath, upoXMLBytes, 0644)
+	if params.OutputFormat == UPOFormatXML {
+		return os.WriteFile(params.Output, upoXMLBytes, 0644)
 	}
 
 	// otherwise, we have to send a special request:
@@ -129,7 +136,7 @@ func DownloadUPO(a *client.APIClient, registry *registryPkg.InvoiceRegistry, out
 		return fmt.Errorf("unexpected response from upo download: %d != 200", response.StatusCode)
 	}
 
-	upoPDFFile, err := os.Create(outputPath)
+	upoPDFFile, err := os.Create(params.Output)
 	if err != nil {
 		return fmt.Errorf("unable to create UPO PDF file: %v", err)
 	}

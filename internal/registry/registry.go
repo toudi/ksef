@@ -57,12 +57,13 @@ type PaymentId struct {
 type InvoiceRegistry struct {
 	QueryCriteria QueryCriteria  `json:"queryCriteria" yaml:"queryCriteria,omitempty"`
 	Environment   string         `yaml:"environment"`
-	Invoices      []Invoice      `yaml:"invoices"`
+	Invoices      []Invoice      `yaml:"invoices,omitempty"`
 	Issuer        string         `yaml:"issuer,omitempty"`
 	SessionID     string         `yaml:"sessionId,omitempty"`
 	seiRefNoIndex map[string]int `yaml:"-"`
 	refNoIndex    map[string]int `yaml:"-"`
-	PaymentIds    []PaymentId    `yaml:"payment-ids"`
+	PaymentIds    []PaymentId    `yaml:"payment-ids,omitempty"`
+	sourcePath    string
 }
 
 func NewRegistry() *InvoiceRegistry {
@@ -75,6 +76,12 @@ func NewRegistry() *InvoiceRegistry {
 }
 
 func (r *InvoiceRegistry) Save(fileName string) error {
+	if fileName == "" {
+		fileName = r.sourcePath
+	}
+	if fileName == "" {
+		return fmt.Errorf("fileName not specified")
+	}
 	destPath := path.Dir(fileName)
 	if err := os.MkdirAll(destPath, 0755); err != nil {
 		return fmt.Errorf("unable to create registry dir: %v", err)
@@ -101,5 +108,6 @@ func LoadRegistry(fileName string) (*InvoiceRegistry, error) {
 		registry.seiRefNoIndex[invoice.SEIReferenceNumber] = index
 		registry.refNoIndex[invoice.ReferenceNumber] = index
 	}
+	registry.sourcePath = fileName
 	return &registry, nil
 }
