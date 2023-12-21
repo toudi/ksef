@@ -8,7 +8,7 @@ import (
 	"io"
 	"ksef/internal/registry"
 	"ksef/internal/sei/api/client"
-	"ksef/internal/sei/api/upload/interactive"
+	"ksef/internal/sei/api/session/interactive"
 	"os"
 
 	"gopkg.in/yaml.v3"

@@ -4,8 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"ksef/internal/sei/api/client"
-	"ksef/internal/sei/api/upload/batch"
-	"ksef/internal/sei/api/upload/interactive"
+	"ksef/internal/sei/api/session/batch"
+	"ksef/internal/sei/api/session/interactive"
 )
 
 type uploadCommand struct {

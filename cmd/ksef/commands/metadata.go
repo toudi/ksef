@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"ksef/internal/logging"
 	"ksef/internal/sei/api/client"
-	"ksef/internal/sei/api/upload/batch"
+	"ksef/internal/sei/api/session/batch"
 )
 
 type metadataCommand struct {

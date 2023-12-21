@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"ksef/internal/registry"
 	"ksef/internal/sei/api/client"
-	"ksef/internal/sei/api/upload/interactive"
+	"ksef/internal/sei/api/session/interactive"
 	"path/filepath"
 	"strings"
 )

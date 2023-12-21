@@ -5,13 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
-	"io"
 	registryPkg "ksef/internal/registry"
 	"ksef/internal/sei/api/client"
-	"ksef/internal/sei/api/status"
-	"mime/multipart"
-	"net/http"
-	"net/textproto"
 	"net/url"
 	"os"
 	"path"
@@ -29,9 +24,15 @@ type upoStatusType struct {
 	UPOBase64        string `json:"upo"`
 }
 
+type KsefInvoiceIdType struct {
+	InvoiceNumber          string `xml:"NumerFaktury" json:"invoiceNumber" yaml:"invoiceNumber"`
+	KSeFInvoiceReferenceNo string `xml:"NumerKSeFDokumentu" json:"ksefDocumentId" yaml:"ksefDocumentId"`
+	DocumentChecksum       string `xml:"SkrotDokumentu"`
+}
+
 type UPO struct {
-	XMLName    xml.Name                   `xml:"Potwierdzenie"`
-	InvoiceIDS []status.KsefInvoiceIdType `xml:"Dokument"`
+	XMLName    xml.Name            `xml:"Potwierdzenie"`
+	InvoiceIDS []KsefInvoiceIdType `xml:"Dokument"`
 }
 
 type DownloadUPOParams struct {
@@ -103,45 +104,10 @@ func DownloadUPO(a *client.APIClient, registry *registryPkg.InvoiceRegistry, par
 		return fmt.Errorf("unable to parse url for UPO PDF")
 	}
 
-	requestBuffer := new(bytes.Buffer)
-	multipartWriter := multipart.NewWriter(requestBuffer)
-	xmlHeader := make(textproto.MIMEHeader)
-	xmlHeader.Set("Content-Disposition", fmt.Sprintf(`form-data; name="%s"; filename="%s.xml"`, "file", registry.SessionID))
-	xmlHeader.Set("Content-Type", "text/xml")
-	xmlFile, err := multipartWriter.CreatePart(xmlHeader)
-	if err != nil {
-		return fmt.Errorf("unable to create xml file writer: %v", err)
-	}
-	if _, err = io.Copy(xmlFile, bytes.NewReader(upoXMLBytes)); err != nil {
-		return fmt.Errorf("unable to write UPO xml bytes to HTTP request: %v", err)
-	}
-	if err = multipartWriter.Close(); err != nil {
-		return fmt.Errorf("unable to close multipartWriter: %v", err)
-	}
-
-	upoPDFDownloadRequest, err := http.NewRequest("POST", upoPDFURL.String(), requestBuffer)
-	if err != nil {
-		return fmt.Errorf("unable to prepare UPO pdf download request: %v", err)
-	}
-	upoPDFDownloadRequest.Header.Add("Content-Type", multipartWriter.FormDataContentType())
-
-	response, err := http.DefaultClient.Do(upoPDFDownloadRequest)
-	if err != nil {
-		return fmt.Errorf("unable to perform upo download request: %v", err)
-	}
-	defer response.Body.Close()
-	if response.StatusCode != 200 {
-		// body, _ := io.ReadAll(response.Body)
-		// fmt.Printf("body: %s\n", string(body))
-		return fmt.Errorf("unexpected response from upo download: %d != 200", response.StatusCode)
-	}
-
-	upoPDFFile, err := os.Create(params.Output)
-	if err != nil {
-		return fmt.Errorf("unable to create UPO PDF file: %v", err)
-	}
-	defer upoPDFFile.Close()
-
-	_, err = io.Copy(upoPDFFile, response.Body)
-	return err
+	return session.DownloadPDFFromSourceXML(
+		upoPDFURL.String(),
+		registry.SessionID,
+		bytes.NewReader(upoXMLBytes),
+		params.Output,
+	)
 }
