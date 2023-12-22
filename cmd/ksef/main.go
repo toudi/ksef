@@ -1,34 +1,73 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"ksef/cmd/ksef/commands"
-	"os"
+	"ksef/internal/config"
+	"ksef/internal/logging"
 )
 
 var command *commands.Command
 
+var loggingOutput string = ""
+var configPath string = ""
+
 func main() {
 	var err error
 
-	if len(os.Args) < 2 {
-		fmt.Printf("Please specify at least one sub-command\nAvailable subcommands:\n\n")
+	flag.Usage = func() {
+		fmt.Printf("Użycie programu: ksef [-c] [-o] [komenda]\n\n")
+		flag.PrintDefaults()
+		fmt.Printf("\nDostępne komendy:\n")
 		for _, command := range commands.Registry {
 			fmt.Printf("%-*s - %s\n", commands.MaxCommandName, command.Name, command.Description)
 		}
+	}
+
+	flag.StringVar(&loggingOutput, "log", loggingOutput, "wyjście logowania. Wartość `-` oznacza wyjście standardowe (stdout)")
+	flag.StringVar(&configPath, "c", configPath, "ścieżka pliku konfiguracyjnego")
+
+	flag.Parse()
+
+	args := flag.Args()
+
+	if len(args) < 1 {
+		flag.Usage()
 		return
 	}
 
-	command = commands.Registry.GetByName(os.Args[1])
+	if configPath != "" {
+		if err = config.ReadConfig(configPath); err != nil {
+			fmt.Printf("[ ERROR ] %v\n", err)
+			return
+		}
+	}
+
+	if err = logging.InitLogging(loggingOutput); err != nil {
+		fmt.Printf("[ ERROR ] Błąd inicjalizacji logowania: %v", err)
+		return
+	}
+
+	defer logging.FinishLogging()
+
+	logging.SeiLogger.Debug("start programu")
+	defer logging.SeiLogger.Debug("koniec programu")
+
+	command = commands.Registry.GetByName(args[0])
 	if command == nil {
-		fmt.Printf("unknown command\n")
+		fmt.Printf("[ ERROR ] Nieznana komenda\n")
+		flag.Usage()
 		return
 	}
 
-	command.FlagSet.Parse(os.Args[2:])
+	if err = command.FlagSet.Parse(args[1:]); err != nil {
+		return
+	}
+
 	err = command.Run(command)
 	if err != nil {
-		fmt.Printf("error running %s:\n%s\n", os.Args[1], err)
+		fmt.Printf("błąd wykonania %s:\n%s\n", args[1], err)
 		return
 	}
 }

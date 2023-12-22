@@ -3,6 +3,7 @@ package commands
 import (
 	"flag"
 	"fmt"
+	"ksef/internal/logging"
 	"ksef/internal/sei"
 	inputprocessors "ksef/internal/sei/input_processors"
 )
@@ -45,6 +46,7 @@ func init() {
 }
 
 func generateRun(c *Command) error {
+	logging.GenerateLogger.Debug("generate")
 	if generateArgs.FileName == "" || generateArgs.Output == "" {
 		GenerateCmd.FlagSet.Usage()
 		return nil

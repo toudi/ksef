@@ -43,7 +43,7 @@ func metadataRun(c *Command) error {
 		return nil
 	}
 
-	logging.SeiLogger.Info().Msg("generowanie metadanych")
+	logging.SeiLogger.Info("generowanie metadanych")
 
 	var environment = client.ProductionEnvironment
 	if metadataArgs.testGateway {
