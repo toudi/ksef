@@ -9,13 +9,15 @@ import (
 	"os"
 )
 
+// these are the actual loggers that the program can reference
 var SeiLogger *slog.Logger
 var GenerateLogger *slog.Logger
 
-var loggers = map[string]*slog.Logger{
-	"main":     SeiLogger,
-	"generate": GenerateLogger,
-}
+// this is a utility map that will be used when config file will be read
+// and log level can be applied. Unfortunetely there's no way to change the
+// log level and/or output at runtime therefore we have to re-initialize the
+// logger.
+var loggers = map[string]*slog.Logger{}
 
 var errUnknownLogger = errors.New("Unknown logger")
 var outputWriter io.Writer
@@ -38,13 +40,14 @@ func InitLogging(output string) error {
 	}
 
 	config := config.Config
+
 	if config.Logging != nil {
 		var err error
 
 		if output == "-" {
 			outputWriter = os.Stdout
 		} else {
-			outputFile, err = os.OpenFile(output, os.O_CREATE, 0644)
+			outputFile, err = os.OpenFile(output, os.O_CREATE|os.O_RDWR, 0644)
 			if err != nil {
 				return fmt.Errorf("unable to open log file: %v", err)
 			}
@@ -55,24 +58,13 @@ func InitLogging(output string) error {
 		var exists bool
 
 		for loggerName, logLevel := range config.Logging {
-			if _, exists = loggers[loggerName]; exists {
-
-				logger = slog.New(slog.NewTextHandler(outputWriter, &slog.HandlerOptions{
+			if logger, exists = loggers[loggerName]; exists {
+				// it may look cryptic and ugly but the bottom line here is this:
+				// we take `logger` which is a pointer to `slog.Logger` and we want to
+				// re-initialize it, however we also want the address to stay the same.
+				*logger = *slog.New(slog.NewTextHandler(outputWriter, &slog.HandlerOptions{
 					Level: parseLevel(logLevel),
 				}))
-				loggers[loggerName] = logger
-
-				// TODO: this is actually very smelly.
-				//       what I was hoping for was to automatically change the
-				//       reference of the original logger since it's a pointer
-				//       but maybe we need to use unsafe.Pointer for that ?
-				switch loggerName {
-				case "main":
-					SeiLogger = logger
-				case "generate":
-					GenerateLogger = logger
-				default:
-				}
 			} else {
 				return errUnknownLogger
 			}
@@ -83,12 +75,20 @@ func InitLogging(output string) error {
 }
 
 func init() {
+	// initialize some default values of the loggers so that they
+	// become valid slog.Logger objects and so that we can use them
+	// without exploding the code
 	SeiLogger = slog.Default()
 	GenerateLogger = slog.Default()
+
+	loggers["main"] = SeiLogger
+	loggers["generate"] = GenerateLogger
 }
 
 func FinishLogging() {
 	if outputFile != nil {
-		outputFile.Close()
+		if err := outputFile.Close(); err != nil {
+			fmt.Printf("error cosing logfile: %v\n", err)
+		}
 	}
 }

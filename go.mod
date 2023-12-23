@@ -1,6 +1,6 @@
 module ksef
 
-go 1.18
+go 1.21
 
 require (
 	github.com/wamuir/svg-qr-code v0.0.0-20210725140500-9525ec975db7
