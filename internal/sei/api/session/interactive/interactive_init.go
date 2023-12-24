@@ -12,7 +12,7 @@ import (
 type InteractiveSession struct {
 	token       string
 	apiClient   *client.APIClient
-	session     *client.RequestFactory
+	session     *client.HTTPSession
 	referenceNo string
 	// token obtained from KSeF web app
 	issuerToken string
@@ -33,7 +33,7 @@ func (i *InteractiveSession) UploadInvoices(sourcePath string) error {
 	if err != nil {
 		return fmt.Errorf("cannot parse invoice collection: %v", err)
 	}
-	if err = i.Login(collection.Issuer); err != nil {
+	if err = i.Login(collection.Issuer, false); err != nil {
 		return fmt.Errorf("cannot login to gateway: %v", err)
 	}
 
@@ -69,9 +69,9 @@ func (i *InteractiveSession) SetIssuerToken(tokenSource string) {
 	}
 }
 
-func (i *InteractiveSession) HTTPSession() *client.RequestFactory {
+func (i *InteractiveSession) HTTPSession() *client.HTTPSession {
 	if i.session == nil {
-		i.session = client.NewRequestFactory(i.apiClient)
+		i.session = client.NewHTTPSession(i.apiClient.Environment.Host)
 	}
 	return i.session
 }

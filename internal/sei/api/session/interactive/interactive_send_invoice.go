@@ -4,6 +4,9 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"ksef/internal/logging"
+	"ksef/internal/sei/api/client"
+	"log/slog"
 	"os"
 )
 
@@ -25,9 +28,15 @@ type invoicePayloadType struct {
 	} `json:"invoicePayload"`
 }
 
-const endpointSendInvoice = "online/Invoice/Send"
+const endpointSendInvoice = "/api/online/Invoice/Send"
 
-func (i *InteractiveSession) sendInvoice(filePath string, invoicePayload *invoicePayloadType) error {
+func (i *InteractiveSession) sendInvoice(
+	filePath string,
+	invoicePayload *invoicePayloadType,
+) error {
+	var log *slog.Logger = logging.UploadLogger
+	log.Info("InteractiveSession::sendInvoice", "source file", filePath)
+
 	invoiceContent, err := os.ReadFile(filePath)
 	if err != nil {
 		return fmt.Errorf("unable to read invoice content: %v", err)
@@ -36,22 +45,34 @@ func (i *InteractiveSession) sendInvoice(filePath string, invoicePayload *invoic
 	hasher := sha256.New()
 	hasher.Write(invoiceContent)
 
+	log.Debug("InteractiveSession::sendInvoice - hash file")
 	invoicePayload.InvoiceHash.FileSize = len(invoiceContent)
 	invoicePayload.InvoiceHash.HashSHA.Value = base64.StdEncoding.EncodeToString(hasher.Sum(nil))
 
 	encryption, _ := i.apiClient.Encryption()
 
 	// encrypt file
+	log.Debug("InteractiveSession::sendInvoice - encrypt file")
 	encryptedContent := encryption.Cipher.Encrypt(invoiceContent, true)
 
 	hasher.Reset()
 	hasher.Write(encryptedContent)
 
-	invoicePayload.InvoicePayload.EncryptedInvoiceBody = base64.StdEncoding.EncodeToString(encryptedContent)
+	invoicePayload.InvoicePayload.EncryptedInvoiceBody = base64.StdEncoding.EncodeToString(
+		encryptedContent,
+	)
 	invoicePayload.InvoicePayload.EncryptedInvoiceHash.FileSize = len(encryptedContent)
-	invoicePayload.InvoicePayload.EncryptedInvoiceHash.HashSHA.Value = base64.StdEncoding.EncodeToString(hasher.Sum(nil))
+	invoicePayload.InvoicePayload.EncryptedInvoiceHash.HashSHA.Value = base64.StdEncoding.EncodeToString(
+		hasher.Sum(nil),
+	)
 
-	invoiceSendResponse, err := i.session.JSONRequest("PUT", endpointSendInvoice, &invoicePayload, nil)
+	invoiceSendResponse, err := i.session.JSONRequest(client.JSONRequestParams{
+		Method:   "PUT",
+		Endpoint: endpointSendInvoice,
+		Payload:  &invoicePayload,
+		Response: nil,
+		Logger:   logging.UploadHTTPLogger,
+	})
 	if err != nil {
 		return fmt.Errorf("error sending invoice: %v", err)
 	}

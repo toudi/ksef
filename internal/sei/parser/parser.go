@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"ksef/internal/invoice"
+	"ksef/internal/logging"
 	"ksef/internal/money"
 	"strconv"
 	"strings"
@@ -35,6 +36,7 @@ type Parser struct {
 
 func (p *Parser) ProcessLine(fields []string) error {
 	var err error
+	logging.ParserLogger.Debug("Parser::ProcessLine", "line", fields)
 	if p.invoice == nil {
 		p.invoice = &invoice.Invoice{}
 		p.invoice.Clear()

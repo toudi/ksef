@@ -2,6 +2,7 @@ package sync
 
 import (
 	"fmt"
+	"ksef/internal/logging"
 	registryPkg "ksef/internal/registry"
 	"ksef/internal/sei/api/client"
 	"ksef/internal/sei/api/session/interactive"
@@ -21,9 +22,13 @@ type SyncInvoicesConfig struct {
 	Token             string
 }
 
-const queryInit string = "/online/Query/Invoice/Sync"
+const queryInit string = "/api/online/Query/Invoice/Sync"
 
-func SyncInvoices(apiClient *client.APIClient, params *SyncInvoicesConfig, registry *registryPkg.InvoiceRegistry) error {
+func SyncInvoices(
+	apiClient *client.APIClient,
+	params *SyncInvoicesConfig,
+	registry *registryPkg.InvoiceRegistry,
+) error {
 	var err error
 
 	if registry == nil {
@@ -49,11 +54,8 @@ func SyncInvoices(apiClient *client.APIClient, params *SyncInvoicesConfig, regis
 			interactiveSession.SetIssuerToken(params.IssuerToken)
 		}
 
-		if err = interactiveSession.Login(registry.Issuer); err != nil {
+		if err = interactiveSession.Login(registry.Issuer, true); err != nil {
 			return fmt.Errorf("unable to login: %v", err)
-		}
-		if err = interactiveSession.WaitForStatusCode(interactive.VerifySecuritySuccess, 15); err != nil {
-			return fmt.Errorf("unable to obtain required status code: %v", err)
 		}
 	}
 
@@ -81,7 +83,15 @@ func SyncInvoices(apiClient *client.APIClient, params *SyncInvoicesConfig, regis
 	var syncFinished bool = false
 
 	for !syncFinished {
-		response, err := httpSession.JSONRequest("POST", queryInit+fmt.Sprintf("?PageSize=50&PageOffset=%d", pageOffset), queryInitStruct, &queryInitResponse)
+		response, err := httpSession.JSONRequest(
+			client.JSONRequestParams{
+				Method:   "POST",
+				Endpoint: queryInit + fmt.Sprintf("?PageSize=50&PageOffset=%d", pageOffset),
+				Payload:  queryInitStruct,
+				Response: &queryInitResponse,
+				Logger:   logging.DownloadHTTPLogger,
+			},
+		)
 		if err != nil {
 			fmt.Printf("response code: %d\n", response.StatusCode)
 			return fmt.Errorf("unable to send queryInit: %v", err)
@@ -95,7 +105,10 @@ func SyncInvoices(apiClient *client.APIClient, params *SyncInvoicesConfig, regis
 
 				registry.Invoices = append(registry.Invoices, invoice)
 			} else {
-				fmt.Printf("invoice %s already in registry; no-op\n", invoice.SEIReferenceNumber)
+				logging.DownloadLogger.Debug(
+					"invoice already in registry; no-op",
+					"invoiceRefNo", invoice.SEIReferenceNumber,
+				)
 			}
 
 			processedInvoices += 1

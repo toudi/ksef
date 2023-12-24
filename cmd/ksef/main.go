@@ -17,7 +17,7 @@ func main() {
 	var err error
 
 	flag.Usage = func() {
-		fmt.Printf("Użycie programu: ksef [-c] [-o] [komenda]\n\n")
+		fmt.Printf("Użycie programu: ksef [-c] [-log] [-v] [komenda]\n\n")
 		flag.PrintDefaults()
 		fmt.Printf("\nDostępne komendy:\n")
 		for _, command := range commands.Registry {
@@ -25,8 +25,19 @@ func main() {
 		}
 	}
 
-	flag.StringVar(&loggingOutput, "log", loggingOutput, "wyjście logowania. Wartość `-` oznacza wyjście standardowe (stdout)")
+	flag.StringVar(
+		&loggingOutput,
+		"log",
+		loggingOutput,
+		"wyjście logowania. Wartość `-` oznacza wyjście standardowe (stdout)",
+	)
 	flag.StringVar(&configPath, "c", configPath, "ścieżka pliku konfiguracyjnego")
+	flag.BoolVar(
+		&logging.Verbose,
+		"v",
+		false,
+		"tryb verbose - przełącza wszystkie loggery w tryb debug",
+	)
 
 	flag.Parse()
 
@@ -51,8 +62,8 @@ func main() {
 
 	defer logging.FinishLogging()
 
-	logging.SeiLogger.Debug("start programu")
-	defer logging.SeiLogger.Debug("koniec programu")
+	logging.SeiLogger.Info("start programu")
+	defer logging.SeiLogger.Info("koniec programu")
 
 	command = commands.Registry.GetByName(args[0])
 	if command == nil {

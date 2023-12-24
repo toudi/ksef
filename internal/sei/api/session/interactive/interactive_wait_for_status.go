@@ -2,10 +2,12 @@ package interactive
 
 import (
 	"fmt"
+	"ksef/internal/logging"
+	"ksef/internal/sei/api/client"
 	"time"
 )
 
-const sessionStatusEndpoint = "online/Session/Status/%s"
+const sessionStatusEndpoint = "/api/online/Session/Status/%s"
 
 type sessionStatusType struct {
 	ProcessingCode int `json:"processingCode"`
@@ -17,14 +19,28 @@ func (i *InteractiveSession) WaitForStatusCode(expectedCode int, maxRetries int)
 	var sessionStatus sessionStatusType
 
 	for j := 0; j < maxRetries; j += 1 {
-		_, err := i.session.JSONRequest("GET", fmt.Sprintf(sessionStatusEndpoint, i.referenceNo), nil, &sessionStatus)
+		_, err := i.session.JSONRequest(
+			client.JSONRequestParams{
+				Method:   "GET",
+				Endpoint: fmt.Sprintf(sessionStatusEndpoint, i.referenceNo),
+				Payload:  nil,
+				Response: &sessionStatus,
+				Logger:   logging.InteractiveHTTPLogger,
+			},
+		)
 		if err != nil {
 			return fmt.Errorf("error sending JSONRequest: %v", err)
 		}
 		if sessionStatus.ProcessingCode == expectedCode {
 			return nil
 		}
-		fmt.Printf("session status code = %d\n", sessionStatus.ProcessingCode)
+
+		logging.InteractiveLogger.Debug(
+			"InteractiveSession::WaitForStatusCode",
+			"status",
+			sessionStatus.ProcessingCode,
+		)
+
 		time.Sleep(2 * time.Second)
 	}
 

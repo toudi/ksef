@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"ksef/internal/encryption"
 	encryptionPkg "ksef/internal/encryption"
+	"ksef/internal/logging"
 	"ksef/internal/sei/api/client"
+	"log/slog"
 	"time"
 )
 
@@ -35,8 +37,8 @@ var authorisationResponse authorisationResponseType
 var authorisationChallengeTemplate embed.FS
 
 const (
-	endpointInitToken              = "online/Session/InitToken"
-	endpointAuthorisationChallenge = "online/Session/AuthorisationChallenge"
+	endpointInitToken              = "/api/online/Session/InitToken"
+	endpointAuthorisationChallenge = "/api/online/Session/AuthorisationChallenge"
 )
 
 type authorisationChallengeTemplateVarsType struct {
@@ -46,19 +48,28 @@ type authorisationChallengeTemplateVarsType struct {
 	EncryptedToken []byte
 }
 
-func (i *InteractiveSession) Login(issuer string) error {
+func (i *InteractiveSession) Login(issuer string, waitForAuthStatus bool) error {
 	var err error
+	var log *slog.Logger = logging.InteractiveLogger
 
 	authorisationRequest.ContextIdentifier.Identifier = issuer
 	if i.session == nil {
-		i.session = client.NewRequestFactory(i.apiClient)
+		i.session = client.NewHTTPSession(i.apiClient.Environment.Host)
 	}
 	encryption, err := i.apiClient.Encryption()
 	if err != nil {
 		return fmt.Errorf("unable to initialize encryption: %v", err)
 	}
 
-	_, err = i.session.JSONRequest("POST", endpointAuthorisationChallenge, authorisationRequest, &authorisationResponse)
+	_, err = i.session.JSONRequest(
+		client.JSONRequestParams{
+			Method:   "POST",
+			Endpoint: endpointAuthorisationChallenge,
+			Payload:  authorisationRequest,
+			Response: &authorisationResponse,
+			Logger:   logging.InteractiveHTTPLogger,
+		},
+	)
 
 	if err != nil {
 		return fmt.Errorf("unable to call authorisationRequest: %v", err)
@@ -73,18 +84,25 @@ func (i *InteractiveSession) Login(issuer string) error {
 	}
 
 	var challengePlaintext = fmt.Sprintf("%s|%d", i.issuerToken, authorisationResponse.Timestamp.UnixMilli())
-	// fmt.Printf("challengePlaintext: %s\n", challengePlaintext)
+	log.Debug("InteractiveSession::Login", "challengePlaintext", challengePlaintext)
+
 	var authorisationChallengeTemplateVars = authorisationChallengeTemplateVarsType{
 		Cipher:    encryption.CipherTemplateVars,
 		Issuer:    issuer,
 		Challenge: authorisationResponse.Challenge,
 	}
 
-	authorisationChallengeTemplateVars.EncryptedToken, err = encryptionPkg.EncryptMessageWithCertificate(i.apiClient.Environment.RsaPublicKey, []byte(challengePlaintext))
+	authorisationChallengeTemplateVars.EncryptedToken, err = encryptionPkg.EncryptMessageWithCertificate(
+		i.apiClient.Environment.RsaPublicKey,
+		[]byte(challengePlaintext),
+	)
 	if err != nil {
 		return fmt.Errorf("error encrypting gatewayToken: %v", err)
 	}
-	authorisationChallengeTemplateVars.Cipher.EncryptionKey, err = encryptionPkg.EncryptMessageWithCertificate(i.apiClient.Environment.RsaPublicKey, encryption.Cipher.Key)
+	authorisationChallengeTemplateVars.Cipher.EncryptionKey, err = encryptionPkg.EncryptMessageWithCertificate(
+		i.apiClient.Environment.RsaPublicKey,
+		encryption.Cipher.Key,
+	)
 	if err != nil {
 		return fmt.Errorf("error encrypting cipher key: %v", err)
 	}
@@ -92,26 +110,42 @@ func (i *InteractiveSession) Login(issuer string) error {
 	var initTokenResponse initTokenResponseType
 
 	response, err := i.session.XMLRequest(
-		"POST",
-		endpointInitToken,
-		authorisationChallengeTemplate,
-		"interactive_auth_challenge.xml",
-		authorisationChallengeTemplateVars,
-		&initTokenResponse,
+		client.XMLRequestParams{
+			Method:       "POST",
+			Endpoint:     endpointInitToken,
+			TemplateDir:  authorisationChallengeTemplate,
+			TemplateName: "interactive_auth_challenge.xml",
+			TemplateData: authorisationChallengeTemplateVars,
+			Response:     &initTokenResponse,
+			Logger:       logging.InteractiveHTTPLogger,
+		},
 	)
 
 	if err != nil || (response != nil && response.StatusCode/100 != 2) {
 		if response != nil {
-			return fmt.Errorf("unexpected response code: %d != 2xx or err: %v", response.StatusCode, err)
+			return fmt.Errorf(
+				"unexpected response code: %d != 2xx or err: %v",
+				response.StatusCode,
+				err,
+			)
 		}
 		return fmt.Errorf("error processing initToken: %v", err)
 	}
 
 	i.session.SetHeader("SessionToken", initTokenResponse.Token.Value)
-	fmt.Printf("set token %s\n", initTokenResponse.Token.Value)
-	// fmt.Printf("set ref no: %s\n", initTokenResponse.ReferenceNumber)
 	i.referenceNo = initTokenResponse.ReferenceNumber
 
+	log.Debug(
+		"InteractiveSession::Login",
+		"SessionToken",
+		initTokenResponse.Token.Value,
+		"SessionID",
+		initTokenResponse.ReferenceNumber,
+	)
+
+	if waitForAuthStatus {
+		return i.WaitForStatusCode(VerifySecuritySuccess, 15)
+	}
 	return nil
 }
 

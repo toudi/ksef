@@ -5,8 +5,10 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
+	"ksef/internal/logging"
 	registryPkg "ksef/internal/registry"
 	"ksef/internal/sei/api/client"
+	"log/slog"
 	"net/url"
 	"os"
 	"path"
@@ -25,7 +27,7 @@ type upoStatusType struct {
 }
 
 type KsefInvoiceIdType struct {
-	InvoiceNumber          string `xml:"NumerFaktury" json:"invoiceNumber" yaml:"invoiceNumber"`
+	InvoiceNumber          string `xml:"NumerFaktury"       json:"invoiceNumber"  yaml:"invoiceNumber"`
 	KSeFInvoiceReferenceNo string `xml:"NumerKSeFDokumentu" json:"ksefDocumentId" yaml:"ksefDocumentId"`
 	DocumentChecksum       string `xml:"SkrotDokumentu"`
 }
@@ -42,14 +44,29 @@ type DownloadUPOParams struct {
 	OutputFormat string
 }
 
-const endpointStatus = "common/Status/%s"
+const endpointStatus = "/api/common/Status/%s"
 const qrcodeUrl = "https://%s/web/verify/%s/%s"
 
-func DownloadUPO(a *client.APIClient, registry *registryPkg.InvoiceRegistry, params *DownloadUPOParams) error {
-	var upoStatus upoStatusType
-	session := client.NewRequestFactory(a)
+func DownloadUPO(
+	a *client.APIClient,
+	registry *registryPkg.InvoiceRegistry,
+	params *DownloadUPOParams,
+) error {
+	var log *slog.Logger = logging.UPOLogger
+	log.Info("DownloadUPO", "sessionId", registry.SessionID)
 
-	_, err := session.JSONRequest("GET", fmt.Sprintf(endpointStatus, registry.SessionID), nil, &upoStatus)
+	var upoStatus upoStatusType
+	session := client.NewHTTPSession(a.Environment.Host)
+
+	_, err := session.JSONRequest(
+		client.JSONRequestParams{
+			Method:   "GET",
+			Endpoint: fmt.Sprintf(endpointStatus, registry.SessionID),
+			Payload:  nil,
+			Response: &upoStatus,
+			Logger:   logging.UPOHTTPLogger,
+		},
+	)
 	if err != nil {
 		return fmt.Errorf("get UPO status err=%v", err)
 	}
@@ -57,6 +74,7 @@ func DownloadUPO(a *client.APIClient, registry *registryPkg.InvoiceRegistry, par
 	if upoStatus.ProcessingStatus != 200 {
 		return fmt.Errorf("unexpected UPO processing status: %d != 200", upoStatus.ProcessingStatus)
 	}
+	log.Debug("UPO is ready")
 
 	// we have to decode UPO into xml regardless of what we decide to do next
 
@@ -70,8 +88,16 @@ func DownloadUPO(a *client.APIClient, registry *registryPkg.InvoiceRegistry, par
 	if err = xml.Unmarshal(upoXMLBytes, &upo); err != nil {
 		return fmt.Errorf("unable to parse upo as XML structure: %v", err)
 	}
+	log.Debug("Parsed UPO XML")
 
 	for _, invoiceId := range upo.InvoiceIDS {
+		log.Info(
+			"processing",
+			"invoice id",
+			invoiceId.InvoiceNumber,
+			"ksef invoice id",
+			invoiceId.KSeFInvoiceReferenceNo,
+		)
 		registry.Invoices = append(registry.Invoices, registryPkg.Invoice{
 			ReferenceNumber:    invoiceId.InvoiceNumber,
 			SEIReferenceNumber: invoiceId.KSeFInvoiceReferenceNo,
@@ -86,7 +112,11 @@ func DownloadUPO(a *client.APIClient, registry *registryPkg.InvoiceRegistry, par
 		if err == nil {
 			// if there's an error outputting the qrcode there's nothing we can do
 			// about it anyway.
-			_ = os.WriteFile(path.Join(params.OutputPath, invoiceId.KSeFInvoiceReferenceNo+".svg"), []byte(qr.String()), 0644)
+			_ = os.WriteFile(
+				path.Join(params.OutputPath, invoiceId.KSeFInvoiceReferenceNo+".svg"),
+				[]byte(qr.String()),
+				0644,
+			)
 		}
 	}
 
@@ -95,11 +125,15 @@ func DownloadUPO(a *client.APIClient, registry *registryPkg.InvoiceRegistry, par
 	}
 
 	if params.OutputFormat == UPOFormatXML {
+		log.Debug("save upo as XML file")
 		return os.WriteFile(params.Output, upoXMLBytes, 0644)
 	}
 
 	// otherwise, we have to send a special request:
-	upoPDFURL, err := url.Parse(fmt.Sprintf("https://%s/web/api/session/get-upo-pdf-file", a.Environment.Host))
+	log.Info("fetch UPO as PDF")
+	upoPDFURL, err := url.Parse(
+		fmt.Sprintf("https://%s/web/api/session/get-upo-pdf-file", a.Environment.Host),
+	)
 	if err != nil {
 		return fmt.Errorf("unable to parse url for UPO PDF")
 	}

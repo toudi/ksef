@@ -19,6 +19,13 @@ export default defineConfig({
         ]
       },
       {
+        text: 'Konfiguracja',
+        items: [
+          {text: 'Konfiguracja', link: '/content/konfiguracja'},
+          {text: 'Komunikaty diagnostyczne', link: '/content/logowanie'},
+        ]
+      },
+      {
         text: 'Komendy',
         items: [
           { text: 'Zapisanie tokenu', link: '/content/komendy/save-token'},

@@ -3,8 +3,10 @@ package batch
 import (
 	"bytes"
 	"fmt"
+	"ksef/internal/logging"
 	registryPkg "ksef/internal/registry"
 	"ksef/internal/sei/api/client"
+	"log/slog"
 	"net/http"
 	"os"
 	"path"
@@ -32,27 +34,40 @@ var batchInitResponse batchInitResponseType
 var finishResponsePayload finishResponseType
 
 const (
-	endpointBatchInit   = "batch/Init"
-	endpointBatchFinish = "batch/Finish"
+	endpointBatchInit   = "/api/batch/Init"
+	endpointBatchFinish = "/api/batch/Finish"
 )
 
 func (b *BatchSession) UploadInvoices(sourcePath string) error {
+	var log *slog.Logger = logging.BatchLogger
 	signedMetadataFile, err := locateBatchMetadataFile(sourcePath)
 
 	if err != nil {
 		return fmt.Errorf("error locating metadata file: %v", err)
 	}
 
-	session := client.NewRequestFactory(b.apiClient)
+	session := client.NewHTTPSession(b.apiClient.Environment.Host)
 
 	// step 1 - send initAuthRequest
-	_, err = session.SendFile("POST", endpointBatchInit, signedMetadataFile, &batchInitResponse)
+	_, err = session.SendFile(client.SendFileParams{
+		Method:       "POST",
+		Endpoint:     endpointBatchInit,
+		FileName:     signedMetadataFile,
+		JSONResponse: &batchInitResponse,
+		Logger:       logging.BatchHTTPLogger,
+	})
 	if err != nil {
 		return fmt.Errorf("unable to send file: %v", err)
 	}
 
 	// // step 2 - upload encrypted archive
-	fmt.Printf("step 2 - PUT to %v\n", batchInitResponse.PackageSignature.PackagePartSignatureList[0].Url)
+	log.Debug(
+		"BatchSession::UploadInvoices",
+		"url",
+		batchInitResponse.PackageSignature.PackagePartSignatureList[0].Url,
+		"method", "PUT",
+	)
+
 	encryptedArchive, err := os.Open(filepath.Join(sourcePath, "metadata.zip.aes"))
 	if err != nil {
 		return fmt.Errorf("could not open encrypted archive for sending: %v", err)
@@ -60,7 +75,11 @@ func (b *BatchSession) UploadInvoices(sourcePath string) error {
 	defer encryptedArchive.Close()
 	stat, _ := encryptedArchive.Stat()
 
-	batchPutRequest, err := http.NewRequest("PUT", batchInitResponse.PackageSignature.PackagePartSignatureList[0].Url, encryptedArchive)
+	batchPutRequest, err := http.NewRequest(
+		"PUT",
+		batchInitResponse.PackageSignature.PackagePartSignatureList[0].Url,
+		encryptedArchive,
+	)
 	if err != nil {
 		return fmt.Errorf("could not prepare PUT request: %v", err)
 	}
@@ -69,7 +88,15 @@ func (b *BatchSession) UploadInvoices(sourcePath string) error {
 	batchPutRequest.ContentLength = stat.Size()
 
 	for _, header := range batchInitResponse.PackageSignature.PackagePartSignatureList[0].HeaderEntryList {
-		// fmt.Printf("add header %v with a value of %v\n", header.Key, header.Value)
+		logging.BatchHTTPLogger.Debug(
+			"BatchSession::UploadInvoices",
+			"set header",
+			"header",
+			header.Key,
+			"value",
+			header.Value,
+		)
+
 		batchPutRequest.Header.Set(header.Key, header.Value)
 	}
 	batchResponse, err := http.DefaultClient.Do(batchPutRequest)
@@ -90,7 +117,15 @@ func (b *BatchSession) UploadInvoices(sourcePath string) error {
 	// step 3 - call finish upload
 	finishResponsePayload.ReferenceNumber = batchInitResponse.ReferenceNumber
 
-	finishResponse, err := session.JSONRequest("POST", endpointBatchFinish, finishResponsePayload, nil)
+	finishResponse, err := session.JSONRequest(
+		client.JSONRequestParams{
+			Method:   "POST",
+			Endpoint: endpointBatchFinish,
+			Payload:  finishResponsePayload,
+			Response: nil,
+			Logger:   logging.BatchHTTPLogger,
+		},
+	)
 
 	if err != nil {
 		return fmt.Errorf("could not call finish request: %v", err)

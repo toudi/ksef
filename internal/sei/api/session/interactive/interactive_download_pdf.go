@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"ksef/internal/logging"
 	"ksef/internal/registry"
 	"ksef/internal/sei/api/client"
 	"net/http"
@@ -11,9 +12,13 @@ import (
 	"path"
 )
 
-const downloadInvoiceXML = "online/Invoice/Get/%s"
+const downloadInvoiceXML = "/api/online/Invoice/Get/%s"
 
-func DownloadPDFFromAPI(apiClient *client.APIClient, args *registry.DownloadPDFArgs, r *registry.InvoiceRegistry) error {
+func DownloadPDFFromAPI(
+	apiClient *client.APIClient,
+	args *registry.DownloadPDFArgs,
+	r *registry.InvoiceRegistry,
+) error {
 	// we have to initialize the interactive session
 	session := InteractiveSessionInit(apiClient)
 	httpSession := session.HTTPSession()
@@ -28,11 +33,8 @@ func DownloadPDFFromAPI(apiClient *client.APIClient, args *registry.DownloadPDFA
 		if args.IssuerToken != "" {
 			session.SetIssuerToken(args.IssuerToken)
 		}
-		if err := session.Login(r.Issuer); err != nil {
+		if err := session.Login(r.Issuer, true); err != nil {
 			return fmt.Errorf("unable to login to interactive session: %v", err)
-		}
-		if err := session.WaitForStatusCode(VerifySecuritySuccess, 15); err != nil {
-			return fmt.Errorf("Authorisation was successful however the session is not open for further processing: %v", err)
 		}
 	}
 	// defer session.Logout()
@@ -66,7 +68,12 @@ func DownloadPDFFromAPI(apiClient *client.APIClient, args *registry.DownloadPDFA
 		var xmlFilename = path.Join(args.Output, seiRefNo+".xml")
 
 		if _, err = os.Stat(xmlFilename); err != nil {
-			invoiceXMLRequest, err := httpSession.Request("GET", fmt.Sprintf(downloadInvoiceXML, seiRefNo), nil)
+			invoiceXMLRequest, err := httpSession.Request(
+				"GET",
+				fmt.Sprintf(downloadInvoiceXML, seiRefNo),
+				nil,
+				logging.InteractiveHTTPLogger,
+			)
 			if err != nil {
 				return fmt.Errorf("unable to download invoice in XML Format: %v", err)
 			}

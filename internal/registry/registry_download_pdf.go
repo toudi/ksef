@@ -18,7 +18,7 @@ type DownloadPDFArgs struct {
 	Invoice     string
 }
 
-const DownloadInvoicePDF = "https://%s/web/api/invoice/get-invoice-pdf-file?ksefReferenceNumber=%s"
+const DownloadInvoicePDF = "/web/api/invoice/get-invoice-pdf-file?ksefReferenceNumber=%s"
 
 var IsNotXMLInvoice error = errors.New("this is not an XML invoice")
 
@@ -39,11 +39,11 @@ func (r *InvoiceRegistry) DownloadPDF(apiClient *client.APIClient, args *Downloa
 		return fmt.Errorf("unable to read the source file: %v", err)
 	}
 
-	httpSession := client.NewRequestFactory(apiClient)
+	httpSession := client.NewHTTPSession(apiClient.Environment.Host)
 	invoiceXMLReader := bytes.NewReader(sourceInvoiceBytes)
 
 	return httpSession.DownloadPDFFromSourceXML(
-		fmt.Sprintf(DownloadInvoicePDF, apiClient.Environment.Host, seiRefNo),
+		fmt.Sprintf(DownloadInvoicePDF, seiRefNo),
 		seiRefNo+".xml",
 		invoiceXMLReader,
 		path.Join(args.Output, seiRefNo+".pdf"),
