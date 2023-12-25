@@ -3,6 +3,7 @@ package upo
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/xml"
 	"fmt"
 	"ksef/internal/logging"
@@ -30,6 +31,17 @@ type KsefInvoiceIdType struct {
 	InvoiceNumber          string `xml:"NumerFaktury"       json:"invoiceNumber"  yaml:"invoiceNumber"`
 	KSeFInvoiceReferenceNo string `xml:"NumerKSeFDokumentu" json:"ksefDocumentId" yaml:"ksefDocumentId"`
 	DocumentChecksum       string `xml:"SkrotDokumentu"`
+}
+
+func (iid KsefInvoiceIdType) Checksum() (string, error) {
+	// the checksum in upstream type is encoded with base64. we have to decode it
+	// to get the array of bytes and then encode it to hex
+	checksumBytes, err := base64.StdEncoding.DecodeString(iid.DocumentChecksum)
+	if err != nil {
+		return "", fmt.Errorf("unable to decode checksum from base64: %v", err)
+	}
+
+	return hex.EncodeToString(checksumBytes), nil
 }
 
 type UPO struct {
@@ -98,7 +110,13 @@ func DownloadUPO(
 			"ksef invoice id",
 			invoiceId.KSeFInvoiceReferenceNo,
 		)
-		registry.Invoices = append(registry.Invoices, registryPkg.Invoice{
+
+		checksum, err := invoiceId.Checksum()
+		if err != nil {
+			return fmt.Errorf("unable to obtain upstream document checksum: %v", err)
+		}
+
+		invoice, err := registry.Update(registryPkg.Invoice{
 			ReferenceNumber:    invoiceId.InvoiceNumber,
 			SEIReferenceNumber: invoiceId.KSeFInvoiceReferenceNo,
 			SEIQRCode: fmt.Sprintf(
@@ -107,8 +125,19 @@ func DownloadUPO(
 				invoiceId.KSeFInvoiceReferenceNo,
 				url.QueryEscape(invoiceId.DocumentChecksum),
 			),
+			Checksum: checksum,
 		})
-		qr, err := qrsvg.New(registry.Invoices[len(registry.Invoices)-1].SEIQRCode)
+
+		if err == registryPkg.ErrDoesNotExist {
+			return fmt.Errorf("UPO contains an invoice which does not exist in registry")
+		}
+
+		if err != nil {
+			return fmt.Errorf("unexpected error while updating registry: %v", err)
+		}
+
+		qr, err := qrsvg.New(invoice.SEIQRCode)
+
 		if err == nil {
 			// if there's an error outputting the qrcode there's nothing we can do
 			// about it anyway.

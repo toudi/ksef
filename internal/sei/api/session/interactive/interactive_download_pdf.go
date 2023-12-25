@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"ksef/internal/logging"
+	"ksef/internal/pdf"
 	"ksef/internal/registry"
 	"ksef/internal/sei/api/client"
 	"net/http"
@@ -16,7 +17,7 @@ const downloadInvoiceXML = "/api/online/Invoice/Get/%s"
 
 func DownloadPDFFromAPI(
 	apiClient *client.APIClient,
-	args *registry.DownloadPDFArgs,
+	args *pdf.DownloadPDFArgs,
 	r *registry.InvoiceRegistry,
 ) error {
 	// we have to initialize the interactive session
@@ -101,7 +102,7 @@ func DownloadPDFFromAPI(
 		}
 
 		err = httpSession.DownloadPDFFromSourceXML(
-			fmt.Sprintf(registry.DownloadInvoicePDF, apiClient.Environment.Host, seiRefNo),
+			fmt.Sprintf(pdf.DownloadInvoicePDF, seiRefNo),
 			seiRefNo+".xml",
 			invoiceXMLReader,
 			path.Join(args.Output, seiRefNo+".pdf"),

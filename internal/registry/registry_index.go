@@ -16,3 +16,11 @@ func (r *InvoiceRegistry) GetSEIRefNo(invoiceNo string) (string, error) {
 
 	return "", errors.New("invoice number could not be found")
 }
+
+func (r *InvoiceRegistry) GetInvoiceByChecksum(checksum string) Invoice {
+	index, exists := r.checksumIndex[checksum]
+	if !exists {
+		return Invoice{}
+	}
+	return r.Invoices[index]
+}

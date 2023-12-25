@@ -46,6 +46,11 @@ func (b *BatchSession) UploadInvoices(sourcePath string) error {
 		return fmt.Errorf("error locating metadata file: %v", err)
 	}
 
+	registry, err := registryPkg.LoadRegistry(path.Join(sourcePath, "registry.yaml"))
+	if err != nil {
+		return fmt.Errorf("cannot open registry file: %v", err)
+	}
+
 	session := client.NewHTTPSession(b.apiClient.Environment.Host)
 
 	// step 1 - send initAuthRequest
@@ -89,8 +94,7 @@ func (b *BatchSession) UploadInvoices(sourcePath string) error {
 
 	for _, header := range batchInitResponse.PackageSignature.PackagePartSignatureList[0].HeaderEntryList {
 		logging.BatchHTTPLogger.Debug(
-			"BatchSession::UploadInvoices",
-			"set header",
+			"BatchSession::UploadInvoices - set header",
 			"header",
 			header.Key,
 			"value",
@@ -138,10 +142,9 @@ func (b *BatchSession) UploadInvoices(sourcePath string) error {
 	}
 
 	// step 4 - persist status for fetching UPO.
-	registry := registryPkg.NewRegistry()
 	registry.Environment = b.apiClient.EnvironmentAlias
 	registry.SessionID = batchInitResponse.ReferenceNumber
-	return registry.Save(path.Join(sourcePath, "registry.yaml"))
+	return registry.Save("")
 }
 
 func locateBatchMetadataFile(sourcePath string) (string, error) {

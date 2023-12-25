@@ -1,8 +1,10 @@
 package interactive
 
 import (
+	"errors"
 	"fmt"
 	"ksef/internal/invoice"
+	"ksef/internal/logging"
 	registryPkg "ksef/internal/registry"
 	"ksef/internal/sei/api/client"
 	"os"
@@ -18,6 +20,10 @@ type InteractiveSession struct {
 	issuerToken string
 }
 
+type interactiveSessionUploadParams struct {
+	ForceUpload bool
+}
+
 func InteractiveSessionInit(apiClient *client.APIClient) *InteractiveSession {
 	session := &InteractiveSession{apiClient: apiClient}
 
@@ -25,21 +31,44 @@ func InteractiveSessionInit(apiClient *client.APIClient) *InteractiveSession {
 }
 
 var invoicePayload invoicePayloadType
+var InteractiveSessionUploadParams interactiveSessionUploadParams
+var ErrProbablyUsedSend = errors.New("upload command probably used previously")
 
 func (i *InteractiveSession) UploadInvoices(sourcePath string) error {
 	var err error
 
-	collection, err := invoice.InvoiceCollection(sourcePath)
+	// we try to load the registry. If it does not exists, it's not a fatal problem since
+	// we will receive a new registry as the return value and it will still conform to the
+	// interface, it will simply report each invoice as not sent.
+	registry, err := registryPkg.OpenOrCreate(path.Join(sourcePath, "registry.yaml"))
+	if err != nil {
+		return fmt.Errorf("cannot open registry: %v", err)
+	}
+
+	collection, err := invoice.InvoiceCollection(sourcePath, registry)
+
+	if err == invoice.ErrAlreadySynced {
+		logging.UploadLogger.Info("no invoices left to send")
+		return nil
+	}
+
+	// ok, there are some potential invoices, however let's warn the user if the registry already contains
+	// the session ID as well
+	if registry.SessionID != "" && !InteractiveSessionUploadParams.ForceUpload {
+		return ErrProbablyUsedSend
+	}
+
 	if err != nil {
 		return fmt.Errorf("cannot parse invoice collection: %v", err)
 	}
+
 	if err = i.Login(collection.Issuer, false); err != nil {
 		return fmt.Errorf("cannot login to gateway: %v", err)
 	}
 
 	// upload files
 	for _, file := range collection.Files {
-		if err = i.sendInvoice(file, &invoicePayload); err != nil {
+		if err = i.sendInvoice(file.Filename, &invoicePayload); err != nil {
 			return fmt.Errorf("error sending invoice: %v", err)
 		}
 	}
@@ -48,7 +77,6 @@ func (i *InteractiveSession) UploadInvoices(sourcePath string) error {
 		return fmt.Errorf("cannot logout: %v", err)
 	}
 
-	registry := registryPkg.NewRegistry()
 	registry.SessionID = i.referenceNo
 	registry.Environment = i.apiClient.EnvironmentAlias
 	registry.Issuer = collection.Issuer

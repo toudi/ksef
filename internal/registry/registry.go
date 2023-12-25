@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -11,9 +12,9 @@ import (
 
 type QueryCriteria struct {
 	DateFrom    time.Time `json:"invoicingDateFrom" yaml:"invoicingDateFrom"`
-	DateTo      time.Time `json:"invoicingDateTo" yaml:"invoicingDateTo"`
-	SubjectType string    `json:"subjectType" yaml:"subjectType"`
-	Type        string    `json:"type" yaml:"type"`
+	DateTo      time.Time `json:"invoicingDateTo"   yaml:"invoicingDateTo"`
+	SubjectType string    `json:"subjectType"       yaml:"subjectType"`
+	Type        string    `json:"type"              yaml:"type"`
 }
 
 type invoiceSubjectQueryResponse struct {
@@ -26,26 +27,27 @@ type invoiceSubjectQueryResponse struct {
 }
 
 type InvoiceSubject struct {
-	invoiceSubjectQueryResponse `yaml:"-"`
+	invoiceSubjectQueryResponse `       yaml:"-"`
 	TIN                         string `yaml:"NIP"`
 	FullName                    string `yaml:"fullName"`
 }
 
 type Invoice struct {
 	ReferenceNumber    string         `json:"invoiceReferenceNumber" yaml:"referenceNumber,omitempty"`
-	SEIReferenceNumber string         `json:"ksefReferenceNumber" yaml:"ksefReferenceNumber,omitempty"`
-	SEIQRCode          string         `yaml:"qrcode-url,omitempty" json:"-"`
-	InvoicingDate      string         `json:"invoicingDate" yaml:"invoicingDate,omitempty"`
-	SubjectFrom        InvoiceSubject `json:"subjectBy,omitempty" yaml:"subjectFrom,omitempty"`
-	SubjectTo          InvoiceSubject `json:"subjectTo,omitempty" yaml:"subjectTo,omitempty"`
-	InvoiceType        string         `json:"invoiceType" yaml:"invoiceType,omitempty"`
-	Net                string         `json:"net" yaml:"net,omitempty"`
-	Vat                string         `json:"vat" yaml:"vat,omitempty"`
-	Gross              string         `json:"gross" yaml:"gross,omitempty"`
+	SEIReferenceNumber string         `json:"ksefReferenceNumber"    yaml:"ksefReferenceNumber,omitempty"`
+	SEIQRCode          string         `json:"-"                      yaml:"qrcode-url,omitempty"`
+	InvoicingDate      string         `json:"invoicingDate"          yaml:"invoicingDate,omitempty"`
+	SubjectFrom        InvoiceSubject `json:"subjectBy,omitempty"    yaml:"subjectFrom,omitempty"`
+	SubjectTo          InvoiceSubject `json:"subjectTo,omitempty"    yaml:"subjectTo,omitempty"`
+	InvoiceType        string         `json:"invoiceType"            yaml:"invoiceType,omitempty"`
+	Net                string         `json:"net"                    yaml:"net,omitempty"`
+	Vat                string         `json:"vat"                    yaml:"vat,omitempty"`
+	Gross              string         `json:"gross"                  yaml:"gross,omitempty"`
+	Checksum           string         `                              yaml:"checksum,omitempty"`
 }
 
 type InvoiceRefId struct {
-	ReferenceNumber    string `json:"invoiceRefNo" yaml:"invoiceRefNo"`
+	ReferenceNumber    string `json:"invoiceRefNo"     yaml:"invoiceRefNo"`
 	SEIReferenceNumber string `json:"ksefInvoiceRefNo" yaml:"ksefInvoiceRefNo"`
 }
 
@@ -56,20 +58,24 @@ type PaymentId struct {
 
 type InvoiceRegistry struct {
 	QueryCriteria QueryCriteria  `json:"queryCriteria" yaml:"queryCriteria,omitempty"`
-	Environment   string         `yaml:"environment"`
-	Invoices      []Invoice      `yaml:"invoices,omitempty"`
-	Issuer        string         `yaml:"issuer,omitempty"`
-	SessionID     string         `yaml:"sessionId,omitempty"`
-	seiRefNoIndex map[string]int `yaml:"-"`
-	refNoIndex    map[string]int `yaml:"-"`
-	PaymentIds    []PaymentId    `yaml:"payment-ids,omitempty"`
+	Environment   string         `                     yaml:"environment"`
+	Invoices      []Invoice      `                     yaml:"invoices,omitempty"`
+	Issuer        string         `                     yaml:"issuer,omitempty"`
+	SessionID     string         `                     yaml:"sessionId,omitempty"`
+	seiRefNoIndex map[string]int `                     yaml:"-"`
+	refNoIndex    map[string]int `                     yaml:"-"`
+	checksumIndex map[string]int `                     yaml:"-"`
+	PaymentIds    []PaymentId    `                     yaml:"payment-ids,omitempty"`
 	sourcePath    string
 }
+
+var ErrDoesNotExist = errors.New("registry file does not exist")
 
 func NewRegistry() *InvoiceRegistry {
 	_registry := &InvoiceRegistry{
 		seiRefNoIndex: make(map[string]int),
 		refNoIndex:    make(map[string]int),
+		checksumIndex: make(map[string]int),
 	}
 
 	return _registry
@@ -97,9 +103,10 @@ func LoadRegistry(fileName string) (*InvoiceRegistry, error) {
 	var registry InvoiceRegistry
 	registry.seiRefNoIndex = make(map[string]int)
 	registry.refNoIndex = make(map[string]int)
+	registry.checksumIndex = make(map[string]int)
 	reader, err := os.Open(fileName)
 	if err != nil {
-		return nil, fmt.Errorf("unable to open registry file: %v", err)
+		return nil, ErrDoesNotExist
 	}
 	if err = yaml.NewDecoder(reader).Decode(&registry); err != nil {
 		return nil, fmt.Errorf("unable to decode invoice registry: %v", err)
@@ -107,7 +114,23 @@ func LoadRegistry(fileName string) (*InvoiceRegistry, error) {
 	for index, invoice := range registry.Invoices {
 		registry.seiRefNoIndex[invoice.SEIReferenceNumber] = index
 		registry.refNoIndex[invoice.ReferenceNumber] = index
+		if invoice.Checksum != "" {
+			registry.checksumIndex[invoice.Checksum] = index
+		}
 	}
 	registry.sourcePath = fileName
 	return &registry, nil
+}
+
+func OpenOrCreate(fileName string) (*InvoiceRegistry, error) {
+	registry, err := LoadRegistry(fileName)
+	if registry == nil && err == ErrDoesNotExist {
+		registry = NewRegistry()
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("Unexpected error during opening registry file: %v", err)
+	}
+
+	return registry, nil
 }

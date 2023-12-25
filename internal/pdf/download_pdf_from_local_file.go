@@ -1,10 +1,11 @@
-package registry
+package pdf
 
 import (
 	"bytes"
 	"errors"
 	"fmt"
 	"ksef/internal/invoice"
+	registryPkg "ksef/internal/registry"
 	"ksef/internal/sei/api/client"
 	"os"
 	"path"
@@ -22,7 +23,11 @@ const DownloadInvoicePDF = "/web/api/invoice/get-invoice-pdf-file?ksefReferenceN
 
 var IsNotXMLInvoice error = errors.New("this is not an XML invoice")
 
-func (r *InvoiceRegistry) DownloadPDF(apiClient *client.APIClient, args *DownloadPDFArgs) error {
+func DownloadPDFFromLocalFile(
+	apiClient *client.APIClient,
+	registry *registryPkg.InvoiceRegistry,
+	args *DownloadPDFArgs,
+) error {
 	// let's check if the specified `invoice` is actually a source XML file.
 	invoiceStruct, err := invoice.ParseInvoice(args.Invoice)
 	if err != nil {
@@ -30,7 +35,7 @@ func (r *InvoiceRegistry) DownloadPDF(apiClient *client.APIClient, args *Downloa
 		return IsNotXMLInvoice
 	}
 	// yes, it is! let's download the PDF based on that.
-	seiRefNo, err := r.GetSEIRefNo(invoiceStruct.InvoiceNumber)
+	seiRefNo, err := registry.GetSEIRefNo(invoiceStruct.InvoiceNumber)
 	if err != nil {
 		return fmt.Errorf("unable to find the invoice in status file. was it uploaded?")
 	}
