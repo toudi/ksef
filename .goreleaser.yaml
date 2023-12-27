@@ -47,6 +47,7 @@ archives:
     files:
       - przykladowe-pliki-wejsciowe
       - klucze
+      - examples
       - src: docs/ksef-dokumentacja-uzytkownika.pdf
         dst: ksef-dokumentacja-uzytkownika.pdf
 

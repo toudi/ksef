@@ -33,6 +33,7 @@ var DownloadLogger *slog.Logger = defaultLogger()
 var UPOLogger *slog.Logger = defaultLogger()
 var UPOHTTPLogger *slog.Logger = defaultLogger()
 var ParserLogger *slog.Logger = defaultLogger()
+var PDFRendererLogger *slog.Logger = defaultLogger()
 
 func init() {
 	// populate the helper map so that we can alter the loggers after config
@@ -51,5 +52,6 @@ func init() {
 		"upo":              UPOLogger,
 		"upo.http":         UPOHTTPLogger,
 		"parser":           ParserLogger,
+		"pdf-renderer":     PDFRendererLogger,
 	}
 }

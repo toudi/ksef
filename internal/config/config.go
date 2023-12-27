@@ -8,7 +8,8 @@ import (
 )
 
 type ConfigType struct {
-	Logging map[string]string `yaml:"logging"`
+	Logging     map[string]string `yaml:"logging"`
+	PDFRenderer map[string]string `yaml:"pdf-renderer"`
 }
 
 var Config ConfigType
