@@ -126,6 +126,7 @@ func OpenOrCreate(fileName string) (*InvoiceRegistry, error) {
 	registry, err := LoadRegistry(fileName)
 	if registry == nil && err == ErrDoesNotExist {
 		registry = NewRegistry()
+		return registry, nil
 	}
 
 	if err != nil {
