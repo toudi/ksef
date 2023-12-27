@@ -99,7 +99,7 @@ func statusRun(c *Command) error {
 		return fmt.Errorf("błąd tworzenia katalogu wyjściowego: %v", err)
 	}
 
-	statusArgs.downloadUPOArgs.OutputPath = outputPath
+	statusArgs.downloadUPOArgs.Output = outputPath
 
 	gateway, err := client.APIClient_Init(registry.Environment)
 	if err != nil {
