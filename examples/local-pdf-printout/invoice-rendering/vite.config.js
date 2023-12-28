@@ -5,6 +5,10 @@ import vue from '@vitejs/plugin-vue'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  build: {
+    // required for gotenberg
+    assetsDir: '',
+  },
   plugins: [
     vue(),
   ],

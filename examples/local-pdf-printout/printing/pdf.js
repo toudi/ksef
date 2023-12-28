@@ -31,7 +31,7 @@ if(process.argv.length < 5) {
 (async () => {
   const browser = await puppeteer.launch({
     executablePath: process.argv[2],
-    args: ["--disable-web-security"]
+    args: ["--allow-file-access-from-files"]
   });
 
   const page = await browser.newPage();

@@ -1,4 +1,4 @@
-# Wizualiacja PDF na podstawie własnego szablonu
+# Wizualizacja PDF na podstawie własnego szablonu
 
 ::: warning
 Ta funkcjonalność jest cały czas rozwijana - jestem otwarty na wszelkie sugestie
@@ -10,10 +10,6 @@ Zamiast tego wpadłem na pomysł aby do wizualizacji służyła mikroaplikacja j
 
 ::: warning
 Zdaję sobie sprawę, że jest to wybór **niemerytoryczny** i że nie każdemu może przypaść do gustu. Dlatego zakładam, że silników drukujących mogłoby być kilka i konfigurowane byłyby w pliku konfiguracyjnym a ten który zaimplementowałem możnaby traktować jedynie jako wersję "referencyjną"
-:::
-
-::: danger
-Przykładowa aplikacja uruchamia przeglądarkę chrome / chromium z parametrem `--disable-web-security` aby załadować lokalne pliki z dysku. Opcją numer dwa byłoby serwowanie plików przez program kliencki na jakimś losowym porcie - póki co po prostu nie chce mi się tego implementować. Inną opcją jest użycie programu gotenberg ale wymaga to działającego dockera
 :::
 
 ## Rozumiem zagrożenie, co mam zrobić?
