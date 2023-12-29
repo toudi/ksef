@@ -43,6 +43,36 @@ Korzystaj z mnemoników. Zamiast mało przyjaznych nazw pól takich jak `P_7`, `
 
 :::
 
+::: warning
+Uważaj na stosowanie stawki VAT "NP" (zazwyczaj stosowanej w przypadku eksportu usług). KSeF przewiduje dwie sytuacje do jej stosowania.
+
+- na podstawie art. 100 ust 1 pkt 4 ustawy (po prostu określ stawkę jako "np")
+- z wyłączeniem art. 100 ust 1 pkt 4 ustawy (określ stawkę jako "np" oraz stwórz kolumnę "vat-rate.except" / "p_12.except" o wartości "1")
+
+Przykłady wierszy:
+
+```csv
+"Sekcja";"Faktura.Fa.FaWiersze.FaWiersz";
+"P_7";"P_8A";"P_8B";"P_9B";"P_12";"P_9B.decimal-places";"P_12.except"
+"Nazwa towaru";"szt";150;"123";23;2;;
+"NP na podstawie ustawy";szt;45;"1.23";"np";;;
+"NP z wyłączeniem ustawy";szt;90;"1.23";"np";;1;
+```
+
+```yaml
+- FaWiersz:
+    item: NP z wyłączeniem ustawy
+    units: m2
+    quantity: "1.02"
+    unit-price-net:
+      value: "1.23"
+      decimal-places: 4
+    vat-rate: np
+    vat-rate.except: 1
+```
+
+:::
+
 ## CSV z sekcjami
 
 Szczerze mówiąc nie wiem czy uprawnione jest nazywanie tego formatu CSV jako że każda z sekcji ma inną liczbę komórek. Z drugiej strony format ten przemyślałem dla integracji które nie będą posiadać jakichkolwiek bibliotek i będą generować dane źródłowe "na piechotę" (np. programy księgowe dla DOS). Z tego samego powodu konwersja z CSV wspiera także tablicę konwersji polskich ogonków

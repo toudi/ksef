@@ -57,5 +57,7 @@
 1;2020-01-01;6;
 ;
 "Sekcja";"Faktura.Fa.FaWiersze.FaWiersz";
-"P_7";"P_8A";"P_8B";"P_9B";"P_12";"P_9B.decimal-places";
-"Nazwa towaru";"szt";150;"123";23;2;
+"P_7";"P_8A";"P_8B";"P_9B";"P_12";"P_9B.decimal-places";"P_12.except"
+"Nazwa towaru";"szt";150;"123";23;2;;
+"NP na podstawie ustawy";szt;45;"1.23";"np";;;
+"NP z wyłączeniem ustawy";szt;90;"1.23";"np";;1;

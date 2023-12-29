@@ -10,6 +10,8 @@ const (
 	AccumulatorVAT = iota
 )
 
+const IgnoreRate string = "ignore"
+
 // this is the internal type that will represent a reverse mapping of
 // MappingNet/MappingVAT structures.
 type Aggregator struct {
@@ -24,7 +26,10 @@ type FieldToVATRatesMapping struct {
 	reverseMapping map[string]*Aggregator
 }
 
-func NewFieldToVATRatesMapping(MappingNet map[string][]string, MappingVAT map[string][]string) *FieldToVATRatesMapping {
+func NewFieldToVATRatesMapping(
+	MappingNet map[string][]string,
+	MappingVAT map[string][]string,
+) *FieldToVATRatesMapping {
 	mapping := &FieldToVATRatesMapping{
 		MappingNet:     MappingNet,
 		MappingVAT:     MappingVAT,
@@ -49,6 +54,11 @@ func NewFieldToVATRatesMapping(MappingNet map[string][]string, MappingVAT map[st
 
 func (f *FieldToVATRatesMapping) Accumulate(item *InvoiceItem) {
 	vatRate := item.UnitPrice.Vat.Description
+	// a fake VAT rate, just because KSeF reports net amounts in two different fields
+	// depending on whether it's "with" the bill or "with except of the bill"
+	if item.UnitPrice.Vat.Except {
+		vatRate += ".except"
+	}
 
 	reverseMapping, exists := f.reverseMapping[vatRate]
 	if !exists {
@@ -58,12 +68,20 @@ func (f *FieldToVATRatesMapping) Accumulate(item *InvoiceItem) {
 	if _, exists := f.Totals[reverseMapping.Net]; !exists {
 		f.Totals[reverseMapping.Net] = 0.0
 	}
-	if _, exists := f.Totals[reverseMapping.VAT]; !exists {
-		f.Totals[reverseMapping.VAT] = 0.0
+
+	// check if we don't want to ignore the total
+	if reverseMapping.VAT != IgnoreRate {
+		if _, exists := f.Totals[reverseMapping.VAT]; !exists {
+			f.Totals[reverseMapping.VAT] = 0.0
+		}
 	}
 
 	f.Totals[reverseMapping.Net] += float64(item.Amount().Net)
-	f.Totals[reverseMapping.VAT] += float64(item.Amount().VAT)
+
+	// check if we don't want to ignore the total
+	if reverseMapping.VAT != IgnoreRate {
+		f.Totals[reverseMapping.VAT] += float64(item.Amount().VAT)
+	}
 }
 
 func (f *FieldToVATRatesMapping) Populate(root *xml.Node) {

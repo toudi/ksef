@@ -8,6 +8,7 @@ import (
 type VAT struct {
 	Rate        int
 	Description string
+	Except      bool
 }
 
 type Price struct {

@@ -7,7 +7,12 @@ import (
 	"strings"
 )
 
-func (fg *FA2Generator) LineHandler(inv *invoice.Invoice, section string, data map[string]string, invoiceReady func() error) error {
+func (fg *FA2Generator) LineHandler(
+	inv *invoice.Invoice,
+	section string,
+	data map[string]string,
+	invoiceReady func() error,
+) error {
 	var err error
 
 	if fg.isCommonData(section) {
@@ -42,6 +47,10 @@ func (fg *FA2Generator) LineHandler(inv *invoice.Invoice, section string, data m
 				item.UnitPrice.Vat.Description = value
 				if vatRate, err := strconv.ParseInt(value, 10, 32); err == nil {
 					item.UnitPrice.Vat.Rate = int(vatRate)
+				}
+			case "vat-rate.except", "p_12.except":
+				if value == "1" {
+					item.UnitPrice.Vat.Except = true
 				}
 			default:
 				item.Attributes[field] = value
