@@ -4,8 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"ksef/internal/sei/api/client"
-	"ksef/internal/sei/api/upload/batch"
-	"ksef/internal/sei/api/upload/interactive"
+	"ksef/internal/sei/api/session/batch"
+	"ksef/internal/sei/api/session/interactive"
 )
 
 type uploadCommand struct {
@@ -35,8 +35,24 @@ func init() {
 
 	UploadCommand.FlagSet.BoolVar(&uploadArgs.testGateway, "t", false, "użyj bramki testowej")
 	UploadCommand.FlagSet.BoolVar(&uploadArgs.interactive, "i", false, "użyj sesji interaktywnej")
-	UploadCommand.FlagSet.StringVar(&uploadArgs.issuerToken, "token", "", "Token sesji interaktywnej lub nazwa zmiennej środowiskowej która go zawiera")
-	UploadCommand.FlagSet.StringVar(&uploadArgs.path, "p", "", "ścieżka do katalogu z wygenerowanymi fakturami")
+	UploadCommand.FlagSet.StringVar(
+		&uploadArgs.issuerToken,
+		"token",
+		"",
+		"Token sesji interaktywnej lub nazwa zmiennej środowiskowej która go zawiera",
+	)
+	UploadCommand.FlagSet.StringVar(
+		&uploadArgs.path,
+		"p",
+		"",
+		"ścieżka do katalogu z wygenerowanymi fakturami",
+	)
+	UploadCommand.FlagSet.BoolVar(
+		&interactive.InteractiveSessionUploadParams.ForceUpload,
+		"f",
+		false,
+		"potwierdź wysyłkę faktur pomimo istniejących sum kontrolnych",
+	)
 
 	registerCommand(&UploadCommand.Command)
 }
@@ -62,7 +78,14 @@ func uploadRun(c *Command) error {
 		if uploadArgs.issuerToken != "" {
 			interactiveSession.SetIssuerToken(uploadArgs.issuerToken)
 		}
-		return interactiveSession.UploadInvoices(uploadArgs.path)
+		err := interactiveSession.UploadInvoices(uploadArgs.path)
+		if err == interactive.ErrProbablyUsedSend {
+			fmt.Printf(
+				"Wygląda na to, że poprzednio użyta została komenda 'upload' na tym rejestrze.\nJeśli na pewno chcesz ponowić wysyłkę, uzyj flagi '-f'\n",
+			)
+			return nil
+		}
+		return err
 	}
 
 	batchSession := batch.BatchSessionInit(gateway)

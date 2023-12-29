@@ -19,6 +19,13 @@ export default defineConfig({
         ]
       },
       {
+        text: 'Konfiguracja',
+        items: [
+          {text: 'Konfiguracja', link: '/content/konfiguracja'},
+          {text: 'Komunikaty diagnostyczne', link: '/content/logowanie'},
+        ]
+      },
+      {
         text: 'Komendy',
         items: [
           { text: 'Zapisanie tokenu', link: '/content/komendy/save-token'},
@@ -31,7 +38,10 @@ export default defineConfig({
           { text: 'Pobieranie faktur', link: '/content/komendy/download'},
           { text: 'Pobieranie UPO', link: '/content/komendy/upo'},
           { text: 'Identyfikator płatności', link: '/content/komendy/payment-id'},
-          { text: 'Wizualizacja PDF', link: '/content/komendy/wizualizacja-pdf'},
+          { text: 'Wizualizacja PDF', items: [
+            {text: "Wizualizacja KSeF", link: '/content/komendy/wizualizacja-pdf'},
+            {text: "Wizualizacja lokalna", link: '/content/komendy/lokalny-pdf'},
+          ]},
         ]
       }
     ],

@@ -8,7 +8,7 @@ import (
 	"io"
 	"ksef/internal/registry"
 	"ksef/internal/sei/api/client"
-	"ksef/internal/sei/api/upload/interactive"
+	"ksef/internal/sei/api/session/interactive"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -39,11 +39,36 @@ func init() {
 		},
 	}
 
-	GeneratePaymentIdCommand.FlagSet.StringVar(&generatePaymentIdArgs.path, "p", "", "ścieżka do pliku rejestru")
-	GeneratePaymentIdCommand.FlagSet.StringVar(&generatePaymentIdArgs.output, "o", "", "Plik do zapisania wyjścia")
-	GeneratePaymentIdCommand.FlagSet.BoolVar(&generatePaymentIdArgs.yaml, "yaml", false, "Użyj formatu YAML do zapisania wyjścia")
-	GeneratePaymentIdCommand.FlagSet.BoolVar(&generatePaymentIdArgs.json, "json", false, "Użyj formatu JSON do zapisania wyjścia")
-	GeneratePaymentIdCommand.FlagSet.StringVar(&generatePaymentIdArgs.issuerToken, "token", "", "Token sesji interaktywnej lub nazwa zmiennej środowiskowej która go zawiera")
+	GeneratePaymentIdCommand.FlagSet.StringVar(
+		&generatePaymentIdArgs.path,
+		"p",
+		"",
+		"ścieżka do pliku rejestru",
+	)
+	GeneratePaymentIdCommand.FlagSet.StringVar(
+		&generatePaymentIdArgs.output,
+		"o",
+		"",
+		"Plik do zapisania wyjścia",
+	)
+	GeneratePaymentIdCommand.FlagSet.BoolVar(
+		&generatePaymentIdArgs.yaml,
+		"yaml",
+		false,
+		"Użyj formatu YAML do zapisania wyjścia",
+	)
+	GeneratePaymentIdCommand.FlagSet.BoolVar(
+		&generatePaymentIdArgs.json,
+		"json",
+		false,
+		"Użyj formatu JSON do zapisania wyjścia",
+	)
+	GeneratePaymentIdCommand.FlagSet.StringVar(
+		&generatePaymentIdArgs.issuerToken,
+		"token",
+		"",
+		"Token sesji interaktywnej lub nazwa zmiennej środowiskowej która go zawiera",
+	)
 
 	registerCommand(&GeneratePaymentIdCommand.Command)
 }
@@ -100,7 +125,9 @@ func generatePaymentIdRun(c *Command) error {
 
 	// we are in the generation mode.
 	if len(invoiceIds) < 2 {
-		return fmt.Errorf("stworzenie identyfikatora płatności wymaga co najmniej dwóch numerów faktur")
+		return fmt.Errorf(
+			"stworzenie identyfikatora płatności wymaga co najmniej dwóch numerów faktur",
+		)
 	}
 
 	seiRefNumbers, err := _registry.GetSEIRefNoFromArray(invoiceIds)
@@ -119,7 +146,7 @@ func generatePaymentIdRun(c *Command) error {
 		session.SetIssuerToken(generatePaymentIdArgs.issuerToken)
 	}
 
-	if err = session.Login(_registry.Issuer); err != nil {
+	if err = session.Login(_registry.Issuer, true); err != nil {
 		return fmt.Errorf("błąd logowania do KSeF: %v", err)
 	}
 

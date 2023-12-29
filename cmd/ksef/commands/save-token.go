@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"ksef/internal/sei/api/client"
-	"ksef/internal/sei/api/upload/interactive"
+	"ksef/internal/sei/api/session/interactive"
 )
 
 type saveTokenCommand struct {

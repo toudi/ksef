@@ -72,3 +72,31 @@ Przykład wywołania:
 ```shell
 ./ksef upload -i -p pliki-zrodlowe-xml -t
 ```
+
+::: warning
+Program wykrywa, które faktury zostały już wysłane do KSeF ale wpłynie to na wysyłkę jedynie **PO** wywołaniu komendy `status`. Powodem takiego działania jest fakt, że KSeF waliduje faktury asynchronicznie. Oznacza to, że dopiero **PO** wykonaniu komendy `status` możemy dowiedzieć się które faktury zostały zaakceptowane (i nadany im został numer KSeF) a które nie. Prawdopodobnie zauważysz, że po wysyłce rejestr faktur otrzyma nową właściwość:
+
+```yaml
+invoices:
+  - referenceNumber: aaa/bbb/ccc
+    checksum: aaabbbcccdddeeee ...
+```
+
+W przypadku ponownego wywołania komendy `upload`, program przeiteruje po źródłowych plikach XML (ich nazwy nie mają znaczenia) i sprawdzi, czy dany plik posiada już odpowiedni wpis z rejestrze razem z sumą kontrolną. Jeśli tak to wysyłka takiego pliku nie zostanie kontynuowana.
+:::
+
+::: warning
+Jeśli program wykryje, że istnieją faktury do wysyłki ale w rejestrze wpisany jest numer sesji, wówczas domyślnie nie ponowi wysyłki faktur (ponieważ potencjalnie może to oznaczać, że wcześniej użyta została komenda `upload` po której nie została użyta komenda `status`). Zamiast tego w konsoli zobaczysz poniższy komunikat:
+
+```text
+Wygląda na to, że poprzednio użyta została komenda 'upload' na tym rejestrze.
+Jeśli na pewno chcesz ponowić wysyłkę, uzyj flagi '-f'
+```
+
+Oczywiście istnieją sytujacje w których **chcesz** ponowić wysyłkę (chociażby wtedy jeśli poprzednia sesja wysyłkowa zwróciła błędy). W takiej sytuacji użyj flagi `-f`:
+
+```shell
+./ksef upload -i -p pliki-zrodlowe-xml -t -f
+```
+
+:::

@@ -3,9 +3,10 @@ package commands
 import (
 	"flag"
 	"fmt"
+	"ksef/internal/pdf"
 	"ksef/internal/registry"
 	"ksef/internal/sei/api/client"
-	"ksef/internal/sei/api/upload/interactive"
+	"ksef/internal/sei/api/session/interactive"
 	"path/filepath"
 	"strings"
 )
@@ -14,7 +15,7 @@ type downloadPDFCommand struct {
 	Command
 }
 type downloadPDFArgsType struct {
-	internalArgs registry.DownloadPDFArgs
+	internalArgs pdf.DownloadPDFArgs
 	path         string
 }
 
@@ -32,12 +33,37 @@ func init() {
 		},
 	}
 
-	DownloadPDFCommand.FlagSet.StringVar(&downloadPDFArgs.path, "p", "", "ścieżka do pliku rejestru")
-	DownloadPDFCommand.FlagSet.StringVar(&downloadPDFArgs.internalArgs.Output, "o", "", "ścieżka do zapisu PDF (domyślnie katalog pliku statusu + {nrRef}.pdf)")
-	DownloadPDFCommand.FlagSet.StringVar(&downloadPDFArgs.internalArgs.Invoice, "i", "", "numer faktury do pobrania. Wartość * oznacza pobranie wszystkich faktur z rejestru")
-	DownloadPDFCommand.FlagSet.StringVar(&downloadPDFArgs.internalArgs.IssuerToken, "token", "", "Token sesji interaktywnej lub nazwa zmiennej środowiskowej która go zawiera")
+	DownloadPDFCommand.FlagSet.StringVar(
+		&downloadPDFArgs.path,
+		"p",
+		"",
+		"ścieżka do pliku rejestru",
+	)
+	DownloadPDFCommand.FlagSet.StringVar(
+		&downloadPDFArgs.internalArgs.Output,
+		"o",
+		"",
+		"ścieżka do zapisu PDF (domyślnie katalog pliku statusu + {nrRef}.pdf)",
+	)
+	DownloadPDFCommand.FlagSet.StringVar(
+		&downloadPDFArgs.internalArgs.Invoice,
+		"i",
+		"",
+		"numer faktury do pobrania. Wartość * oznacza pobranie wszystkich faktur z rejestru",
+	)
+	DownloadPDFCommand.FlagSet.StringVar(
+		&downloadPDFArgs.internalArgs.IssuerToken,
+		"token",
+		"",
+		"Token sesji interaktywnej lub nazwa zmiennej środowiskowej która go zawiera",
+	)
 	// DownloadPDFCommand.FlagSet.StringVar(&downloadPDFArgs.internalArgs.Token, "token", "", "token sesji")
-	DownloadPDFCommand.FlagSet.BoolVar(&downloadPDFArgs.internalArgs.SaveXml, "xml", false, "zapisz źródłowy plik XML")
+	DownloadPDFCommand.FlagSet.BoolVar(
+		&downloadPDFArgs.internalArgs.SaveXml,
+		"xml",
+		false,
+		"zapisz źródłowy plik XML",
+	)
 
 	registerCommand(&DownloadPDFCommand.Command)
 }
@@ -67,7 +93,7 @@ func downloadPDFRun(c *Command) error {
 	}
 
 	if strings.HasSuffix(strings.ToLower(downloadPDFArgs.internalArgs.Invoice), ".xml") {
-		return registry.DownloadPDF(gateway, &downloadPDFArgs.internalArgs)
+		return pdf.DownloadPDFFromLocalFile(gateway, registry, &downloadPDFArgs.internalArgs)
 	}
 
 	return interactive.DownloadPDFFromAPI(gateway, &downloadPDFArgs.internalArgs, registry)

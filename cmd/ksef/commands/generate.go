@@ -3,6 +3,7 @@ package commands
 import (
 	"flag"
 	"fmt"
+	"ksef/internal/logging"
 	"ksef/internal/sei"
 	inputprocessors "ksef/internal/sei/input_processors"
 )
@@ -36,15 +37,31 @@ func init() {
 
 	GenerateCmd.FlagSet.StringVar(&generateArgs.FileName, "f", "", "nazwa pliku do przetworzenia")
 	GenerateCmd.FlagSet.StringVar(&generateArgs.Output, "o", "", "nazwa katalogu wyjściowego")
-	GenerateCmd.FlagSet.StringVar(&generateArgs.Delimiter, "d", ",", "łańcuch znaków rozdzielający pola (tylko dla CSV)")
-	GenerateCmd.FlagSet.StringVar(&generateArgs.SheetName, "s", "", "Nazwa skoroszytu do przetworzenia (tylko dla XLSX)")
+	GenerateCmd.FlagSet.StringVar(
+		&generateArgs.Delimiter,
+		"d",
+		",",
+		"łańcuch znaków rozdzielający pola (tylko dla CSV)",
+	)
+	GenerateCmd.FlagSet.StringVar(
+		&generateArgs.SheetName,
+		"s",
+		"",
+		"Nazwa skoroszytu do przetworzenia (tylko dla XLSX)",
+	)
 	GenerateCmd.FlagSet.StringVar(&generateArgs.GeneratorName, "g", "fa-2", "nazwa generatora")
-	GenerateCmd.FlagSet.StringVar(&generateArgs.EncodingConversionFile, "e", "", "użyj pliku z konwersją znaków (tylko dla CSV)")
+	GenerateCmd.FlagSet.StringVar(
+		&generateArgs.EncodingConversionFile,
+		"e",
+		"",
+		"użyj pliku z konwersją znaków (tylko dla CSV)",
+	)
 
 	registerCommand(&GenerateCmd.Command)
 }
 
 func generateRun(c *Command) error {
+	logging.GenerateLogger.Info("generate")
 	if generateArgs.FileName == "" || generateArgs.Output == "" {
 		GenerateCmd.FlagSet.Usage()
 		return nil
