@@ -91,6 +91,8 @@ func (s *SEI) ProcessSourceFile(sourceFile string) error {
 		processor = inputprocessors.XLSXDecoder_Init(s.conversionParameters.XLSX)
 	} else if extension == ".yaml" {
 		processor = inputprocessors.YAMLDecoder_Init()
+	} else if extension == ".json" {
+		processor = inputprocessors.JSONDecoder_Init()
 	}
 	if processor == nil {
 		return errUnknownSourceExtension

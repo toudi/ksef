@@ -1,0 +1,119 @@
+{
+    "Faktura": {
+      "#xmlns": "http://crd.gov.pl/wzor/2023/06/29/12648/",
+      "#xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+      "#xmlns:xsd": "http://www.w3.org/2001/XMLSchema",
+      "Naglowek": {
+        "SystemInfo": "WSI Pegasus",
+        "KodFormularza": "FA",
+        "KodFormularza#kodSystemowy": "FA (2)",
+        "KodFormularza#wersjaSchemy": "1-0E",
+        "WariantFormularza": 2
+      },
+      "Podmiot1": {
+        "DaneIdentyfikacyjne": {
+          "NIP": 3333333333,
+          "Nazwa": "Moja firma ABC"
+        },
+        "Adres": {
+          "KodKraju": "PL",
+          "AdresL1": "ul. Kwietniowa 1/2",
+          "AdresL2": "61-815 Grzegrzółkowo"
+        }
+      },
+      "Podmiot2": {
+        "DaneIdentyfikacyjne": {
+          "NIP": 2222222222,
+          "Nazwa": "AAA Firma"
+        },
+        "Adres": {
+          "KodKraju": "PL",
+          "AdresL1": "ul. Czereśniowa 3/4",
+          "AdresL2": "00-111 Chmielowo"
+        }
+      },
+      "Fa": {
+        "KodWaluty": "PLN",
+        "P_1": "2022-01-01",
+        "P_1M": "Mielno",
+        "P_2": "FV 00/11/22",
+        "P_6": "2022-01-02",
+        "RodzajFaktury": "VAT",
+        "Adnotacje": {
+          "P_16": 2,
+          "P_17": 2,
+          "P_18": 2,
+          "P_18A": 2,
+          "Zwolnienie.P_19N": 1,
+          "NoweSrodkiTransportu.P_22N": 1,
+          "P_23": 2,
+          "PMarzy.P_PMarzyN": 1
+        },
+        "Platnosc": {
+          "Zaplacono": 1,
+          "DataZaplaty": "2020-01-01",
+          "FormaPlatnosci": 6
+        },
+        "FaWiersze": [
+          {
+            "FaWiersz": {
+              "item": "Nazwa towaru 1",
+              "units": "szt",
+              "quantity": {
+                "value": 150,
+                "decimal-places": 0
+              },
+              "unit-price-net": 1.23,
+              "vat-rate": 23
+            }
+          },
+          {
+            "FaWiersz": {
+              "item": "Nazwa towaru 2",
+              "units": "m3",
+              "quantity": "1500",
+              "unit-price-net": 0.0001,
+              "vat-rate": 23
+            }
+          },
+          {
+            "FaWiersz": {
+              "item": "Nazwa towaru 3",
+              "units": "m2",
+              "quantity": "1.02",
+              "unit-price-net": {
+                "value": 1,
+                "decimal-places": 4
+              },
+              "vat-rate": 8
+            }
+          },
+          {
+            "FaWiersz": {
+              "item": "Nazwa towaru 4",
+              "units": "m2",
+              "quantity": "1.02",
+              "unit-price-net": {
+                "value": "1.23",
+                "decimal-places": 4
+              },
+              "vat-rate": 8
+            }
+          },
+          {
+            "FaWiersz": {
+              "item": "NP z wyłączeniem ustawy",
+              "units": "m2",
+              "quantity": "1.02",
+              "unit-price-net": {
+                "value": "1.23",
+                "decimal-places": 4
+              },
+              "vat-rate": "np",
+              "vat-rate.except": 1
+            }
+          }
+        ]
+      }
+    }
+  }

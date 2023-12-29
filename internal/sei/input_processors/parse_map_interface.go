@@ -8,13 +8,9 @@ import (
 	"strings"
 )
 
-func (y *YAMLDecoder) processSingleInvoiceSource(invoice map[string]interface{}, parser *parser.Parser) error {
-	if err := processRecurse("", invoice, parser); err != nil {
-		return fmt.Errorf("error running processRecurse: %v", err)
-	}
-	return parser.InvoiceReady()
-}
-
+// processRecurse takes the input node (which can be a part of map) and then it constructs
+// invoice properties and provides them to the parser. Thanks to this approach, we can use
+// the same function to process both yaml and json with the same parser
 func processRecurse(section string, data interface{}, parser *parser.Parser) error {
 	var err error
 	var fullSection string
@@ -53,7 +49,7 @@ func processRecurse(section string, data interface{}, parser *parser.Parser) err
 			if _tmpData, is_a_map := keyDataItem.(map[string]interface{}); is_a_map {
 				parsed_number, is_serialized_number, err := money.ParseMonetaryValue(_tmpData)
 				if err != nil {
-					return fmt.Errorf("error during parseSerializedNumber(): %v", err)
+					return fmt.Errorf("error during parseSerializedNumber(): %v; tmpData=%+v", err, _tmpData)
 				}
 				if is_serialized_number {
 					sectionData[keyName] = parsed_number

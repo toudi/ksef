@@ -1,21 +1,20 @@
 package inputprocessors
 
 import (
+	"encoding/json"
 	"fmt"
 	"ksef/internal/sei/parser"
 	"os"
-
-	"gopkg.in/yaml.v3"
 )
 
-type YAMLDecoder struct {
+type JSONDecoder struct {
 }
 
-func YAMLDecoder_Init() *YAMLDecoder {
-	return &YAMLDecoder{}
+func JSONDecoder_Init() *JSONDecoder {
+	return &JSONDecoder{}
 }
 
-func (y *YAMLDecoder) Process(sourceFile string, parser *parser.Parser) error {
+func (j *JSONDecoder) Process(sourceFile string, parser *parser.Parser) error {
 	var err error
 	var serializedInvoice map[string]interface{}
 
@@ -25,26 +24,26 @@ func (y *YAMLDecoder) Process(sourceFile string, parser *parser.Parser) error {
 	}
 	defer file.Close()
 
-	if err = yaml.NewDecoder(file).Decode(&serializedInvoice); err != nil {
-		return fmt.Errorf("error decoding YAML file. syntax error ?: %v", err)
+	if err = json.NewDecoder(file).Decode(&serializedInvoice); err != nil {
+		return fmt.Errorf("error decoding JSON file. syntax error ?: %v", err)
 	}
 
 	// let's check if this is a bulk invoices array or a single one.
 	if _, exists := serializedInvoice["common"]; exists {
-		return y.processBatchSource(serializedInvoice, parser)
+		return j.processBatchSource(serializedInvoice, parser)
 	} else {
-		return y.processSingleInvoiceSource(serializedInvoice, parser)
+		return j.processSingleInvoiceSource(serializedInvoice, parser)
 	}
 }
 
-func (y *YAMLDecoder) processSingleInvoiceSource(invoice map[string]interface{}, parser *parser.Parser) error {
+func (j *JSONDecoder) processSingleInvoiceSource(invoice map[string]interface{}, parser *parser.Parser) error {
 	if err := processRecurse("", invoice, parser); err != nil {
 		return fmt.Errorf("error running processRecurse: %v", err)
 	}
 	return parser.InvoiceReady()
 }
 
-func (y *YAMLDecoder) processBatchSource(source map[string]interface{}, parser *parser.Parser) error {
+func (j *JSONDecoder) processBatchSource(source map[string]interface{}, parser *parser.Parser) error {
 	commonInvoiceData := source["common"]
 	invoices := source["invoices"].([]interface{})
 	var err error

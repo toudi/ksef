@@ -43,7 +43,13 @@ func ParseMonetaryValue(data map[string]interface{}) (string, bool, error) {
 				//
 				decimalPlacesInt, err = strconv.Atoi(decimalPlacesString)
 			} else {
-				err = fmt.Errorf("sub-struct contains decimal-places but it's neither int nor string")
+				// it could be a float if we're parsing from JSON source
+				decimalPlacesFloat, ok := tmpDecimalPlaces.(float64)
+				if ok {
+					decimalPlacesInt = int(decimalPlacesFloat)
+				} else {
+					err = fmt.Errorf("sub-struct contains decimal-places but it's neither int nor float nor a string")
+				}
 			}
 			if err != nil {
 				return "", false, fmt.Errorf("sub-struct does contain decimal-places but it is not an integer")
