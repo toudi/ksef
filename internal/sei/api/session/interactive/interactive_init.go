@@ -62,6 +62,11 @@ func (i *InteractiveSession) UploadInvoices(sourcePath string) error {
 		return fmt.Errorf("cannot parse invoice collection: %v", err)
 	}
 
+	// check NIP for validity
+	if !i.apiClient.Environment.NipValidator(collection.Issuer) {
+		return fmt.Errorf("invalid NIP: %s", collection.Issuer)
+	}
+
 	if err = i.Login(collection.Issuer, false); err != nil {
 		return fmt.Errorf("cannot login to gateway: %v", err)
 	}
