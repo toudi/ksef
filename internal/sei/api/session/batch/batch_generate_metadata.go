@@ -53,6 +53,11 @@ func (b *BatchSession) GenerateMetadata(sourcePath string) error {
 		return fmt.Errorf("cannot parse invoice collection: %v", err)
 	}
 
+	// check NIP for validity
+	if !b.apiClient.Environment.NipValidator(collection.Issuer) {
+		return fmt.Errorf("invalid NIP: %s", collection.Issuer)
+	}
+
 	encryption, err := b.apiClient.Encryption()
 	if err != nil {
 		return fmt.Errorf("cannot instantiate cipher: %v", err)

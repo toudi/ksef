@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"ksef/internal/encryption"
+	"ksef/internal/utils"
 )
 
 const (
@@ -14,11 +15,20 @@ const (
 type environmentConfigType struct {
 	Host         string
 	RsaPublicKey string
+	NipValidator utils.NIPValidatorType
 }
 
 var environmentConfig = map[string]environmentConfigType{
-	ProductionEnvironment: {Host: "ksef.mf.gov.pl", RsaPublicKey: "klucze/prod/publicKey.pem"},
-	TestEnvironment:       {Host: "ksef-test.mf.gov.pl", RsaPublicKey: "klucze/test/publicKey.pem"},
+	ProductionEnvironment: {
+		Host:         "ksef.mf.gov.pl",
+		RsaPublicKey: "klucze/prod/publicKey.pem",
+		NipValidator: utils.NIPValidator,
+	},
+	TestEnvironment: {
+		Host:         "ksef-test.mf.gov.pl",
+		RsaPublicKey: "klucze/test/publicKey.pem",
+		NipValidator: utils.NIPLengthValidator,
+	},
 }
 
 type EncryptionType struct {
