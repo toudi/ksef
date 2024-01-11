@@ -47,7 +47,7 @@ func DownloadPDFFromAPI(
 	for _, invoice := range r.Invoices {
 		// * means to download all invoices.
 		seiRefNo = invoice.SEIReferenceNumber
-		if args.Invoice != "*" {
+		if !downloadAll {
 			if seiRefNo, err = r.GetSEIRefNo(args.Invoice); err != nil {
 				return fmt.Errorf("cannot find invoice %s in registry", args.Invoice)
 			}
@@ -58,8 +58,9 @@ func DownloadPDFFromAPI(
 		}
 		if _, err = os.Stat(path.Join(args.Output, seiRefNo+".pdf")); err == nil {
 			// PDF was already downloaded
-			if downloadAll {
-				// nothing left to do
+			if !downloadAll {
+				// this is only a single file download mode therefore
+				// nothing left to be done, we can safely return.
 				return nil
 			}
 			continue
@@ -78,7 +79,7 @@ func DownloadPDFFromAPI(
 			if err != nil {
 				return fmt.Errorf("unable to download invoice in XML Format: %v", err)
 			}
-			fmt.Printf("request: %+v\n", invoiceXMLRequest)
+			// fmt.Printf("request: %+v\n", invoiceXMLRequest)
 			invoiceXMLResponse, err := http.DefaultClient.Do(invoiceXMLRequest)
 			if err != nil {
 				return fmt.Errorf("error performing HTTP request: %v", err)
@@ -111,6 +112,7 @@ func DownloadPDFFromAPI(
 		if err != nil {
 			return fmt.Errorf("unable to download PDF: %v", err)
 		}
+
 	}
 
 	return nil

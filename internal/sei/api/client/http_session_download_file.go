@@ -9,6 +9,7 @@ import (
 	"net/textproto"
 	"net/url"
 	"os"
+	"strings"
 )
 
 func (hs *HTTPSession) DownloadPDFFromSourceXML(
@@ -17,6 +18,9 @@ func (hs *HTTPSession) DownloadPDFFromSourceXML(
 	sourceXMLFile io.Reader,
 	outputPath string,
 ) error {
+	if !strings.HasPrefix(endpoint, "https") {
+		endpoint = fmt.Sprintf("https://%s%s", hs.host, endpoint)
+	}
 	pdfURL, err := url.Parse(endpoint)
 	if err != nil {
 		return fmt.Errorf("unable to parse url for PDF")
