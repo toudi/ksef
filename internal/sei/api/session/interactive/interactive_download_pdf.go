@@ -43,8 +43,10 @@ func DownloadPDFFromAPI(
 	// httpSession := session.HTTPSession()
 	var seiRefNo string
 	var downloadAll = args.Invoice == "*"
+	var pdfExists bool
 
 	for _, invoice := range r.Invoices {
+		pdfExists = false
 		// * means to download all invoices.
 		seiRefNo = invoice.SEIReferenceNumber
 		if !downloadAll {
@@ -57,13 +59,17 @@ func DownloadPDFFromAPI(
 			continue
 		}
 		if _, err = os.Stat(path.Join(args.Output, seiRefNo+".pdf")); err == nil {
-			// PDF was already downloaded
-			if !downloadAll {
+			// PDF was already downloaded.
+			// make sure that if SaveXML was requested that we do not exit early
+			pdfExists = true
+			if !downloadAll && !args.SaveXml {
 				// this is only a single file download mode therefore
 				// nothing left to be done, we can safely return.
 				return nil
 			}
-			continue
+			if !args.SaveXml {
+				continue
+			}
 		}
 
 		var invoiceXMLReader io.Reader
@@ -102,17 +108,18 @@ func DownloadPDFFromAPI(
 			}
 		}
 
-		err = httpSession.DownloadPDFFromSourceXML(
-			fmt.Sprintf(pdf.DownloadInvoicePDF, seiRefNo),
-			seiRefNo+".xml",
-			invoiceXMLReader,
-			path.Join(args.Output, seiRefNo+".pdf"),
-		)
-
-		if err != nil {
-			return fmt.Errorf("unable to download PDF: %v", err)
+		if !pdfExists {
+			// dowload the PDF only if it wasn't already downloaded
+			err = httpSession.DownloadPDFFromSourceXML(
+				fmt.Sprintf(pdf.DownloadInvoicePDF, seiRefNo),
+				seiRefNo+".xml",
+				invoiceXMLReader,
+				path.Join(args.Output, seiRefNo+".pdf"),
+			)
+			if err != nil {
+				return fmt.Errorf("unable to download PDF: %v", err)
+			}
 		}
-
 	}
 
 	return nil
