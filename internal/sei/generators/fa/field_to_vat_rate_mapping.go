@@ -1,4 +1,4 @@
-package fa_2
+package fa
 
 import (
 	"ksef/internal/invoice"

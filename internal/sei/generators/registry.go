@@ -4,18 +4,17 @@ import (
 	"fmt"
 	"ksef/internal/interfaces"
 	"ksef/internal/sei/generators/fa_2"
+	"ksef/internal/sei/generators/fa_3_1"
 )
 
 var registry map[string]interfaces.Generator
 
-func registerGenerator(name string, g interfaces.Generator) error {
+func registerGenerator(name string, g interfaces.Generator) {
 	if registry == nil {
 		registry = make(map[string]interfaces.Generator, 0)
 	}
 
 	registry[name] = g
-
-	return nil
 }
 
 // func Run(generatorName string, delimiter string, inputFile string, outputDirectory string, encodingConversionFile string) (interfaces.Generator, error) {
@@ -59,4 +58,5 @@ func Generator(id string) (interfaces.Generator, error) {
 
 func init() {
 	registerGenerator("fa-2", fa_2.GeneratorFactory())
+	registerGenerator("fa-3_1.0", fa_3_1.GeneratorFactory())
 }

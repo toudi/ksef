@@ -1,4 +1,4 @@
-package fa_2
+package fa
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func (fg *FA2Generator) LineHandler(
+func (fg *FAGenerator) LineHandler(
 	inv *invoice.Invoice,
 	section string,
 	data map[string]string,

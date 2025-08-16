@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"ksef/cmd/ksef/commands"
@@ -75,6 +76,8 @@ func main() {
 	if err = command.FlagSet.Parse(args[1:]); err != nil {
 		return
 	}
+
+	command.Context = context.Background()
 
 	err = command.Run(command)
 	if err != nil {

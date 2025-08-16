@@ -1,6 +1,9 @@
 package commands
 
-import "flag"
+import (
+	"context"
+	"flag"
+)
 
 type CommandCallable = func(c *Command) error
 
@@ -10,6 +13,7 @@ type Command struct {
 	Description string
 	Args        interface{}
 	Run         CommandCallable
+	Context     context.Context
 }
 
 type commandsRegistry []*Command

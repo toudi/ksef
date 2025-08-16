@@ -1,4 +1,4 @@
-package fa_2
+package fa
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 // and want to output the xml.Node object as your output, which is then used to generate
 // metadata and so on.
 // if this is not what you wish to do, then please use the line-based generator approach (either CSV or XLSX)
-func (fg *FA2Generator) InvoiceToXMLTree(invoice *invoice.Invoice) (*xml.Node, error) {
+func (fg *FAGenerator) InvoiceToXMLTree(invoice *invoice.Invoice) (*xml.Node, error) {
 	var root = &xml.Node{Name: "Faktura"}
 
 	root.SetValuesFromMap(fg.commonData)
@@ -53,11 +53,15 @@ func (fg *FA2Generator) InvoiceToXMLTree(invoice *invoice.Invoice) (*xml.Node, e
 
 	fieldToVatRatesMapping.Populate(root)
 	faNode.SetValue("P_15", money.RenderAmountFromCurrencyUnits(invoice.Total.Gross, 2))
-	if err := root.ApplyOrdering(FA_2ChildrenOrder); err != nil {
+	if err := root.ApplyOrdering(fg.elementOrdering); err != nil {
 		return nil, fmt.Errorf("unable to apply schema order: %v", err)
 	}
 
 	fieldToVatRatesMapping.Zero()
+
+	if err := fg.hooks.PostProcess(root); err != nil {
+		return nil, err
+	}
 
 	return root, nil
 }
