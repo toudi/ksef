@@ -26,8 +26,8 @@ jobs:
         with:
           switches: -avzr --delete
           path: docs/.vitepress/dist/
-          remote_path: domains/po-godzinach.info/public_html/ksef/
+          remote_path: ${{ secrets.DOCS_REMOTE_PATH }}
           remote_host: ksef.po-godzinach.info
-          remote_user: toudi
-          remote_port: 222
+          remote_user: ${{ secrets.DOCS_REMOTE_USER }}
+          remote_port: ${{ secrets.DOCS_REMOTE_PORT }}
           remote_key: ${{ secrets.DOCS_DEPLOYMENT_KEY }}

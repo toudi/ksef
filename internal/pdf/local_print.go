@@ -18,19 +18,21 @@ type PDFPrinter interface {
 var ErrEngineNotConfigured = errors.New("PDF rendering engine not found in config")
 
 func GetLocalPrintingEngine() (PDFPrinter, error) {
-	engine := config.Config.PDFRenderer["engine"]
+	cfg := config.GetConfig()
+
+	engine := cfg.PDFRenderer["engine"]
 
 	if engine == puppeteer {
 		return &PuppeteerReferencePrinter{
-			nodeBin:         config.Config.PDFRenderer["node_bin"],
-			browserBin:      config.Config.PDFRenderer["browser_bin"],
-			templatePath:    config.Config.PDFRenderer["template_path"],
-			renderingScript: config.Config.PDFRenderer["rendering_script"],
+			nodeBin:         cfg.PDFRenderer["node_bin"],
+			browserBin:      cfg.PDFRenderer["browser_bin"],
+			templatePath:    cfg.PDFRenderer["template_path"],
+			renderingScript: cfg.PDFRenderer["rendering_script"],
 		}, nil
 	} else if engine == gotenberg {
 		return &GotenbergPrinter{
-			host:         config.Config.PDFRenderer["host"],
-			templatePath: config.Config.PDFRenderer["template_path"],
+			host:         cfg.PDFRenderer["host"],
+			templatePath: cfg.PDFRenderer["template_path"],
 		}, nil
 	}
 

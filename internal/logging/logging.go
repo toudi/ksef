@@ -58,7 +58,7 @@ func InitLogging(output string) error {
 		return nil
 	}
 
-	config := config.Config
+	config := config.GetConfig()
 
 	if config.Logging != nil {
 		var logger *slog.Logger

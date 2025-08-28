@@ -2,8 +2,8 @@ package commands
 
 import (
 	"flag"
+	"ksef/internal/config"
 	client_v2 "ksef/internal/sei/api/client/v2"
-	"ksef/internal/sei/api/environment"
 )
 
 type downloadCertsCommand struct {
@@ -33,15 +33,15 @@ func init() {
 }
 
 func downloadCertsRun(c *Command) error {
-	var env = environment.EnvironmentProduction
+	var env config.APIEnvironment = config.APIEnvironmentProd
 	if downloadCertsArgs.test {
-		env = environment.EnvironmentTest
+		env = config.APIEnvironmentTest
 	}
 
-	apiClient, err := client_v2.NewClient(c.Context, env)
+	apiClient, err := client_v2.NewClient(c.Context, config.GetConfig(), env)
 	if err != nil {
 		return err
 	}
 
-	return apiClient.DownloadCerts()
+	return apiClient.DownloadCertificates(c.Context)
 }

@@ -3,25 +3,62 @@ package config
 import (
 	"fmt"
 	"os"
+	"path"
 
 	"gopkg.in/yaml.v3"
 )
 
-type ConfigType struct {
-	Logging     map[string]string `yaml:"logging"`
-	PDFRenderer map[string]string `yaml:"pdf-renderer"`
+type APIEnvironment string
+
+const (
+	APIEnvironmentTest = "ksef-test.mf.gov.pl"
+	APIEnvironmentProd = "ksef.mf.gov.pl"
+)
+
+type Certificate string
+
+func (c Certificate) DER() string {
+	return string(c) + ".der"
 }
 
-var Config ConfigType
+func (c Certificate) PEM() string {
+	return string(c) + ".pem"
+}
+
+type APIConfig struct {
+	Host        string
+	Certificate Certificate
+}
+
+type Config struct {
+	Logging          map[string]string `yaml:"logging"`
+	PDFRenderer      map[string]string `yaml:"pdf-renderer"`
+	CertificatesPath string            `yaml:"certificates-path"`
+}
+
+func (c Config) APIConfig(env APIEnvironment) APIConfig {
+	return APIConfig{
+		Host:        string(env),
+		Certificate: Certificate(path.Join(c.CertificatesPath, string(env))),
+	}
+}
+
+var config = Config{
+	CertificatesPath: "klucze/",
+}
 
 func ReadConfig(configFile string) error {
 	file, err := os.Open(configFile)
 	if err != nil {
 		return fmt.Errorf("unable to open config file: %v", err)
 	}
-	if err = yaml.NewDecoder(file).Decode(&Config); err != nil {
+	if err = yaml.NewDecoder(file).Decode(&config); err != nil {
 		return fmt.Errorf("unable to parse config file: %v", err)
 	}
 
 	return nil
+}
+
+func GetConfig() Config {
+	return config
 }

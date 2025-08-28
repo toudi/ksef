@@ -81,7 +81,7 @@ func main() {
 
 	err = command.Run(command)
 	if err != nil {
-		fmt.Printf("błąd wykonania %s:\n%s\n", args[1], err)
+		fmt.Printf("błąd wykonania %s:\n%s\n", args[0], err)
 		return
 	}
 }
