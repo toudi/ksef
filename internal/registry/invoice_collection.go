@@ -1,39 +1,44 @@
-package invoice
+package registry
 
 import (
 	"errors"
 	"fmt"
-
 	"ksef/internal/logging"
-	registryPkg "ksef/internal/registry"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-type collectionFile struct {
+var (
+	ErrAlreadySynced        = errors.New("all invoices already sent")
+	ErrUnableToDetectIssuer = errors.New("unable to detect issuer")
+)
+
+// v2 api specs wants us to group invoices by their form code so we have to keep them in hash
+type InvoiceFormCode struct {
+	SystemCode    string `xml:"kodSystemowy,attr"`
+	SchemaVersion string `xml:"wersjaSchemy,attr"`
+	Value         string `xml:",chardata"`
+}
+
+type CollectionFile struct {
 	Filename string
 	Checksum string
 }
 
-type invoiceCollection struct {
+type InvoiceCollection struct {
 	Issuer string
-	Files  []collectionFile
+	Files  map[InvoiceFormCode][]CollectionFile
 }
 
-var ErrAlreadySynced = errors.New("all invoices already sent")
-
-func InvoiceCollection(
-	sourcePath string,
-	registry *registryPkg.InvoiceRegistry,
-) (*invoiceCollection, error) {
-	files, err := os.ReadDir(sourcePath)
+func (r *InvoiceRegistry) InvoiceCollection() (*InvoiceCollection, error) {
+	files, err := os.ReadDir(r.sourcePath)
 	if err != nil {
-		return nil, fmt.Errorf("cannot read list of files from %s: %v", sourcePath, err)
+		return nil, fmt.Errorf("cannot read list of files from %s: %v", r.sourcePath, err)
 	}
 
-	collection := &invoiceCollection{
-		Files: make([]collectionFile, 0),
+	collection := &InvoiceCollection{
+		Files: make(map[InvoiceFormCode][]CollectionFile),
 	}
 
 	var fileName string
@@ -45,7 +50,7 @@ func InvoiceCollection(
 
 	for _, file := range files {
 		fileName = file.Name()
-		fullFileName = filepath.Join(sourcePath, fileName)
+		fullFileName = filepath.Join(r.sourcePath, fileName)
 
 		// do not bother to check if the file is not an XML
 		if strings.ToLower(filepath.Ext(fileName)) != ".xml" {
@@ -62,7 +67,7 @@ func InvoiceCollection(
 			if err != nil {
 				return nil, fmt.Errorf("unable to hash source file: %v", err)
 			}
-			invoice := registry.GetInvoiceByChecksum(checksum)
+			invoice := r.GetInvoiceByChecksum(checksum)
 			if invoice.SEIReferenceNumber != "" {
 				logging.UploadLogger.Info(
 					"invoice was already uploaded - skipping",
@@ -72,11 +77,11 @@ func InvoiceCollection(
 				syncedFiles += 1
 				continue
 			}
-			collection.Files = append(collection.Files, collectionFile{
+			collection.Files[parsedInvoice.HeaderFormCode] = append(collection.Files[parsedInvoice.HeaderFormCode], CollectionFile{
 				Filename: fullFileName, Checksum: checksum,
 			})
 
-			_, err = registry.Upsert(registryPkg.Invoice{
+			_, err = r.Upsert(Invoice{
 				Checksum:        checksum,
 				ReferenceNumber: parsedInvoice.InvoiceNumber,
 			})
@@ -96,9 +101,8 @@ func InvoiceCollection(
 	}
 
 	if collection.Issuer == "" {
-		return nil, fmt.Errorf("no issuer found - this should be impossible")
+		return nil, ErrUnableToDetectIssuer
 	}
 
 	return collection, nil
-
 }

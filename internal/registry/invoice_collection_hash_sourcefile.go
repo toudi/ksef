@@ -1,4 +1,4 @@
-package invoice
+package registry
 
 import (
 	"crypto/sha256"

@@ -2,9 +2,8 @@ package commands
 
 import (
 	"flag"
-	"fmt"
-	"ksef/internal/sei/api/client"
-	"ksef/internal/sei/api/session/interactive"
+	"ksef/internal/config"
+	"ksef/internal/sei/api/client/v2/auth"
 )
 
 type saveTokenCommand struct {
@@ -44,16 +43,10 @@ func saveTokenRun(c *Command) error {
 		return nil
 	}
 
-	var environment = client.ProductionEnvironment
+	var env config.APIEnvironment = config.APIEnvironmentProd
 	if saveTokenArgs.testGateway {
-		environment = client.TestEnvironment
+		env = config.APIEnvironmentTest
 	}
 
-	gateway, err := client.APIClient_Init(environment)
-	if err != nil {
-		return fmt.Errorf("unknown environment: %v", environment)
-	}
-
-	session := interactive.InteractiveSessionInit(gateway)
-	return session.PersistToken(saveTokenArgs.NIP, saveTokenArgs.token)
+	return auth.PersistKsefTokenToKeyring(config.GetConfig().APIConfig(env).Host, saveTokenArgs.NIP, saveTokenArgs.token)
 }

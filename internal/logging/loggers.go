@@ -20,6 +20,7 @@ func defaultLogger() *slog.Logger {
 	)
 }
 
+var AuthLogger *slog.Logger = defaultLogger()
 var SeiLogger *slog.Logger = defaultLogger()
 var GenerateLogger *slog.Logger = defaultLogger()
 var UploadLogger *slog.Logger = defaultLogger()
@@ -40,6 +41,7 @@ func init() {
 	// is read.
 	loggers = map[string]*slog.Logger{
 		"main":             SeiLogger,
+		"auth":             AuthLogger,
 		"generate":         GenerateLogger,
 		"upload":           UploadLogger,
 		"upload.http":      UploadHTTPLogger,

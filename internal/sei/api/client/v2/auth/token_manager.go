@@ -16,6 +16,11 @@ const (
 	authStatusCodeSuccess    = 200
 )
 
+type TokenUpdate struct {
+	Token string
+	Err   error
+}
+
 type TokenInfo struct {
 	Token     string    `json:"token"`
 	ExpiresAt time.Time `json:"validUntil"`
@@ -28,6 +33,7 @@ type TokenManager struct {
 	finished            bool
 	authenticationToken string
 	sessionTokens       *SessionTokens
+	C                   chan TokenUpdate
 }
 
 type AuthenticationStatus struct {

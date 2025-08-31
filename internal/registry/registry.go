@@ -10,6 +10,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const registryName = "registry.yaml"
+
 type QueryCriteria struct {
 	DateFrom    time.Time `json:"invoicingDateFrom" yaml:"invoicingDateFrom"`
 	DateTo      time.Time `json:"invoicingDateTo"   yaml:"invoicingDateTo"`
@@ -122,8 +124,8 @@ func LoadRegistry(fileName string) (*InvoiceRegistry, error) {
 	return &registry, nil
 }
 
-func OpenOrCreate(fileName string) (*InvoiceRegistry, error) {
-	registry, err := LoadRegistry(fileName)
+func OpenOrCreate(dirName string) (*InvoiceRegistry, error) {
+	registry, err := LoadRegistry(path.Join(dirName, registryName))
 	if registry == nil && err == ErrDoesNotExist {
 		registry = NewRegistry()
 		return registry, nil

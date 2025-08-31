@@ -3,8 +3,9 @@ package commands
 import (
 	"flag"
 	"fmt"
-	"ksef/internal/sei/api/client"
-	"ksef/internal/sei/api/session/batch"
+	"ksef/internal/config"
+	"ksef/internal/logging"
+	v2 "ksef/internal/sei/api/client/v2"
 	"ksef/internal/sei/api/session/interactive"
 )
 
@@ -63,22 +64,31 @@ func uploadRun(c *Command) error {
 		return nil
 	}
 
-	environment := client.ProductionEnvironment
+	var env config.APIEnvironment = config.APIEnvironmentProd
 	if uploadArgs.testGateway {
-		environment = client.TestEnvironment
+		env = config.APIEnvironmentTest
 	}
 
-	gateway, err := client.APIClient_Init(environment)
+	cli, err := v2.NewClient(c.Context, config.GetConfig(), env)
 	if err != nil {
-		return fmt.Errorf("nieznane środowisko: %v", environment)
+		return fmt.Errorf("błąd inicjalizacji klienta: %v", err)
+	}
+
+	if err = cli.SetRegistryPath(uploadArgs.path); err != nil {
+		return err
 	}
 
 	if uploadArgs.interactive {
-		interactiveSession := interactive.InteractiveSessionInit(gateway)
+		interactiveSession := cli.InteractiveSession()
 		if uploadArgs.issuerToken != "" {
-			interactiveSession.SetIssuerToken(uploadArgs.issuerToken)
+			logging.AuthLogger.Warn("overriding KSeF token")
+			if err = cli.Auth.SetKsefToken(uploadArgs.issuerToken); err != nil {
+				logging.AuthLogger.Error("unable to override KSeF token")
+				return err
+			}
 		}
-		err := interactiveSession.UploadInvoices(uploadArgs.path)
+
+		err := interactiveSession.UploadInvoices()
 		if err == interactive.ErrProbablyUsedSend {
 			fmt.Printf(
 				"Wygląda na to, że poprzednio użyta została komenda 'upload' na tym rejestrze.\nJeśli na pewno chcesz ponowić wysyłkę, uzyj flagi '-f'\n",
@@ -88,7 +98,9 @@ func uploadRun(c *Command) error {
 		return err
 	}
 
-	batchSession := batch.BatchSessionInit(gateway)
-	return batchSession.UploadInvoices(uploadArgs.path)
+	return fmt.Errorf("batch session not implemented yet")
+
+	// batchSession := batch.BatchSessionInit(gateway)
+	// return batchSession.UploadInvoices(uploadArgs.path)
 
 }

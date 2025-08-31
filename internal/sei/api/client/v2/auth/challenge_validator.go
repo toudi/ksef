@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"ksef/internal/http"
 	"time"
 )
 
@@ -16,5 +17,5 @@ type ValidationResponse struct {
 }
 
 type AuthValidator interface {
-	ValidateChallenge(ctx context.Context, challenge authChallengeResponse) (*ValidationResponse, error)
+	ValidateChallenge(ctx context.Context, httpClient http.Client, challenge authChallengeResponse) (*ValidationResponse, error)
 }

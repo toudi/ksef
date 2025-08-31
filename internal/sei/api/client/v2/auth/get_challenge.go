@@ -32,5 +32,5 @@ func (ah AuthHandler) ObtainSessionToken(ctx context.Context) (*ValidationRespon
 		return nil, err
 	}
 
-	return ah.challengeValidator.ValidateChallenge(ctx, authResponse)
+	return ah.challengeValidator.ValidateChallenge(ctx, ah.httpClient, authResponse)
 }

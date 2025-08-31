@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"ksef/internal/invoice"
 	registryPkg "ksef/internal/registry"
 	"ksef/internal/sei/api/client"
 	"os"
@@ -29,7 +28,7 @@ func DownloadPDFFromLocalFile(
 	args *DownloadPDFArgs,
 ) error {
 	// let's check if the specified `invoice` is actually a source XML file.
-	invoiceStruct, err := invoice.ParseInvoice(args.Invoice)
+	invoiceStruct, err := registryPkg.ParseInvoice(args.Invoice)
 	if err != nil {
 		// the code using this will catch this error and continue via different path
 		return IsNotXMLInvoice

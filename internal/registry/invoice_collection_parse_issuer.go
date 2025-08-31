@@ -1,4 +1,4 @@
-package invoice
+package registry
 
 import (
 	"encoding/xml"
@@ -7,9 +7,10 @@ import (
 )
 
 type XMLInvoice struct {
-	XMLName       xml.Name `xml:"Faktura"`
-	Issuer        string   `xml:"Podmiot1>DaneIdentyfikacyjne>NIP"`
-	InvoiceNumber string   `xml:"Fa>P_2"`
+	XMLName        xml.Name        `xml:"Faktura"`
+	HeaderFormCode InvoiceFormCode `xml:"Naglowek>KodFormularza"`
+	Issuer         string          `xml:"Podmiot1>DaneIdentyfikacyjne>NIP"`
+	InvoiceNumber  string          `xml:"Fa>P_2"`
 }
 
 func parseInvoiceIssuer(sourceFile string) (string, error) {
