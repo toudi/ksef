@@ -21,7 +21,7 @@ func pkcs7Pad(data []byte, blockSize int) ([]byte, error) {
 	if blockSize <= 0 {
 		return nil, ErrInvalidBlockSize
 	}
-	if data == nil || len(data) == 0 {
+	if len(data) == 0 {
 		return nil, ErrInvalidPKCS7Data
 	}
 	padLen := blockSize - len(data)%blockSize

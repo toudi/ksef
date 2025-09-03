@@ -3,6 +3,7 @@ package interactive
 import (
 	"context"
 	"errors"
+	"ksef/internal/config"
 	HTTP "ksef/internal/http"
 	"ksef/internal/logging"
 	"ksef/internal/registry"
@@ -17,7 +18,7 @@ type Session struct {
 	sessionToken        string
 	httpClient          HTTP.Client
 	initialized         bool
-	ready               chan bool
+	apiConfig           config.APIConfig
 }
 
 var ErrObtainSessionTokenTimeout = errors.New("timeout waiting for session token")
@@ -27,12 +28,13 @@ func NewSession(httpClient HTTP.Client, tokenUpdatesChannel chan auth.TokenUpdat
 		tokenUpdatesChannel: tokenUpdatesChannel,
 		httpClient:          httpClient,
 		collection:          collection,
-		ready:               make(chan bool),
 	}
 }
 
 func (s *Session) UploadInvoices() error {
-	go s.eventLoop()
+	var initializedC = make(chan bool)
+
+	go s.eventLoop(initializedC)
 	defer func() {
 		s.finished = true
 	}()
@@ -40,22 +42,21 @@ func (s *Session) UploadInvoices() error {
 	// we have to wait for the session token to be ready but let's not wait indefinetely
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 
-	for !s.initialized {
-		select {
-		case <-ctx.Done():
-			cancel()
-			return ErrObtainSessionTokenTimeout
-		case <-s.ready:
-			logging.AuthLogger.Debug("session token obtained")
-			cancel()
-			s.initialized = true
-		}
+	select {
+	case <-ctx.Done():
+		cancel()
+		return ErrObtainSessionTokenTimeout
+	case <-initializedC:
+		logging.AuthLogger.Debug("session token obtained")
+		cancel()
 	}
 
 	// v2 specs forces us to group invoices by their form code
 	// on the other hand, it no longer forces us to send invoices through a 3rd party server
 	for formCode, files := range s.collection.Files {
-
+		if err := s.uploadInvoicesForForm(context.Background(), formCode, files); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -65,7 +66,7 @@ func (s *Session) UploadInvoices() error {
 // asynchronous and so it is the token manager that needs to notify the session that the token is
 // indeed ready (and what it is). This event will be called regardless whether the token was
 // established for the first time or it was refreshed
-func (s *Session) eventLoop() {
+func (s *Session) eventLoop(initialized chan bool) {
 	var heartbeat = time.NewTicker(time.Second)
 
 	for !s.finished {
@@ -83,8 +84,17 @@ func (s *Session) eventLoop() {
 			}
 			logging.InteractiveLogger.Debug("token refreshed")
 			s.sessionToken = tokenUpdate.Token
+			if !s.initialized {
+				initialized <- true
+			}
 		}
 	}
 
 	heartbeat.Stop()
+}
+
+func (s *Session) authHeaders() map[string]string {
+	return map[string]string{
+		"Authorization": "Bearer " + s.sessionToken,
+	}
 }
