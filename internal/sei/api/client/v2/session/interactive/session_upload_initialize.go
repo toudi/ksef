@@ -51,7 +51,6 @@ func (s *Session) initialize(ctx context.Context, invoiceFormCode registry.Invoi
 	_, err = s.httpClient.Request(
 		ctx,
 		HTTP.RequestConfig{
-			Headers:         s.authHeaders(),
 			Body:            req,
 			ContentType:     HTTP.JSON,
 			Dest:            &resp,
@@ -83,5 +82,5 @@ func (s *Session) uploadInvoicesForForm(ctx context.Context, invoiceFormCode reg
 			logging.InteractiveLogger.Error("error uploading invoice", "counter", i, "error", err)
 		}
 	}
-	return s.Close(ctx, us)
+	return s.closeUploadSession(ctx, us)
 }

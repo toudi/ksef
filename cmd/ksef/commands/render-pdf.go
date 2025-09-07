@@ -91,7 +91,10 @@ func renderPDFRun(c *Command) error {
 
 	logging.PDFRendererLogger.Debug("calculated checksum", "checksum", fileChecksum)
 
-	invoiceMeta := registry.GetInvoiceByChecksum(fileChecksum)
+	invoiceMeta, err := registry.GetInvoiceByChecksum(fileChecksum)
+	if err != nil {
+		return err
+	}
 	if invoiceMeta.Checksum != fileChecksum {
 		return fmt.Errorf("nie udało się znaleźć faktury na podstawie kryteriów wejściowych")
 	}

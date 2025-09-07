@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"ksef/internal/interfaces"
 	"net/http"
 	"net/url"
 	"time"
@@ -31,7 +32,8 @@ type RequestConfig struct {
 }
 
 type Client struct {
-	Base string
+	Base                   string
+	AuthTokenRetrieverFunc interfaces.TokenRetrieverFunc
 }
 
 func (rb Client) Request(ctx context.Context, config RequestConfig, endpoint string) (*http.Response, error) {
@@ -75,6 +77,14 @@ func (rb Client) Request(ctx context.Context, config RequestConfig, endpoint str
 
 	for headerName, headerValue := range config.Headers {
 		req.Header.Set(headerName, headerValue)
+	}
+
+	if rb.AuthTokenRetrieverFunc != nil {
+		token, err := rb.AuthTokenRetrieverFunc()
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Authorization", "Bearer "+token)
 	}
 
 	resp, err := http.DefaultClient.Do(req)

@@ -32,6 +32,10 @@ type InvoiceCollection struct {
 }
 
 func (r *InvoiceRegistry) InvoiceCollection() (*InvoiceCollection, error) {
+	if r.collection != nil {
+		return r.collection, nil
+	}
+
 	files, err := os.ReadDir(r.sourcePath)
 	if err != nil {
 		return nil, fmt.Errorf("cannot read list of files from %s: %v", r.sourcePath, err)
@@ -67,7 +71,7 @@ func (r *InvoiceRegistry) InvoiceCollection() (*InvoiceCollection, error) {
 			if err != nil {
 				return nil, fmt.Errorf("unable to hash source file: %v", err)
 			}
-			invoice := r.GetInvoiceByChecksum(checksum)
+			invoice, _ := r.GetInvoiceByChecksum(checksum)
 			if invoice.SEIReferenceNumber != "" {
 				logging.UploadLogger.Info(
 					"invoice was already uploaded - skipping",
@@ -103,6 +107,8 @@ func (r *InvoiceRegistry) InvoiceCollection() (*InvoiceCollection, error) {
 	if collection.Issuer == "" {
 		return nil, ErrUnableToDetectIssuer
 	}
+
+	r.collection = collection
 
 	return collection, nil
 }

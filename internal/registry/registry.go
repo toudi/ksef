@@ -3,6 +3,7 @@ package registry
 import (
 	"errors"
 	"fmt"
+	"ksef/internal/config"
 	"os"
 	"path"
 	"time"
@@ -11,6 +12,18 @@ import (
 )
 
 const registryName = "registry.yaml"
+
+type InvoiceUploadResult struct {
+	Filename string `yaml:"filename"`
+	Checksum string `yaml:"checksum"`
+	SeiRefNo string `yaml:"seiRefNo"`
+	Failed   bool   `yaml:"failed,omitzero"` // whether the invoice was processed successfuly
+}
+
+type UploadSessionStatus struct {
+	Processed bool                   `yaml:"processed"`
+	Invoices  []*InvoiceUploadResult `yaml:"invoices"`
+}
 
 type QueryCriteria struct {
 	DateFrom    time.Time `json:"invoicingDateFrom" yaml:"invoicingDateFrom"`
@@ -59,16 +72,17 @@ type PaymentId struct {
 }
 
 type InvoiceRegistry struct {
-	QueryCriteria QueryCriteria  `json:"queryCriteria" yaml:"queryCriteria,omitempty"`
-	Environment   string         `                     yaml:"environment"`
-	Invoices      []Invoice      `                     yaml:"invoices,omitempty"`
-	Issuer        string         `                     yaml:"issuer,omitempty"`
-	SessionID     string         `                     yaml:"sessionId,omitempty"`
-	seiRefNoIndex map[string]int `                     yaml:"-"`
-	refNoIndex    map[string]int `                     yaml:"-"`
-	checksumIndex map[string]int `                     yaml:"-"`
-	PaymentIds    []PaymentId    `                     yaml:"payment-ids,omitempty"`
-	sourcePath    string
+	QueryCriteria  QueryCriteria                   `json:"queryCriteria" yaml:"queryCriteria,omitempty"`
+	Environment    config.APIEnvironment           `                     yaml:"environment"`
+	Invoices       []Invoice                       `                     yaml:"invoices,omitempty"`
+	Issuer         string                          `                     yaml:"issuer,omitempty"`
+	seiRefNoIndex  map[string]int                  `                     yaml:"-"`
+	refNoIndex     map[string]int                  `                     yaml:"-"`
+	checksumIndex  map[string]int                  `                     yaml:"-"`
+	PaymentIds     []PaymentId                     `                     yaml:"payment-ids,omitempty"`
+	UploadSessions map[string]*UploadSessionStatus `yaml:"upload-sessions"` // map between upload session ID and list of seiRefNumbers
+	sourcePath     string
+	collection     *InvoiceCollection `yaml:"-"` // cache invoice collection ptr
 }
 
 var ErrDoesNotExist = errors.New("registry file does not exist")

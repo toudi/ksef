@@ -4,6 +4,7 @@ import (
 	"errors"
 	"ksef/internal/config"
 	"ksef/internal/http"
+	"time"
 )
 
 var ErrInvalidChallengeValidator = errors.New("invalid challenge validator")
@@ -38,6 +39,10 @@ func NewManager(handler *AuthHandler) *Manager {
 
 func (a *AuthHandler) Close() {
 	a.tokenManager.Stop()
+}
+
+func (a *AuthHandler) GetAuthorizationToken(timeout ...time.Duration) (string, error) {
+	return a.tokenManager.GetAuthorizationToken(timeout...)
 }
 
 func WithChallengeValidator(validator AuthValidator) func(handler *AuthHandler) {

@@ -3,10 +3,11 @@ package commands
 import (
 	"flag"
 	"fmt"
+	"ksef/internal/config"
+	"ksef/internal/logging"
 	registryPkg "ksef/internal/registry"
-	"ksef/internal/sei/api/client"
-	"ksef/internal/sei/api/upo"
-	"ksef/internal/utils"
+	v2 "ksef/internal/sei/api/client/v2"
+	"ksef/internal/sei/api/client/v2/upo"
 	"path/filepath"
 )
 
@@ -14,101 +15,86 @@ type statusCommand struct {
 	Command
 }
 
-type statusArgsType struct {
-	path            string
-	xml             bool
-	downloadUPOArgs upo.DownloadUPOParams
-}
+var registryPath string
 
 var StatusCommand *statusCommand
-var statusArgs statusArgsType
+var upoDownloaderParams upo.UPODownloaderParams
+var issuerToken string
+var xml bool
 
 func init() {
+	upoDownloaderParams.Format = upo.UPOFormatPDF
 	StatusCommand = &statusCommand{
 		Command: Command{
 			Name:        "status",
 			FlagSet:     flag.NewFlagSet("status", flag.ExitOnError),
 			Description: "wysyła sprawdza status przesyłki i pobiera dokument UPO",
 			Run:         statusRun,
-			Args:        statusArgs,
+			Args:        upoDownloaderParams,
 		},
 	}
 
-	StatusCommand.FlagSet.StringVar(&statusArgs.path, "p", "", "ścieżka do pliku rejestru")
+	StatusCommand.FlagSet.StringVar(&registryPath, "p", "", "ścieżka do pliku rejestru")
 	StatusCommand.FlagSet.StringVar(
-		&statusArgs.downloadUPOArgs.Output,
+		&upoDownloaderParams.Path,
 		"o",
 		"",
 		"ścieżka do zapisu UPO (domyślnie katalog pliku rejestru + {nrRef}.pdf)",
 	)
 	StatusCommand.FlagSet.BoolVar(
-		&statusArgs.downloadUPOArgs.Mkdir,
+		&upoDownloaderParams.Mkdir,
 		"m",
 		false,
 		"stwórz katalog, jeśli wskazany do zapisu nie istnieje",
 	)
-	StatusCommand.FlagSet.BoolVar(&statusArgs.xml, "xml", false, "zapis UPO jako plik XML")
+	StatusCommand.FlagSet.BoolFunc("xml", "zapis UPO jako plik XML", func(s string) error {
+		upoDownloaderParams.Format = upo.UPOFormatPDF
+		return nil
+	})
+	StatusCommand.FlagSet.StringVar(
+		&issuerToken,
+		"token",
+		"",
+		"Token sesji interaktywnej lub nazwa zmiennej środowiskowej która go zawiera",
+	)
 
 	registerCommand(&StatusCommand.Command)
 }
 
 func statusRun(c *Command) error {
-	if statusArgs.path == "" {
+	if registryPath == "" {
 		StatusCommand.FlagSet.Usage()
 		return nil
 	}
 
-	registry, err := registryPkg.LoadRegistry(statusArgs.path)
+	registry, err := registryPkg.LoadRegistry(registryPath)
 	if err != nil {
 		return fmt.Errorf("unable to load status from file: %v", err)
 	}
 
-	if registry.Environment == "" || registry.SessionID == "" {
+	if registry.Environment == "" || registry.UploadSessions == nil {
 		return fmt.Errorf(
 			"file deserialized correctly, but either environment or referenceNo are empty: %+v",
 			registry,
 		)
 	}
 
-	statusArgs.downloadUPOArgs.OutputFormat = upo.UPOFormatPDF
-
-	if statusArgs.xml {
-		statusArgs.downloadUPOArgs.OutputFormat = upo.UPOFormatXML
-	}
-
-	if statusArgs.downloadUPOArgs.Output == "" {
-		statusArgs.downloadUPOArgs.Output = filepath.Dir(statusArgs.path)
-	}
-
-	outputPath, err := utils.ResolveFilepath(
-		utils.FilepathResolverConfig{
-			Path:  statusArgs.downloadUPOArgs.Output,
-			Mkdir: statusArgs.downloadUPOArgs.Mkdir,
-			DefaultFilename: fmt.Sprintf(
-				"%s.%s",
-				registry.SessionID,
-				statusArgs.downloadUPOArgs.OutputFormat,
-			),
-		},
-	)
-
-	if err == utils.ErrDoesNotExistAndMkdirNotSpecified {
-		return fmt.Errorf("wskazany katalog nie istnieje a nie użyłeś opcji `-m`")
-	}
+	cli, err := v2.NewClient(c.Context, config.GetConfig(), registry.Environment, v2.WithRegistry(registry))
 	if err != nil {
-		return fmt.Errorf("błąd tworzenia katalogu wyjściowego: %v", err)
+		return fmt.Errorf("błąd inicjalizacji klienta: %v", err)
 	}
 
-	statusArgs.downloadUPOArgs.Output = outputPath
-
-	gateway, err := client.APIClient_Init(registry.Environment)
-	if err != nil {
-		return fmt.Errorf("cannot initialize gateway: %v", err)
+	if issuerToken != "" {
+		logging.AuthLogger.Warn("overriding KSeF token")
+		if err = cli.Auth.SetKsefToken(issuerToken); err != nil {
+			logging.AuthLogger.Error("unable to override KSeF token")
+			return err
+		}
 	}
 
-	if err = upo.DownloadUPO(gateway, registry, &statusArgs.downloadUPOArgs); err != nil {
-		return fmt.Errorf("unable to download UPO: %v", err)
+	if upoDownloaderParams.Path == "" {
+		upoDownloaderParams.Path = filepath.Dir(registryPath)
 	}
 
-	return nil
+	return cli.UploadSessionsStatusCheck(c.Context, upoDownloaderParams)
 }

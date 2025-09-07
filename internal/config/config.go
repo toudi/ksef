@@ -11,8 +11,8 @@ import (
 type APIEnvironment string
 
 const (
-	APIEnvironmentTest = "ksef-test.mf.gov.pl"
-	APIEnvironmentProd = "ksef.mf.gov.pl"
+	APIEnvironmentTest APIEnvironment = "ksef-test.mf.gov.pl"
+	APIEnvironmentProd APIEnvironment = "ksef.mf.gov.pl"
 )
 
 type Certificate string

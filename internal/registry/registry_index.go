@@ -2,6 +2,10 @@ package registry
 
 import "errors"
 
+var (
+	ErrUnknownInvoice = errors.New("unable to lookup invoice by checksum")
+)
+
 func (r *InvoiceRegistry) Contains(refNo string) bool {
 	_, exists := r.seiRefNoIndex[refNo]
 	return exists
@@ -17,10 +21,10 @@ func (r *InvoiceRegistry) GetSEIRefNo(invoiceNo string) (string, error) {
 	return "", errors.New("invoice number could not be found")
 }
 
-func (r *InvoiceRegistry) GetInvoiceByChecksum(checksum string) Invoice {
+func (r *InvoiceRegistry) GetInvoiceByChecksum(checksum string) (Invoice, error) {
 	index, exists := r.checksumIndex[checksum]
 	if !exists {
-		return Invoice{}
+		return Invoice{}, ErrUnknownInvoice
 	}
-	return r.Invoices[index]
+	return r.Invoices[index], nil
 }

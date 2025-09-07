@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"ksef/internal/config"
 	"ksef/internal/logging"
+	registryPkg "ksef/internal/registry"
 	v2 "ksef/internal/sei/api/client/v2"
 	"ksef/internal/sei/api/session/interactive"
 )
@@ -69,17 +70,21 @@ func uploadRun(c *Command) error {
 		env = config.APIEnvironmentTest
 	}
 
-	cli, err := v2.NewClient(c.Context, config.GetConfig(), env)
+	registry, err := registryPkg.LoadRegistry(uploadArgs.path)
+	if err != nil {
+		return err
+	}
+
+	cli, err := v2.NewClient(c.Context, config.GetConfig(), env, v2.WithRegistry(registry))
 	if err != nil {
 		return fmt.Errorf("błąd inicjalizacji klienta: %v", err)
 	}
 
-	if err = cli.SetRegistryPath(uploadArgs.path); err != nil {
-		return err
-	}
-
 	if uploadArgs.interactive {
-		interactiveSession := cli.InteractiveSession()
+		interactiveSession, err := cli.InteractiveSession()
+		if err != nil {
+			return err
+		}
 		if uploadArgs.issuerToken != "" {
 			logging.AuthLogger.Warn("overriding KSeF token")
 			if err = cli.Auth.SetKsefToken(uploadArgs.issuerToken); err != nil {
@@ -88,7 +93,7 @@ func uploadRun(c *Command) error {
 			}
 		}
 
-		err := interactiveSession.UploadInvoices()
+		err = interactiveSession.UploadInvoices()
 		if err == interactive.ErrProbablyUsedSend {
 			fmt.Printf(
 				"Wygląda na to, że poprzednio użyta została komenda 'upload' na tym rejestrze.\nJeśli na pewno chcesz ponowić wysyłkę, uzyj flagi '-f'\n",

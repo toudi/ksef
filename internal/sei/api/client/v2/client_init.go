@@ -18,20 +18,26 @@ type APIClient struct {
 	httpClient httpClient.Client
 	ctx        context.Context
 	// for uploading sessions
-	invoiceCollection *registryPkg.InvoiceCollection
+	registry *registryPkg.InvoiceRegistry
 }
 
-func NewClient(ctx context.Context, cfg config.Config, env config.APIEnvironment) (*APIClient, error) {
+func NewClient(ctx context.Context, cfg config.Config, env config.APIEnvironment, options ...func(c *APIClient)) (*APIClient, error) {
 	logging.SeiLogger.Info("klient KSeF v2 - start programu")
 
 	apiConfig := cfg.APIConfig(env)
 	httpClient := httpClient.Client{Base: "https://" + apiConfig.Host}
 
-	return &APIClient{
+	client := &APIClient{
 		ctx:        ctx,
 		httpClient: httpClient,
 		apiConfig:  apiConfig,
-	}, nil
+	}
+
+	for _, option := range options {
+		option(client)
+	}
+
+	return client, nil
 }
 
 func (c *APIClient) DownloadCertificates(ctx context.Context) error {
@@ -42,8 +48,13 @@ func (c *APIClient) DownloadCertificates(ctx context.Context) error {
 	)
 }
 
-func (c *APIClient) InteractiveSession() *interactive.Session {
-	issuerNip := c.invoiceCollection.Issuer
+func (c *APIClient) InteractiveSession() (*interactive.Session, error) {
+	collection, err := c.registry.InvoiceCollection()
+	if err != nil {
+		return nil, err
+	}
+
+	issuerNip := collection.Issuer
 
 	// WARNING: for now, the challenge validator is forced to ksefToken
 	challengeValidator := auth.NewKsefTokenAuthValidator(c.apiConfig, issuerNip)
@@ -52,20 +63,13 @@ func (c *APIClient) InteractiveSession() *interactive.Session {
 		challengeValidator,
 	))
 	c.Auth = auth.NewManager(c.auth)
+	c.httpClient.AuthTokenRetrieverFunc = c.auth.GetAuthorizationToken
 
-	return nil
+	return interactive.NewSession(c.httpClient, c.registry), nil
 }
 
-func (c *APIClient) SetRegistryPath(path string) error {
-	registry, err := registryPkg.OpenOrCreate(path)
-	if err != nil {
-		return err
+func WithRegistry(registry *registryPkg.InvoiceRegistry) func(client *APIClient) {
+	return func(client *APIClient) {
+		client.registry = registry
 	}
-
-	collection, err := registry.InvoiceCollection()
-	if err != nil {
-		return err
-	}
-	c.invoiceCollection = collection
-	return nil
 }

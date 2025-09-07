@@ -3,6 +3,7 @@ package interactive
 import (
 	"context"
 	HTTP "ksef/internal/http"
+	"ksef/internal/registry"
 	"net/http"
 )
 
@@ -19,7 +20,6 @@ func (s *Session) uploadFile(ctx context.Context, us *uploadSession, filename st
 	var resp InvoiceUploadResponse
 
 	_, err = s.httpClient.Request(ctx, HTTP.RequestConfig{
-		Headers:         s.authHeaders(),
 		Body:            payload,
 		ContentType:     HTTP.JSON,
 		Dest:            &resp,
@@ -33,6 +33,14 @@ func (s *Session) uploadFile(ctx context.Context, us *uploadSession, filename st
 	}
 
 	us.seiRefNumbers[filename] = resp.ReferenceNumber
+
+	// notify invoice registry that we've uploaded `filename` within `us.refNo` upload session and that it has
+	// received `resp.ReferenceNumber`. This will be important when we'll want to retrieve UPO's
+	s.registry.SetUploadResult(us.refNo, &registry.InvoiceUploadResult{
+		Filename: filename,
+		Checksum: payload.InvoiceHash,
+		SeiRefNo: resp.ReferenceNumber,
+	})
 
 	return nil
 }

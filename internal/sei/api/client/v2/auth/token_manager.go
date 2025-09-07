@@ -3,17 +3,20 @@ package auth
 import (
 	"context"
 	"errors"
-	"fmt"
 	"ksef/internal/http"
 	baseHttp "net/http"
+	"sync"
 	"time"
 )
 
 const (
 	endpointAuthStatus       = "/api/v2/auth/%s"
-	endpointAuthTokenRedeem  = "/api/v2/auth/token/redeem"
 	endpointAuthTokenRefresh = "/api/v2/auth/token/refresh"
 	authStatusCodeSuccess    = 200
+)
+
+var (
+	ErrTimeoutReadingToken = errors.New("timeout reading authorization token")
 )
 
 type TokenUpdate struct {
@@ -33,69 +36,14 @@ type TokenManager struct {
 	finished            bool
 	authenticationToken string
 	sessionTokens       *SessionTokens
-	C                   chan TokenUpdate
+	updateChannel       chan TokenUpdate
+	mutex               sync.RWMutex
 }
 
 type AuthenticationStatus struct {
 	Status struct {
 		Code int `json:"code"`
 	} `json:"status"`
-}
-
-func (t *TokenManager) Stop() {
-	t.finished = true
-}
-
-func (t *TokenManager) Run() {
-	ticker := time.NewTicker(1 * time.Second)
-
-	var httpClient http.Client
-	ctx := context.Background()
-
-	for !t.finished {
-		<-ticker.C
-		if t.sessionTokens == nil {
-			if t.authenticationToken != "" {
-				var authHeaders = map[string]string{"Authorization": "Bearer " + t.authenticationToken}
-				// session tokens are empty - we have to check if they can be retrieved
-				var authStatus AuthenticationStatus
-				_, _ = httpClient.Request(ctx, http.RequestConfig{
-					Headers:         authHeaders,
-					Dest:            &authStatus,
-					DestContentType: http.JSON,
-					ExpectedStatus:  baseHttp.StatusOK,
-					Method:          baseHttp.MethodPost,
-				}, fmt.Sprintf(endpointAuthStatus, t.authenticationToken))
-				if authStatus.Status.Code == authStatusCodeSuccess {
-					// let's fetch the tokens for the initial time
-					var tokens SessionTokens
-					_, _ = httpClient.Request(ctx, http.RequestConfig{
-						Method:          baseHttp.MethodGet,
-						Headers:         authHeaders,
-						Dest:            &tokens,
-						DestContentType: http.JSON,
-					}, endpointAuthTokenRedeem)
-					t.sessionTokens = &tokens
-				}
-			}
-		} else {
-			// if we do have session tokens, let's check if we need to refresh them
-			var now = time.Now()
-			if now.After(t.sessionTokens.AuthorizationToken.ExpiresAt) {
-				// but only if we're not past refresh token expiration time
-				if now.Before(t.sessionTokens.RefreshToken.ExpiresAt) {
-					newToken, err := t.GetAccessToken(ctx, httpClient, t.sessionTokens.RefreshToken.Token)
-					if err == nil {
-						t.sessionTokens.AuthorizationToken = newToken
-					}
-				} else {
-					fmt.Printf("too late to refresh token")
-				}
-			}
-		}
-	}
-
-	ticker.Stop()
 }
 
 func (t *TokenManager) GetAccessToken(ctx context.Context, httpClient http.Client, refreshToken string) (*TokenInfo, error) {
@@ -114,4 +62,58 @@ func (t *TokenManager) GetAccessToken(ctx context.Context, httpClient http.Clien
 	} else {
 		return nil, errors.New("unexpected code")
 	}
+}
+
+// this is a blocking function that will either:
+// - retrieve the most recent authorization token or
+// - timeout after 15 seconds
+func (t *TokenManager) GetAuthorizationToken(timeout ...time.Duration) (string, error) {
+	// a bit of an ugly way to pass a custom tiemout but hey.. it works
+	// desperate times call for desperate measures and all that.
+	if len(timeout) == 0 {
+		timeout = []time.Duration{15 * time.Second}
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout[0])
+	defer cancel()
+
+	// so this temporary channel is for retrieving the *current* token
+	var tokenChan = make(chan string)
+	defer close(tokenChan)
+
+	go t.readToken(tokenChan)
+
+	select {
+	case <-ctx.Done():
+		return "", ErrTimeoutReadingToken
+	case tokenUpdate := <-t.updateChannel:
+		return tokenUpdate.Token, tokenUpdate.Err
+	case token := <-tokenChan:
+		return token, nil
+	}
+}
+
+// read token from memory. if it exists, push it to tokenChan
+func (t *TokenManager) readToken(tokenChan chan string) {
+	t.mutex.RLock()
+	defer t.mutex.RUnlock()
+
+	token := t.sessionTokens
+	if token != nil && token.AuthorizationToken != nil {
+		tokenChan <- token.AuthorizationToken.Token
+	}
+}
+
+func (t *TokenManager) updateAuthorizationToken(authToken string, commit func()) {
+	// first send an update to update channel as it doesn't require acquiring a lock
+	// which means that the above GetAuthorizationToken function cal capture it
+	// in the select loop
+	t.updateChannel <- TokenUpdate{
+		Token: authToken,
+	}
+
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
+	// callback that has a guarantee of being executed withing mutex lock
+	commit()
 }

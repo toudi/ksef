@@ -9,11 +9,10 @@ import (
 
 const endpointSessionClose = "/api/v2/sessions/online/%s/close"
 
-func (s *Session) Close(ctx context.Context, us *uploadSession) error {
+func (s *Session) closeUploadSession(ctx context.Context, us *uploadSession) error {
 	_, err := s.httpClient.Request(
 		ctx,
 		HTTP.RequestConfig{
-			Headers:        s.authHeaders(),
 			ExpectedStatus: http.StatusNoContent,
 			Method:         http.MethodPost,
 		},
