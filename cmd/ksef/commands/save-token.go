@@ -3,7 +3,7 @@ package commands
 import (
 	"flag"
 	"ksef/internal/config"
-	"ksef/internal/sei/api/client/v2/auth"
+	kseftoken "ksef/internal/sei/api/client/v2/auth/ksef_token"
 )
 
 type saveTokenCommand struct {
@@ -26,7 +26,6 @@ func init() {
 			FlagSet:     flag.NewFlagSet("save-token", flag.ExitOnError),
 			Description: "zapisuje token KSeF w systemowym pęku kluczy",
 			Run:         saveTokenRun,
-			Args:        saveTokenArgs,
 		},
 	}
 
@@ -48,5 +47,5 @@ func saveTokenRun(c *Command) error {
 		env = config.APIEnvironmentTest
 	}
 
-	return auth.PersistKsefTokenToKeyring(config.GetConfig().APIConfig(env).Host, saveTokenArgs.NIP, saveTokenArgs.token)
+	return kseftoken.PersistKsefTokenToKeyring(config.GetConfig().APIConfig(env).Host, saveTokenArgs.NIP, saveTokenArgs.token)
 }

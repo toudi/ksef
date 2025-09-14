@@ -11,13 +11,13 @@ import (
 type Session struct {
 	registry   *registry.InvoiceRegistry
 	finished   bool
-	httpClient HTTP.Client
+	httpClient *HTTP.Client
 	apiConfig  config.APIConfig
 }
 
 var ErrObtainSessionTokenTimeout = errors.New("timeout waiting for session token")
 
-func NewSession(httpClient HTTP.Client, registry *registry.InvoiceRegistry) *Session {
+func NewSession(httpClient *HTTP.Client, registry *registry.InvoiceRegistry) *Session {
 	return &Session{
 		httpClient: httpClient,
 		registry:   registry,

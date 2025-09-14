@@ -23,22 +23,16 @@ func init() {
 			FlagSet:     flag.NewFlagSet("download-certs", flag.ExitOnError),
 			Description: "pobiera certyfikaty klucza publicznego",
 			Run:         downloadCertsRun,
-			Args:        downloadCertsArgs,
 		},
 	}
 
-	DownloadCertsCommand.FlagSet.BoolVar(&downloadCertsArgs.test, "test", false, "użycie serwera testowego")
+	testGatewayFlag(DownloadCertsCommand.FlagSet)
 
 	registerCommand(&DownloadCertsCommand.Command)
 }
 
 func downloadCertsRun(c *Command) error {
-	var env config.APIEnvironment = config.APIEnvironmentProd
-	if downloadCertsArgs.test {
-		env = config.APIEnvironmentTest
-	}
-
-	apiClient, err := client_v2.NewClient(c.Context, config.GetConfig(), env)
+	apiClient, err := client_v2.NewClient(c.Context, config.GetConfig(), environment)
 	if err != nil {
 		return err
 	}

@@ -18,7 +18,7 @@ type FailedInvoicesResponse struct {
 	Invoices          []FailedInvoiceInfo `json:"invoices"`
 }
 
-func GetFailedInvoiceList(ctx context.Context, httpClient HTTP.Client, uploadSessionId string) ([]int, error) {
+func GetFailedInvoiceList(ctx context.Context, httpClient *HTTP.Client, uploadSessionId string) ([]int, error) {
 	var failedInvoices []int
 	var err error
 

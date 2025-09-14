@@ -2,7 +2,12 @@ package commands
 
 import (
 	"context"
+	"errors"
 	"flag"
+)
+
+var (
+	ErrNotImplemented = errors.New("not implemented")
 )
 
 type CommandCallable = func(c *Command) error
@@ -11,7 +16,6 @@ type Command struct {
 	Name        string
 	FlagSet     *flag.FlagSet
 	Description string
-	Args        interface{}
 	Run         CommandCallable
 	Context     context.Context
 }

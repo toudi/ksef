@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"ksef/internal/config"
-	"ksef/internal/logging"
 	registryPkg "ksef/internal/registry"
 	v2 "ksef/internal/sei/api/client/v2"
 	"ksef/internal/sei/api/session/interactive"
@@ -15,10 +14,8 @@ type uploadCommand struct {
 }
 
 type uploadArgsType struct {
-	testGateway bool
 	path        string
 	interactive bool
-	issuerToken string
 }
 
 var UploadCommand *uploadCommand
@@ -31,18 +28,14 @@ func init() {
 			FlagSet:     flag.NewFlagSet("upload", flag.ExitOnError),
 			Description: "wysyła podpisany plik KSEF do bramki ministerstwa finansów",
 			Run:         uploadRun,
-			Args:        uploadArgs,
 		},
 	}
 
-	UploadCommand.FlagSet.BoolVar(&uploadArgs.testGateway, "t", false, "użyj bramki testowej")
+	flagSet := UploadCommand.FlagSet
+	initAuthParams(flagSet)
+	testGatewayFlag(flagSet)
+
 	UploadCommand.FlagSet.BoolVar(&uploadArgs.interactive, "i", false, "użyj sesji interaktywnej")
-	UploadCommand.FlagSet.StringVar(
-		&uploadArgs.issuerToken,
-		"token",
-		"",
-		"Token sesji interaktywnej lub nazwa zmiennej środowiskowej która go zawiera",
-	)
 	UploadCommand.FlagSet.StringVar(
 		&uploadArgs.path,
 		"p",
@@ -65,17 +58,20 @@ func uploadRun(c *Command) error {
 		return nil
 	}
 
-	var env config.APIEnvironment = config.APIEnvironmentProd
-	if uploadArgs.testGateway {
-		env = config.APIEnvironmentTest
-	}
-
 	registry, err := registryPkg.LoadRegistry(uploadArgs.path)
 	if err != nil {
 		return err
 	}
 
-	cli, err := v2.NewClient(c.Context, config.GetConfig(), env, v2.WithRegistry(registry))
+	// load invoice collection to retrieve the issuer
+	collection, err := registry.InvoiceCollection()
+	if err != nil {
+		return err
+	}
+
+	authValidator := authValidatorInstance(collection.Issuer)
+
+	cli, err := v2.NewClient(c.Context, config.GetConfig(), environment, v2.WithRegistry(registry), v2.WithAuthValidator(authValidator))
 	if err != nil {
 		return fmt.Errorf("błąd inicjalizacji klienta: %v", err)
 	}
@@ -84,13 +80,6 @@ func uploadRun(c *Command) error {
 		interactiveSession, err := cli.InteractiveSession()
 		if err != nil {
 			return err
-		}
-		if uploadArgs.issuerToken != "" {
-			logging.AuthLogger.Warn("overriding KSeF token")
-			if err = cli.Auth.SetKsefToken(uploadArgs.issuerToken); err != nil {
-				logging.AuthLogger.Error("unable to override KSeF token")
-				return err
-			}
 		}
 
 		err = interactiveSession.UploadInvoices()

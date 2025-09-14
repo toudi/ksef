@@ -13,7 +13,9 @@ import (
 // (i każdego kolejnego) tokenu sesyjnego.
 
 func (c *APIClient) UploadSessionsStatusCheck(ctx context.Context, upoDownloaderParams upo.UPODownloaderParams) error {
-	upoDownloader := upo.NewDownloader(c.httpClient, upoDownloaderParams)
+	httpClient := c.authenticatedHTTPClient()
+
+	upoDownloader := upo.NewDownloader(httpClient, upoDownloaderParams)
 
 	// let's iterate through all of upload sessions and skip these that were already processed
 	for uploadSessionId, uploadSessionStatus := range c.registry.UploadSessions {
@@ -21,7 +23,7 @@ func (c *APIClient) UploadSessionsStatusCheck(ctx context.Context, upoDownloader
 			continue
 		}
 
-		statusResponse, err := status.CheckSessionStatus(ctx, c.httpClient, uploadSessionId)
+		statusResponse, err := status.CheckSessionStatus(ctx, httpClient, uploadSessionId)
 		if err != nil {
 			// log this rather than returning an error eagerly I suppose since there may be
 			// more than a single session to check
@@ -31,7 +33,7 @@ func (c *APIClient) UploadSessionsStatusCheck(ctx context.Context, upoDownloader
 
 		if statusResponse.FailedInvoiceCount > 0 {
 			// we have to mark failed invoices in registry
-			failedInvoiceList, err := status.GetFailedInvoiceList(ctx, c.httpClient, uploadSessionId)
+			failedInvoiceList, err := status.GetFailedInvoiceList(ctx, httpClient, uploadSessionId)
 			if err != nil {
 				logging.SeiLogger.Error("błąd pobierania listy błędnie przetworzonych faktur", "error", err)
 			}

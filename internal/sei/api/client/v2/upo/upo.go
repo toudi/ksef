@@ -29,11 +29,11 @@ type UPODownloaderParams struct {
 // https://ksef.mf.gov.pl/web/anonymous-upo-status
 // const downloadUrl = "https://klient-eformularz.mf.gov.pl/api/upo/%s/pdf"
 type UPODownloader struct {
-	httpClient HTTP.Client
+	httpClient *HTTP.Client
 	params     UPODownloaderParams
 }
 
-func NewDownloader(httpClient HTTP.Client, params UPODownloaderParams) *UPODownloader {
+func NewDownloader(httpClient *HTTP.Client, params UPODownloaderParams) *UPODownloader {
 	return &UPODownloader{
 		httpClient: httpClient,
 		params:     params,
@@ -41,7 +41,8 @@ func NewDownloader(httpClient HTTP.Client, params UPODownloaderParams) *UPODownl
 }
 
 func (ud *UPODownloader) Download(ctx context.Context, uploadSessionId string, pages []UPODownloadPage) error {
-	outputPath, err := utils.ResolveFilepath(
+	// outputPath
+	_, err := utils.ResolveFilepath(
 		utils.FilepathResolverConfig{
 			Path:  ud.params.Path,
 			Mkdir: ud.params.Mkdir,

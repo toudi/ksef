@@ -22,6 +22,7 @@ const (
 type RequestConfig struct {
 	Timeout         time.Duration
 	Headers         map[string]string
+	QueryParams     map[string]string
 	ContentType     string
 	Body            any
 	Dest            any
@@ -36,7 +37,7 @@ type Client struct {
 	AuthTokenRetrieverFunc interfaces.TokenRetrieverFunc
 }
 
-func (rb Client) Request(ctx context.Context, config RequestConfig, endpoint string) (*http.Response, error) {
+func (rb *Client) Request(ctx context.Context, config RequestConfig, endpoint string) (*http.Response, error) {
 	var cancel context.CancelFunc
 
 	if config.Timeout.Abs() == 0 {
@@ -69,6 +70,13 @@ func (rb Client) Request(ctx context.Context, config RequestConfig, endpoint str
 	req, err := http.NewRequestWithContext(ctx, config.Method, fullUrl.String(), body)
 	if err != nil {
 		return nil, err
+	}
+	if config.QueryParams != nil {
+		params := req.URL.Query()
+		for paramName, paramValue := range config.QueryParams {
+			params.Set(paramName, paramValue)
+		}
+		req.URL.RawQuery = params.Encode()
 	}
 
 	if config.ContentType == JSON {

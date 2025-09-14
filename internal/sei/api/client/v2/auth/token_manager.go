@@ -4,15 +4,13 @@ import (
 	"context"
 	"errors"
 	"ksef/internal/http"
-	baseHttp "net/http"
+	"ksef/internal/sei/api/client/v2/auth/validator"
 	"sync"
 	"time"
 )
 
 const (
-	endpointAuthStatus       = "/api/v2/auth/%s"
 	endpointAuthTokenRefresh = "/api/v2/auth/token/refresh"
-	authStatusCodeSuccess    = 200
 )
 
 var (
@@ -33,35 +31,26 @@ type SessionTokens struct {
 	RefreshToken       *TokenInfo `json:"refreshToken"`
 }
 type TokenManager struct {
+	challengeValidator  validator.AuthChallengeValidator
 	finished            bool
-	authenticationToken string
 	sessionTokens       *SessionTokens
 	updateChannel       chan TokenUpdate
 	mutex               sync.RWMutex
+	httpClient          *http.Client
+	validationReference *validator.ValidationReference
+}
+
+func NewTokenManager(httpClient *http.Client, challengeValidator validator.AuthChallengeValidator) *TokenManager {
+	return &TokenManager{
+		updateChannel: make(chan TokenUpdate),
+		httpClient:    httpClient,
+	}
 }
 
 type AuthenticationStatus struct {
 	Status struct {
 		Code int `json:"code"`
 	} `json:"status"`
-}
-
-func (t *TokenManager) GetAccessToken(ctx context.Context, httpClient http.Client, refreshToken string) (*TokenInfo, error) {
-	var tokens SessionTokens
-	resp, err := httpClient.Request(ctx, http.RequestConfig{
-		Method:          baseHttp.MethodPost,
-		Headers:         map[string]string{"Authorization": "Bearer " + t.sessionTokens.RefreshToken.Token},
-		Dest:            &tokens,
-		DestContentType: http.JSON,
-	}, endpointAuthTokenRefresh)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode == baseHttp.StatusOK {
-		return tokens.AuthorizationToken, nil
-	} else {
-		return nil, errors.New("unexpected code")
-	}
 }
 
 // this is a blocking function that will either:
@@ -110,6 +99,8 @@ func (t *TokenManager) updateAuthorizationToken(authToken string, commit func())
 	t.updateChannel <- TokenUpdate{
 		Token: authToken,
 	}
+
+	t.validationReference = nil
 
 	t.mutex.Lock()
 	defer t.mutex.Unlock()

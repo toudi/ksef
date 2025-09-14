@@ -23,7 +23,7 @@ type certificateRow struct {
 	Usage       []string `json:"usage"`
 }
 
-func DownloadCertificates(ctx context.Context, client http.Client, cfg config.APIConfig) error {
+func DownloadCertificates(ctx context.Context, client *http.Client, cfg config.APIConfig) error {
 	var certificates []certificateRow
 
 	_, err := client.Request(

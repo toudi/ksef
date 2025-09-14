@@ -2,13 +2,7 @@ package commands
 
 import (
 	"flag"
-	"fmt"
 	"ksef/internal/pdf"
-	"ksef/internal/registry"
-	"ksef/internal/sei/api/client"
-	"ksef/internal/sei/api/session/interactive"
-	"path/filepath"
-	"strings"
 )
 
 type downloadPDFCommand struct {
@@ -29,7 +23,6 @@ func init() {
 			FlagSet:     flag.NewFlagSet("download-pdf", flag.ExitOnError),
 			Description: "pobiera wizualizację PDF dla wskazanej faktury",
 			Run:         downloadPDFRun,
-			Args:        downloadPDFArgs,
 		},
 	}
 
@@ -65,36 +58,40 @@ func init() {
 		"zapisz źródłowy plik XML",
 	)
 
-	registerCommand(&DownloadPDFCommand.Command)
+	// API v2 zdaje się nie wspierać tej operacji więc do odwołania wyrejestrowuję komendę
+	// registerCommand(&DownloadPDFCommand.Command)
 }
 
 func downloadPDFRun(c *Command) error {
-	if downloadPDFArgs.path == "" || downloadPDFArgs.internalArgs.Invoice == "" {
-		DownloadPDFCommand.FlagSet.Usage()
-		return nil
-	}
+	return ErrNotImplemented
+	/*
+		if downloadPDFArgs.path == "" || downloadPDFArgs.internalArgs.Invoice == "" {
+			DownloadPDFCommand.FlagSet.Usage()
+			return nil
+		}
 
-	registry, err := registry.LoadRegistry(downloadPDFArgs.path)
-	if err != nil {
-		return fmt.Errorf("unable to load registry from file: %v", err)
-	}
+		registry, err := registry.LoadRegistry(downloadPDFArgs.path)
+		if err != nil {
+			return fmt.Errorf("unable to load registry from file: %v", err)
+		}
 
-	if registry.Environment == "" {
-		return fmt.Errorf("file deserialized correctly, but environment is empty")
-	}
+		if registry.Environment == "" {
+			return fmt.Errorf("file deserialized correctly, but environment is empty")
+		}
 
-	gateway, err := client.APIClient_Init(registry.Environment)
-	if err != nil {
-		return fmt.Errorf("cannot initialize gateway: %v", err)
-	}
+		gateway, err := client.APIClient_Init(registry.Environment)
+		if err != nil {
+			return fmt.Errorf("cannot initialize gateway: %v", err)
+		}
 
-	if downloadPDFArgs.internalArgs.Output == "" {
-		downloadPDFArgs.internalArgs.Output = filepath.Dir(downloadPDFArgs.path)
-	}
+		if downloadPDFArgs.internalArgs.Output == "" {
+			downloadPDFArgs.internalArgs.Output = filepath.Dir(downloadPDFArgs.path)
+		}
 
-	if strings.HasSuffix(strings.ToLower(downloadPDFArgs.internalArgs.Invoice), ".xml") {
-		return pdf.DownloadPDFFromLocalFile(gateway, registry, &downloadPDFArgs.internalArgs)
-	}
+		if strings.HasSuffix(strings.ToLower(downloadPDFArgs.internalArgs.Invoice), ".xml") {
+			return pdf.DownloadPDFFromLocalFile(gateway, registry, &downloadPDFArgs.internalArgs)
+		}
 
-	return interactive.DownloadPDFFromAPI(gateway, &downloadPDFArgs.internalArgs, registry)
+		return interactive.DownloadPDFFromAPI(gateway, &downloadPDFArgs.internalArgs, registry)
+	*/
 }

@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"ksef/internal/config"
-	"ksef/internal/logging"
 	registryPkg "ksef/internal/registry"
 	v2 "ksef/internal/sei/api/client/v2"
 	"ksef/internal/sei/api/client/v2/upo"
@@ -30,9 +29,11 @@ func init() {
 			FlagSet:     flag.NewFlagSet("status", flag.ExitOnError),
 			Description: "wysyła sprawdza status przesyłki i pobiera dokument UPO",
 			Run:         statusRun,
-			Args:        upoDownloaderParams,
 		},
 	}
+
+	flagSet := StatusCommand.FlagSet
+	initAuthParams(flagSet)
 
 	StatusCommand.FlagSet.StringVar(&registryPath, "p", "", "ścieżka do pliku rejestru")
 	StatusCommand.FlagSet.StringVar(
@@ -51,12 +52,6 @@ func init() {
 		upoDownloaderParams.Format = upo.UPOFormatPDF
 		return nil
 	})
-	StatusCommand.FlagSet.StringVar(
-		&issuerToken,
-		"token",
-		"",
-		"Token sesji interaktywnej lub nazwa zmiennej środowiskowej która go zawiera",
-	)
 
 	registerCommand(&StatusCommand.Command)
 }
@@ -79,17 +74,11 @@ func statusRun(c *Command) error {
 		)
 	}
 
-	cli, err := v2.NewClient(c.Context, config.GetConfig(), registry.Environment, v2.WithRegistry(registry))
+	authValidator := authValidatorInstance(registry.Issuer)
+
+	cli, err := v2.NewClient(c.Context, config.GetConfig(), registry.Environment, v2.WithRegistry(registry), v2.WithAuthValidator(authValidator))
 	if err != nil {
 		return fmt.Errorf("błąd inicjalizacji klienta: %v", err)
-	}
-
-	if issuerToken != "" {
-		logging.AuthLogger.Warn("overriding KSeF token")
-		if err = cli.Auth.SetKsefToken(issuerToken); err != nil {
-			logging.AuthLogger.Error("unable to override KSeF token")
-			return err
-		}
 	}
 
 	if upoDownloaderParams.Path == "" {

@@ -27,7 +27,6 @@ func init() {
 			FlagSet:     flag.NewFlagSet("metadata", flag.ExitOnError),
 			Description: "generuje plik metadanych dla wskazanego katalogu faktur (tylko tryb wsadowy)",
 			Run:         metadataRun,
-			Args:        metadataArgs,
 		},
 	}
 

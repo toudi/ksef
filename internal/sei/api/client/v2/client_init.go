@@ -7,25 +7,28 @@ import (
 	"ksef/internal/logging"
 	registryPkg "ksef/internal/registry"
 	"ksef/internal/sei/api/client/v2/auth"
+	"ksef/internal/sei/api/client/v2/auth/validator"
 	"ksef/internal/sei/api/client/v2/security"
 	"ksef/internal/sei/api/client/v2/session/interactive"
 )
 
 type APIClient struct {
-	auth       *auth.AuthHandler
-	Auth       *auth.Manager
-	apiConfig  config.APIConfig
-	httpClient httpClient.Client
-	ctx        context.Context
+	tokenManager           *auth.TokenManager
+	authChallengeValidator validator.AuthChallengeValidator
+	apiConfig              config.APIConfig
+	httpClient             *httpClient.Client
+	ctx                    context.Context
 	// for uploading sessions
 	registry *registryPkg.InvoiceRegistry
 }
 
-func NewClient(ctx context.Context, cfg config.Config, env config.APIEnvironment, options ...func(c *APIClient)) (*APIClient, error) {
+type InitializerFunc func(c *APIClient)
+
+func NewClient(ctx context.Context, cfg config.Config, env config.APIEnvironment, options ...InitializerFunc) (*APIClient, error) {
 	logging.SeiLogger.Info("klient KSeF v2 - start programu")
 
 	apiConfig := cfg.APIConfig(env)
-	httpClient := httpClient.Client{Base: "https://" + apiConfig.Host}
+	httpClient := &httpClient.Client{Base: "https://" + apiConfig.Host}
 
 	client := &APIClient{
 		ctx:        ctx,
@@ -37,7 +40,24 @@ func NewClient(ctx context.Context, cfg config.Config, env config.APIEnvironment
 		option(client)
 	}
 
+	if client.authChallengeValidator != nil {
+		client.tokenManager = auth.NewTokenManager(httpClient, client.authChallengeValidator)
+		go client.tokenManager.Run()
+	}
+
 	return client, nil
+}
+
+func (c *APIClient) authenticatedHTTPClient() *httpClient.Client {
+	// create a copy of httpClient that will use token manager instance to retrieve the current session token
+	return &httpClient.Client{
+		Base:                   c.httpClient.Base,
+		AuthTokenRetrieverFunc: c.tokenManager.GetAuthorizationToken,
+	}
+}
+
+func (c *APIClient) Close() {
+	c.tokenManager.Stop()
 }
 
 func (c *APIClient) DownloadCertificates(ctx context.Context) error {
@@ -49,27 +69,17 @@ func (c *APIClient) DownloadCertificates(ctx context.Context) error {
 }
 
 func (c *APIClient) InteractiveSession() (*interactive.Session, error) {
-	collection, err := c.registry.InvoiceCollection()
-	if err != nil {
-		return nil, err
-	}
-
-	issuerNip := collection.Issuer
-
-	// WARNING: for now, the challenge validator is forced to ksefToken
-	challengeValidator := auth.NewKsefTokenAuthValidator(c.apiConfig, issuerNip)
-
-	c.auth = auth.NewAuthHandler(c.httpClient, c.apiConfig, auth.WithChallengeValidator(
-		challengeValidator,
-	))
-	c.Auth = auth.NewManager(c.auth)
-	c.httpClient.AuthTokenRetrieverFunc = c.auth.GetAuthorizationToken
-
-	return interactive.NewSession(c.httpClient, c.registry), nil
+	return interactive.NewSession(c.authenticatedHTTPClient(), c.registry), nil
 }
 
 func WithRegistry(registry *registryPkg.InvoiceRegistry) func(client *APIClient) {
 	return func(client *APIClient) {
 		client.registry = registry
+	}
+}
+
+func WithAuthValidator(validator validator.AuthChallengeValidator) func(client *APIClient) {
+	return func(client *APIClient) {
+		client.authChallengeValidator = validator
 	}
 }

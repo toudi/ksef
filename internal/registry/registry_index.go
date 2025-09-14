@@ -6,8 +6,8 @@ var (
 	ErrUnknownInvoice = errors.New("unable to lookup invoice by checksum")
 )
 
-func (r *InvoiceRegistry) Contains(refNo string) bool {
-	_, exists := r.seiRefNoIndex[refNo]
+func (r *InvoiceRegistry) Contains(ksefRefNo string) bool {
+	_, exists := r.seiRefNoIndex[ksefRefNo]
 	return exists
 }
 

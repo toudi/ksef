@@ -32,7 +32,6 @@ func init() {
 			FlagSet:     flag.NewFlagSet("render-pdf", flag.ExitOnError),
 			Description: "drukuje PDF dla wskazanej faktury używając lokalnego szablonu",
 			Run:         renderPDFRun,
-			Args:        renderPDFArgs,
 		},
 	}
 

@@ -31,7 +31,6 @@ func init() {
 			FlagSet:     flag.NewFlagSet("generate", flag.ExitOnError),
 			Description: "Konwertuje plik CSV/YAML/XLSX do pliku KSEF (XML)",
 			Run:         generateRun,
-			Args:        generateArgs,
 		},
 	}
 
