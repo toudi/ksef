@@ -151,3 +151,7 @@ func OpenOrCreate(dirName string) (*InvoiceRegistry, error) {
 
 	return registry, nil
 }
+
+func (r *InvoiceRegistry) GetDir() string {
+	return path.Dir(r.sourcePath)
+}

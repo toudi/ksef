@@ -8,6 +8,7 @@ import (
 	v2 "ksef/internal/sei/api/client/v2"
 	"ksef/internal/sei/api/client/v2/auth/validator"
 	"ksef/internal/sei/api/client/v2/invoices"
+	typesInvoices "ksef/internal/sei/api/client/v2/types/invoices"
 	"path"
 	"time"
 )
@@ -46,19 +47,19 @@ func init() {
 
 	// specify subject type
 	flagSet.BoolFunc("income", "Synchronizuj faktury przychodowe (Podmiot1)", func(s string) error {
-		syncInvoicesArgs.params.SubjectType = invoices.SubjectTypeIssuer
+		syncInvoicesArgs.params.SubjectType = typesInvoices.SubjectTypeIssuer
 		return nil
 	})
 	flagSet.BoolFunc("cost", "Synchronizuj faktury kosztowe (Podmiot2)", func(s string) error {
-		syncInvoicesArgs.params.SubjectType = invoices.SubjectTypeRecipient
+		syncInvoicesArgs.params.SubjectType = typesInvoices.SubjectTypeRecipient
 		return nil
 	})
 	flagSet.BoolFunc("payer", "Synchronizuj faktury podmiotu innego (Podmiot3)", func(s string) error {
-		syncInvoicesArgs.params.SubjectType = invoices.SubjectTypePayer
+		syncInvoicesArgs.params.SubjectType = typesInvoices.SubjectTypePayer
 		return nil
 	})
 	flagSet.BoolFunc("subjectAuthorized", "Synchronizuj faktury podmiotu upoważnionego (???)", func(s string) error {
-		syncInvoicesArgs.params.SubjectType = invoices.SubjectTypeAuthorized
+		syncInvoicesArgs.params.SubjectType = typesInvoices.SubjectTypeAuthorized
 		return nil
 	})
 
@@ -91,7 +92,7 @@ func syncInvoicesRun(c *Command) error {
 		if syncInvoicesArgs.subjectNIP == "" ||
 			syncInvoicesArgs.params.DestPath == "" ||
 			syncInvoicesArgs.startDateInput == "" ||
-			syncInvoicesArgs.params.SubjectType == invoices.SubjectTypeInvalid {
+			syncInvoicesArgs.params.SubjectType == typesInvoices.SubjectTypeInvalid {
 			c.FlagSet.Usage()
 			return nil
 		}

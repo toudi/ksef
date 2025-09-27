@@ -2,11 +2,18 @@ package invoices
 
 import (
 	"context"
+	"errors"
 	"ksef/internal/http"
+	"ksef/internal/pdf"
 	"ksef/internal/registry"
+	types "ksef/internal/sei/api/client/v2/types/invoices"
 	baseHttp "net/http"
 	"strconv"
 	"time"
+)
+
+var (
+	ErrUnableToInitializePDFPrintingEngine = errors.New("nie udało się zainicjować silnika wydruku PDF")
 )
 
 type DateRangeType string
@@ -16,18 +23,8 @@ const (
 	DateRangeTypeIssue       DateRangeType = "Issue"
 )
 
-type InvoiceMetadata struct {
-	KSeFNumber    string `json:"ksefNumber"`
-	InvoiceNumber string `json:"invoiceNumber"`
-}
-
-type InvoiceMetadataResponse struct {
-	HasMore  bool              `json:"hasMore"`
-	Invoices []InvoiceMetadata `json:"invoices"`
-}
-
 type InvoiceMetadataRequest struct {
-	SubjectType SubjectType `json:"subjectType"`
+	SubjectType types.SubjectType `json:"subjectType"`
 	DateRange   struct {
 		DateType DateRangeType `json:"dateType"`
 		From     time.Time     `json:"from"`
@@ -39,12 +36,19 @@ func Sync(ctx context.Context, httpClient *http.Client, params SyncParams, regis
 		finished bool
 		page     int
 		req      InvoiceMetadataRequest
-		resp     InvoiceMetadataResponse
+		resp     types.InvoiceMetadataResponse
 		err      error
 	)
 
 	req.DateRange.DateType = DateRangeTypeIssue
 	req.DateRange.From = registry.QueryCriteria.DateFrom
+
+	printingEngine, err := pdf.GetLocalPrintingEngine()
+	if err != nil {
+		return ErrUnableToInitializePDFPrintingEngine
+	}
+
+	downloader := NewInvoiceDownloader(httpClient, registry)
 
 	for !finished {
 		_, err = httpClient.Request(
@@ -68,11 +72,29 @@ func Sync(ctx context.Context, httpClient *http.Client, params SyncParams, regis
 		}
 
 		for _, invoice := range resp.Invoices {
+			var filename string
+			var checksum string
+
 			if registry.Contains(invoice.KSeFNumber) {
 				continue
 			}
-			// TODO: download and print PDF
+
+			// download invoice to a local file
+			if filename, checksum, err = downloader.Download(ctx, invoice, params.SubjectType); err != nil {
+				return err
+			}
+			if params.PDF {
+				registryMeta, err := registry.GetInvoiceByChecksum(checksum)
+				if err != nil {
+					return err
+				}
+				if err = pdf.PrintLocalInvoice(printingEngine, registryMeta, filename); err != nil {
+					return err
+				}
+			}
 		}
+
+		finished = !resp.HasMore
 
 		page += 1
 	}

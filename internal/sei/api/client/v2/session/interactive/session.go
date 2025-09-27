@@ -10,12 +10,14 @@ import (
 
 type Session struct {
 	registry   *registry.InvoiceRegistry
-	finished   bool
 	httpClient *HTTP.Client
 	apiConfig  config.APIConfig
 }
 
-var ErrObtainSessionTokenTimeout = errors.New("timeout waiting for session token")
+var (
+	ErrObtainSessionTokenTimeout = errors.New("timeout waiting for session token")
+	ErrProbablyUsedSend          = errors.New("upload command probably used previously")
+)
 
 func NewSession(httpClient *HTTP.Client, registry *registry.InvoiceRegistry) *Session {
 	return &Session{
@@ -24,7 +26,7 @@ func NewSession(httpClient *HTTP.Client, registry *registry.InvoiceRegistry) *Se
 	}
 }
 
-func (s *Session) UploadInvoices() error {
+func (s *Session) UploadInvoices(params UploadParams) error {
 	// at this point the collection has already been initialized and retrieved so no need for checking the error
 	collection, _ := s.registry.InvoiceCollection()
 

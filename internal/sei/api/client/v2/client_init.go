@@ -8,8 +8,6 @@ import (
 	registryPkg "ksef/internal/registry"
 	"ksef/internal/sei/api/client/v2/auth"
 	"ksef/internal/sei/api/client/v2/auth/validator"
-	"ksef/internal/sei/api/client/v2/security"
-	"ksef/internal/sei/api/client/v2/session/interactive"
 )
 
 type APIClient struct {
@@ -58,18 +56,6 @@ func (c *APIClient) authenticatedHTTPClient() *httpClient.Client {
 
 func (c *APIClient) Close() {
 	c.tokenManager.Stop()
-}
-
-func (c *APIClient) DownloadCertificates(ctx context.Context) error {
-	logging.SeiLogger.Debug("pobieranie certyfikatów klucza publicznego")
-
-	return security.DownloadCertificates(
-		ctx, c.httpClient, c.apiConfig,
-	)
-}
-
-func (c *APIClient) InteractiveSession() (*interactive.Session, error) {
-	return interactive.NewSession(c.authenticatedHTTPClient(), c.registry), nil
 }
 
 func WithRegistry(registry *registryPkg.InvoiceRegistry) func(client *APIClient) {

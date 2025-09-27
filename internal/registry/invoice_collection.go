@@ -16,9 +16,9 @@ var (
 
 // v2 api specs wants us to group invoices by their form code so we have to keep them in hash
 type InvoiceFormCode struct {
-	SystemCode    string `xml:"kodSystemowy,attr"`
-	SchemaVersion string `xml:"wersjaSchemy,attr"`
-	Value         string `xml:",chardata"`
+	SystemCode    string `xml:"kodSystemowy,attr" json:"systemCode"`
+	SchemaVersion string `xml:"wersjaSchemy,attr" json:"schemaVersion"`
+	Value         string `xml:",chardata" json:"value"`
 }
 
 type CollectionFile struct {

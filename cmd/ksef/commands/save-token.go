@@ -11,9 +11,8 @@ type saveTokenCommand struct {
 }
 
 type saveTokenArgsType struct {
-	token       string
-	NIP         string
-	testGateway bool
+	token string
+	NIP   string
 }
 
 var SaveTokenCommand *saveTokenCommand
@@ -29,7 +28,7 @@ func init() {
 		},
 	}
 
-	SaveTokenCommand.FlagSet.BoolVar(&saveTokenArgs.testGateway, "t", false, "użyj bramki testowej")
+	testGatewayFlag(SaveTokenCommand.FlagSet)
 	SaveTokenCommand.FlagSet.StringVar(&saveTokenArgs.NIP, "nip", "", "numer NIP podatnika")
 	SaveTokenCommand.FlagSet.StringVar(&saveTokenArgs.token, "token", "", "token wygenerowany na środowisku KSeF")
 
@@ -42,10 +41,9 @@ func saveTokenRun(c *Command) error {
 		return nil
 	}
 
-	var env config.APIEnvironment = config.APIEnvironmentProd
-	if saveTokenArgs.testGateway {
-		env = config.APIEnvironmentTest
-	}
-
-	return kseftoken.PersistKsefTokenToKeyring(config.GetConfig().APIConfig(env).Host, saveTokenArgs.NIP, saveTokenArgs.token)
+	return kseftoken.PersistKsefTokenToKeyring(
+		config.GetConfig().APIConfig(environment).Host,
+		saveTokenArgs.NIP,
+		saveTokenArgs.token,
+	)
 }

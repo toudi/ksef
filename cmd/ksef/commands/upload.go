@@ -6,7 +6,7 @@ import (
 	"ksef/internal/config"
 	registryPkg "ksef/internal/registry"
 	v2 "ksef/internal/sei/api/client/v2"
-	"ksef/internal/sei/api/session/interactive"
+	"ksef/internal/sei/api/client/v2/session/interactive"
 )
 
 type uploadCommand struct {
@@ -14,8 +14,9 @@ type uploadCommand struct {
 }
 
 type uploadArgsType struct {
-	path        string
-	interactive bool
+	path                    string
+	interactive             bool
+	interactiveUploadParams interactive.UploadParams
 }
 
 var UploadCommand *uploadCommand
@@ -43,7 +44,7 @@ func init() {
 		"ścieżka do katalogu z wygenerowanymi fakturami",
 	)
 	UploadCommand.FlagSet.BoolVar(
-		&interactive.InteractiveSessionUploadParams.ForceUpload,
+		&uploadArgs.interactiveUploadParams.ForceUpload,
 		"f",
 		false,
 		"potwierdź wysyłkę faktur pomimo istniejących sum kontrolnych",
@@ -82,7 +83,7 @@ func uploadRun(c *Command) error {
 			return err
 		}
 
-		err = interactiveSession.UploadInvoices()
+		err = interactiveSession.UploadInvoices(uploadArgs.interactiveUploadParams)
 		if err == interactive.ErrProbablyUsedSend {
 			fmt.Printf(
 				"Wygląda na to, że poprzednio użyta została komenda 'upload' na tym rejestrze.\nJeśli na pewno chcesz ponowić wysyłkę, uzyj flagi '-f'\n",

@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"ksef/internal/utils"
 	"os"
 	"path"
 
@@ -15,6 +16,11 @@ const (
 	APIEnvironmentProd APIEnvironment = "ksef.mf.gov.pl"
 )
 
+var nipValidators = map[APIEnvironment]utils.NIPValidatorType{
+	APIEnvironmentProd: utils.NIPValidator,
+	APIEnvironmentTest: utils.NIPLengthValidator,
+}
+
 type Certificate string
 
 func (c Certificate) DER() string {
@@ -26,8 +32,9 @@ func (c Certificate) PEM() string {
 }
 
 type APIConfig struct {
-	Host        string
-	Certificate Certificate
+	Host         string
+	Certificate  Certificate
+	NIPValidator utils.NIPValidatorType
 }
 
 type Config struct {
@@ -38,8 +45,9 @@ type Config struct {
 
 func (c Config) APIConfig(env APIEnvironment) APIConfig {
 	return APIConfig{
-		Host:        string(env),
-		Certificate: Certificate(path.Join(c.CertificatesPath, string(env))),
+		Host:         string(env),
+		Certificate:  Certificate(path.Join(c.CertificatesPath, string(env))),
+		NIPValidator: nipValidators[env],
 	}
 }
 

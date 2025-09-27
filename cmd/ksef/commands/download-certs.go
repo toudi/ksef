@@ -37,5 +37,5 @@ func downloadCertsRun(c *Command) error {
 		return err
 	}
 
-	return apiClient.DownloadCertificates(c.Context)
+	return apiClient.DownloadPubKeyCertificates(c.Context)
 }
