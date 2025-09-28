@@ -36,5 +36,5 @@ func DownloadCertificates(ctx context.Context, client *http.Client, cfg config.A
 		}
 	}
 
-	return nil
+	return cfg.CertificatesDB.Save()
 }

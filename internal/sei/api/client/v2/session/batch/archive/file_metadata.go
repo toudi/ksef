@@ -1,11 +1,8 @@
 package archive
 
-type FileSizeAndHash struct {
-	FileSize uint64
-	Hash     string
-}
+import "ksef/internal/utils"
 
 type ArchivePart struct {
-	FileSizeAndHash
+	utils.FilesizeAndHash
 	FileName string
 }

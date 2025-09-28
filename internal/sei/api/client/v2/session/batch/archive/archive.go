@@ -2,7 +2,9 @@ package archive
 
 import (
 	"archive/zip"
+	"ksef/internal/utils"
 	"os"
+	"path/filepath"
 )
 
 type Archive struct {
@@ -23,7 +25,8 @@ type Archive struct {
 }
 
 func New(basename string, maxFileSize int) (*Archive, error) {
-	output, err := os.Create(basename + ".zip")
+	outputFilename := basename + ".zip"
+	output, err := os.Create(outputFilename)
 	if err != nil {
 		return nil, err
 	}
@@ -32,11 +35,12 @@ func New(basename string, maxFileSize int) (*Archive, error) {
 	return &Archive{
 		maxFileSize: maxFileSize,
 		output:      output,
-		outputPath:  basename + ".zip",
+		outputPath:  outputFilename,
+		outputDir:   filepath.Dir(outputFilename),
 		writer:      writer,
 	}, nil
 }
 
-func (a *Archive) Metadata() (FileSizeAndHash, error) {
-	return FileSizeAndHash{}, nil
+func (a *Archive) Metadata() (*utils.FilesizeAndHash, error) {
+	return utils.FileSizeAndSha256Hash(a.outputPath)
 }

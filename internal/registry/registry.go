@@ -82,6 +82,7 @@ type InvoiceRegistry struct {
 	PaymentIds     []PaymentId                     `                     yaml:"payment-ids,omitempty"`
 	UploadSessions map[string]*UploadSessionStatus `yaml:"upload-sessions"` // map between upload session ID and list of seiRefNumbers
 	sourcePath     string
+	Dir            string
 	collection     *InvoiceCollection `yaml:"-"` // cache invoice collection ptr
 }
 
@@ -115,7 +116,8 @@ func (r *InvoiceRegistry) Save(fileName string) error {
 	return yaml.NewEncoder(destFile).Encode(r)
 }
 
-func LoadRegistry(fileName string) (*InvoiceRegistry, error) {
+func LoadRegistry(dirName string) (*InvoiceRegistry, error) {
+	var fileName = path.Join(dirName, registryName)
 	var registry InvoiceRegistry
 	registry.seiRefNoIndex = make(map[string]int)
 	registry.refNoIndex = make(map[string]int)
@@ -135,13 +137,16 @@ func LoadRegistry(fileName string) (*InvoiceRegistry, error) {
 		}
 	}
 	registry.sourcePath = fileName
+	registry.Dir = dirName
 	return &registry, nil
 }
 
 func OpenOrCreate(dirName string) (*InvoiceRegistry, error) {
-	registry, err := LoadRegistry(path.Join(dirName, registryName))
+	registry, err := LoadRegistry(dirName)
 	if registry == nil && err == ErrDoesNotExist {
 		registry = NewRegistry()
+		registry.sourcePath = path.Join(dirName, registryName)
+		registry.Dir = dirName
 		return registry, nil
 	}
 
@@ -150,8 +155,4 @@ func OpenOrCreate(dirName string) (*InvoiceRegistry, error) {
 	}
 
 	return registry, nil
-}
-
-func (r *InvoiceRegistry) GetDir() string {
-	return path.Dir(r.sourcePath)
 }

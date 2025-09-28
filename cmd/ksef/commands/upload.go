@@ -59,7 +59,7 @@ func uploadRun(c *Command) error {
 		return nil
 	}
 
-	registry, err := registryPkg.LoadRegistry(uploadArgs.path)
+	registry, err := registryPkg.OpenOrCreate(uploadArgs.path)
 	if err != nil {
 		return err
 	}

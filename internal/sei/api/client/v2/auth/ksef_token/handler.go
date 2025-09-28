@@ -31,7 +31,9 @@ func NewKsefTokenHandler(apiConfig config.APIConfig, nip string) validator.AuthC
 		// that's not a fatal error because the program also supports overriding the token directly
 		logging.AuthLogger.Warn("unable to retrieve KSeF token from keyring")
 	} else {
-		validator.SetKsefToken(ksefToken)
+		defer func() {
+			go validator.SetKsefToken(ksefToken)
+		}()
 	}
 
 	return validator

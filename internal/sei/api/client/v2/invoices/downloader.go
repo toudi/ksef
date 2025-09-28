@@ -26,7 +26,7 @@ func NewInvoiceDownloader(httpClient *http.Client, registry *registry.InvoiceReg
 	return &invoiceDownloader{
 		httpClient: httpClient,
 		registry:   registry,
-		targetPath: registry.GetDir(),
+		targetPath: registry.Dir,
 	}
 }
 
@@ -58,11 +58,12 @@ func (d *invoiceDownloader) Download(
 		return "", "", err
 	}
 
-	if checksum, err = utils.Sha256FileToString(outputFilename); err != nil {
+	fileMeta, err := utils.FileSizeAndSha256Hash(outputFilename)
+	if err != nil {
 		return "", "", err
 	}
 
 	d.registry.AddInvoice(invoiceMeta, checksum)
 
-	return outputFilename, checksum, nil
+	return outputFilename, fileMeta.Hash, nil
 }

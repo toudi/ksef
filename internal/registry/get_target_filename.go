@@ -20,8 +20,6 @@ func (r *InvoiceRegistry) GetTargetFilename(
 	invoice invoices.InvoiceMetadata,
 	subjectType invoices.SubjectType,
 ) string {
-	dir := r.GetDir()
-
 	var sanitizedInvoiceNumber = slugify.Slugify(invoice.InvoiceNumber)
 	var sanitizedFilename = strings.ToLower(
 		fmt.Sprintf(
@@ -31,5 +29,5 @@ func (r *InvoiceRegistry) GetTargetFilename(
 			sanitizedInvoiceNumber,
 		),
 	)
-	return path.Join(dir, subjectTypeToDirname[subjectType], sanitizedFilename)
+	return path.Join(r.Dir, subjectTypeToDirname[subjectType], sanitizedFilename)
 }

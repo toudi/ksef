@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 )
 
 // https://github.com/CIRFMF/ksef-docs/blob/main/sesja-wsadowa.md#2-podzia%C5%82-binarny-paczki-zip-na-cz%C4%99%C5%9Bci
@@ -40,15 +41,17 @@ func (a *Archive) getPartWriter() (io.Writer, error) {
 		a.partWriter.Close()
 	}
 
+	partFileName := path.Base(a.outputPath)
+
 	a.Parts = append(a.Parts, ArchivePart{
-		FileName: fmt.Sprintf("%s.zip.%03d", a.basename, len(a.Parts)),
+		FileName: fmt.Sprintf("%s.%03d", partFileName, len(a.Parts)),
 	})
-	a.partWriter, err = os.Create(a.Parts[len(a.Parts)-1].FileName)
+	a.partWriter, err = os.Create(path.Join(a.outputDir, a.Parts[len(a.Parts)-1].FileName))
 
 	return a.partWriter, err
 }
 
 func (a *Archive) chunkWritten(hash string, bytesWritten int) {
-	a.Parts[len(a.Parts)-1].FileSize = uint64(bytesWritten)
+	a.Parts[len(a.Parts)-1].FileSize = int64(bytesWritten)
 	a.Parts[len(a.Parts)-1].Hash = hash
 }

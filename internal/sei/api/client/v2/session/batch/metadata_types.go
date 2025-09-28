@@ -1,13 +1,15 @@
 package batch
 
-import "ksef/internal/sei/api/client/v2/session/batch/archive"
+import (
+	"ksef/internal/utils"
+)
 
 type BatchArchivePart struct {
-	archive.FileSizeAndHash
+	utils.FilesizeAndHash
 	Filename string
 }
 
 type BatchMetadataInfo struct {
-	Archive archive.FileSizeAndHash
+	Archive utils.FilesizeAndHash
 	Parts   []BatchArchivePart
 }

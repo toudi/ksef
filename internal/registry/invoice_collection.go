@@ -36,7 +36,8 @@ func (r *InvoiceRegistry) InvoiceCollection() (*InvoiceCollection, error) {
 		return r.collection, nil
 	}
 
-	files, err := os.ReadDir(r.sourcePath)
+	files, err := os.ReadDir(r.Dir)
+
 	if err != nil {
 		return nil, fmt.Errorf("cannot read list of files from %s: %v", r.sourcePath, err)
 	}
@@ -54,7 +55,7 @@ func (r *InvoiceRegistry) InvoiceCollection() (*InvoiceCollection, error) {
 
 	for _, file := range files {
 		fileName = file.Name()
-		fullFileName = filepath.Join(r.sourcePath, fileName)
+		fullFileName = filepath.Join(r.Dir, fileName)
 
 		// do not bother to check if the file is not an XML
 		if strings.ToLower(filepath.Ext(fileName)) != ".xml" {

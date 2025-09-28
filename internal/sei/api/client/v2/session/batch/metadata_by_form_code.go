@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"ksef/internal/registry"
 	"ksef/internal/sei/api/client/v2/session/batch/archive"
+	"path"
 	"path/filepath"
 )
 
@@ -20,7 +21,7 @@ func (b *Session) generateMetadataByFormCode(formCode registry.InvoiceFormCode, 
 
 	var randomPart = "abcdef" // it is actually going to be random, just trying to figure out where to initiate it
 	var basename = fmt.Sprintf("%s-batch-%s", formCode.SchemaVersion, randomPart)
-	_archive, err := archive.New(basename, maxArchiveSize)
+	_archive, err := archive.New(path.Join(b.registry.Dir, basename), maxArchiveSize)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +32,6 @@ func (b *Session) generateMetadataByFormCode(formCode registry.InvoiceFormCode, 
 				// this is not a fatal error. we can simply rerun the program and it will pick up the rest of the files
 				// also.. it's highly unlikely that anybody using this program will actually have so many invoices that
 				// they would exceed the limits
-				err = nil
 				break
 			}
 		}
@@ -45,7 +45,7 @@ func (b *Session) generateMetadataByFormCode(formCode registry.InvoiceFormCode, 
 	if err != nil {
 		return nil, err
 	}
-	batchMetadataRequest.BatchFile.FileSize = archiveMeta.FileSize
+	batchMetadataRequest.BatchFile.FileSize = uint64(archiveMeta.FileSize)
 	batchMetadataRequest.BatchFile.FileHash = archiveMeta.Hash
 
 	for partNo, part := range _archive.Parts {
@@ -54,7 +54,7 @@ func (b *Session) generateMetadataByFormCode(formCode registry.InvoiceFormCode, 
 			batchArchivePart{
 				OrdNo:    uint32(partNo),
 				FileName: filepath.Base(part.FileName),
-				FileSize: part.FileSize,
+				FileSize: uint64(part.FileSize),
 				FileHash: part.Hash,
 			},
 		)

@@ -7,6 +7,7 @@ import (
 	"ksef/internal/environment"
 	"os"
 	"path"
+	"slices"
 	"strings"
 
 	"github.com/samber/lo"
@@ -22,6 +23,12 @@ func (cdb *CertificatesDB) AddCertificate(base64Der string, environment environm
 			lo.Map(usage, func(elem Usage, _ int) string { return string(elem) }), "-",
 		),
 	)
+
+	// sort the usage slice so that we don't end up writing the same certificate twice
+	// just because it's usage array will be reversed
+	slices.SortFunc(usage, func(e1, e2 Usage) int {
+		return strings.Compare(string(e1), string(e2))
+	})
 
 	PEMFilename := path.Dir(certificatesDBFile) + certBaseFilename + ".pem"
 	DERFilename := path.Dir(certificatesDBFile) + certBaseFilename + ".der"
@@ -48,14 +55,21 @@ func (cdb *CertificatesDB) AddCertificate(base64Der string, environment environm
 		return err
 	}
 
-	cdb.certs = append(cdb.certs, CertificateFile{
-		Environment: environment,
-		Usage:       usage,
-		PEMFile:     PEMFilename,
-		DERFile:     DERFilename,
+	// let's check if we have to update entry in the db:
+	exists := slices.ContainsFunc(cdb.certs, func(cert CertificateFile) bool {
+		return cert.Environment == environment && slices.Equal(cert.Usage, usage)
 	})
 
-	cdb.dirty = true
+	if !exists {
+		cdb.certs = append(cdb.certs, CertificateFile{
+			Environment: environment,
+			Usage:       usage,
+			PEMFile:     PEMFilename,
+			DERFile:     DERFilename,
+		})
+
+		cdb.dirty = true
+	}
 
 	return nil
 }

@@ -3,7 +3,6 @@ package archive
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 	"hash"
 	"io"
 )
@@ -68,14 +67,9 @@ func (h *HasherWriter) Write(p []byte) (int, error) {
 			h.bytesWritten = 0
 		}
 		availableSpace := h.sizeLimit - h.bytesWritten
-		fmt.Printf("offset: %d; available space: %d; bytes remaining: %d\n", offset, availableSpace, bytesRemaining)
-		fmt.Printf("target buffer: %p\n", h.targetBuffer)
-		fmt.Printf("calculated range: %d : %d\n", offset, offset+min(bytesRemaining, availableSpace))
 		chunkToBeWritten := p[offset : offset+min(bytesRemaining, availableSpace)]
 
 		replaceWriter = availableSpace < bytesRemaining
-
-		fmt.Printf("writing %v\n", chunkToBeWritten)
 
 		if _, err = h.hasher.Write(chunkToBeWritten); err != nil {
 			return -1, err
@@ -83,7 +77,6 @@ func (h *HasherWriter) Write(p []byte) (int, error) {
 
 		var written int
 		written, err = h.targetBuffer.Write(chunkToBeWritten)
-		fmt.Printf("wrote %d bytes to %p with err: %v;\n", written, h.targetBuffer, err)
 
 		h.bytesWritten += written
 		bytesRemaining -= written
