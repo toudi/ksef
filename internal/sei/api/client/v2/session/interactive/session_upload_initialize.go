@@ -3,6 +3,7 @@ package interactive
 import (
 	"context"
 	"fmt"
+	"ksef/internal/certsdb"
 	"ksef/internal/encryption"
 	HTTP "ksef/internal/http"
 	"ksef/internal/logging"
@@ -42,7 +43,11 @@ func (s *Session) initialize(ctx context.Context, invoiceFormCode registry.Invoi
 	var req uploadSessionRequest = uploadSessionRequest{
 		FormCode: invoiceFormCode,
 	}
-	req.Encryption, err = cipher.PrepareHTTPRequestPayload(s.apiConfig.Certificate.PEM())
+	certificate, err := s.apiConfig.CertificatesDB.GetByUsage(certsdb.UsageSymmetricKeyEncryption)
+	if err != nil {
+		return nil, err
+	}
+	req.Encryption, err = cipher.PrepareHTTPRequestPayload(certificate.PEMFile)
 	if err != nil {
 		return nil, err
 	}

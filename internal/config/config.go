@@ -2,58 +2,36 @@ package config
 
 import (
 	"fmt"
-	"ksef/internal/utils"
+	"ksef/internal/certsdb"
+	"ksef/internal/environment"
+	"log"
 	"os"
-	"path"
 
 	"gopkg.in/yaml.v3"
 )
 
-type APIEnvironment string
-
-const (
-	APIEnvironmentTest APIEnvironment = "ksef-test.mf.gov.pl"
-	APIEnvironmentProd APIEnvironment = "ksef.mf.gov.pl"
-)
-
-var nipValidators = map[APIEnvironment]utils.NIPValidatorType{
-	APIEnvironmentProd: utils.NIPValidator,
-	APIEnvironmentTest: utils.NIPLengthValidator,
-}
-
-type Certificate string
-
-func (c Certificate) DER() string {
-	return string(c) + ".der"
-}
-
-func (c Certificate) PEM() string {
-	return string(c) + ".pem"
-}
-
 type APIConfig struct {
-	Host         string
-	Certificate  Certificate
-	NIPValidator utils.NIPValidatorType
+	Environment    environment.Config
+	CertificatesDB *certsdb.CertificatesDB
 }
 
 type Config struct {
-	Logging          map[string]string `yaml:"logging"`
-	PDFRenderer      map[string]string `yaml:"pdf-renderer"`
-	CertificatesPath string            `yaml:"certificates-path"`
+	Logging     map[string]string `yaml:"logging"`
+	PDFRenderer map[string]string `yaml:"pdf-renderer"`
 }
 
-func (c Config) APIConfig(env APIEnvironment) APIConfig {
+func (c Config) APIConfig(env environment.Environment) APIConfig {
+	certsDB, err := certsdb.OpenOrCreate(env)
+	if err != nil {
+		log.Fatalf("unable to open certificates db: %v", err)
+	}
 	return APIConfig{
-		Host:         string(env),
-		Certificate:  Certificate(path.Join(c.CertificatesPath, string(env))),
-		NIPValidator: nipValidators[env],
+		Environment:    environment.GetConfig(env),
+		CertificatesDB: certsDB,
 	}
 }
 
-var config = Config{
-	CertificatesPath: "klucze/",
-}
+var config = Config{}
 
 func ReadConfig(configFile string) error {
 	file, err := os.Open(configFile)

@@ -3,6 +3,7 @@ package commands
 import (
 	"flag"
 	"ksef/internal/config"
+	environmentPkg "ksef/internal/environment"
 	"ksef/internal/logging"
 	kseftoken "ksef/internal/sei/api/client/v2/auth/ksef_token"
 	"ksef/internal/sei/api/client/v2/auth/validator"
@@ -26,7 +27,7 @@ var (
 	authParams = authParamsT{
 		backend: authBackendKsefToken,
 	}
-	environment config.APIEnvironment = config.APIEnvironmentProd
+	environment environmentPkg.Environment = environmentPkg.Production
 )
 
 func initAuthParams(flagSet *flag.FlagSet) {
@@ -36,7 +37,7 @@ func initAuthParams(flagSet *flag.FlagSet) {
 
 func testGatewayFlag(flagSet *flag.FlagSet) {
 	flagSet.BoolFunc("t", "Użyj bramki testowej", func(s string) error {
-		environment = config.APIEnvironmentTest
+		environment = environmentPkg.Test
 		return nil
 	})
 }

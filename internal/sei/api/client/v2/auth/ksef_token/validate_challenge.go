@@ -3,6 +3,7 @@ package kseftoken
 import (
 	"context"
 	"fmt"
+	"ksef/internal/certsdb"
 	"ksef/internal/encryption"
 	"ksef/internal/http"
 	"ksef/internal/sei/api/client/v2/auth/validator"
@@ -61,8 +62,12 @@ func (kt *KsefTokenHandler) ValidateChallenge(ctx context.Context, httpClient *h
 }
 
 func (kt *KsefTokenHandler) encryptToken(tokenPlaintext string, timestamp time.Time) (string, error) {
+	certificate, err := kt.apiConfig.CertificatesDB.GetByUsage(certsdb.UsageTokenEncryption)
+	if err != nil {
+		return "", err
+	}
 	encryptedBytes, err := encryption.EncryptMessageWithCertificate(
-		kt.apiConfig.Certificate.PEM(),
+		certificate.PEMFile,
 		fmt.Appendf([]byte{}, "%s|%d", tokenPlaintext, timestamp.UnixMilli()),
 	)
 	if err != nil {

@@ -83,7 +83,7 @@ func uploadRun(c *Command) error {
 			return err
 		}
 
-		err = interactiveSession.UploadInvoices(uploadArgs.interactiveUploadParams)
+		err = interactiveSession.UploadInvoices(c.Context, uploadArgs.interactiveUploadParams)
 		if err == interactive.ErrProbablyUsedSend {
 			fmt.Printf(
 				"Wygląda na to, że poprzednio użyta została komenda 'upload' na tym rejestrze.\nJeśli na pewno chcesz ponowić wysyłkę, uzyj flagi '-f'\n",
@@ -93,9 +93,10 @@ func uploadRun(c *Command) error {
 		return err
 	}
 
-	return fmt.Errorf("batch session not implemented yet")
+	batchSession, err := cli.BatchSession()
+	if err != nil {
+		return err
+	}
 
-	// batchSession := batch.BatchSessionInit(gateway)
-	// return batchSession.UploadInvoices(uploadArgs.path)
-
+	return batchSession.UploadInvoices(c.Context)
 }

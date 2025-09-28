@@ -42,7 +42,7 @@ func saveTokenRun(c *Command) error {
 	}
 
 	return kseftoken.PersistKsefTokenToKeyring(
-		config.GetConfig().APIConfig(environment).Host,
+		config.GetConfig().APIConfig(environment).Environment.Host,
 		saveTokenArgs.NIP,
 		saveTokenArgs.token,
 	)

@@ -26,7 +26,7 @@ func NewKsefTokenHandler(apiConfig config.APIConfig, nip string) validator.AuthC
 	}
 
 	// let's try to retrieve it from keyring
-	ksefToken, err := retrieveKsefTokenFromKeyring(apiConfig.Host, nip)
+	ksefToken, err := retrieveKsefTokenFromKeyring(apiConfig.Environment.Host, nip)
 	if err != nil {
 		// that's not a fatal error because the program also supports overriding the token directly
 		logging.AuthLogger.Warn("unable to retrieve KSeF token from keyring")

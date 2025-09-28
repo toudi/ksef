@@ -3,7 +3,7 @@ package registry
 import (
 	"errors"
 	"fmt"
-	"ksef/internal/config"
+	"ksef/internal/environment"
 	"os"
 	"path"
 	"time"
@@ -73,7 +73,7 @@ type PaymentId struct {
 
 type InvoiceRegistry struct {
 	QueryCriteria  QueryCriteria                   `json:"queryCriteria" yaml:"queryCriteria,omitempty"`
-	Environment    config.APIEnvironment           `                     yaml:"environment"`
+	Environment    environment.Environment         `                     yaml:"environment"`
 	Invoices       []Invoice                       `                     yaml:"invoices,omitempty"`
 	Issuer         string                          `                     yaml:"issuer,omitempty"`
 	seiRefNoIndex  map[string]int                  `                     yaml:"-"`

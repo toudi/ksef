@@ -3,11 +3,11 @@ package batch
 import (
 	"context"
 	"errors"
+	"ksef/internal/certsdb"
 	"ksef/internal/encryption"
 	HTTP "ksef/internal/http"
 	"ksef/internal/registry"
 	baseHTTP "net/http"
-	"net/url"
 )
 
 const (
@@ -18,7 +18,7 @@ var (
 	ErrCannotInitializeCiper = errors.New("unable to initialize cipher")
 )
 
-func (b *Session) UploadInvoices() error {
+func (b *Session) UploadInvoices(ctx context.Context) error {
 	collection, err := b.registry.InvoiceCollection()
 	if err != nil {
 		return err
@@ -27,7 +27,7 @@ func (b *Session) UploadInvoices() error {
 	// v2 specs forces us to group invoices by their form code
 	// on the other hand, it no longer forces us to send invoices through a 3rd party server
 	for formCode, files := range collection.Files {
-		if err := b.uploadInvoicesForForm(context.Background(), formCode, files); err != nil {
+		if err := b.uploadInvoicesForForm(ctx, formCode, files); err != nil {
 			return err
 		}
 	}
@@ -49,24 +49,6 @@ type batchArchiveInfo struct {
 	FileParts []batchArchivePart `json:"fileParts"`
 }
 
-type batchSessionInitRequest struct {
-	FormCode   registry.InvoiceFormCode     `json:"formCode"`
-	BatchFile  batchArchiveInfo             `json:"batchFile"`
-	Encryption encryption.CipherHTTPRequest `json:"encryption"`
-}
-
-type batchSessionPartUploadRequest struct {
-	OrdinalNumber int32             `json:"ordinalNumber"`
-	Method        string            `json:"method"`
-	Url           url.URL           `json:"url"`
-	Headers       map[string]string `json:"headers"`
-}
-
-type batchSessionInitResponse struct {
-	ReferenceNumber    string                          `json:"referenceNumber"`
-	PartUploadRequests []batchSessionPartUploadRequest `json:"partUploadRequests"`
-}
-
 func (b *Session) uploadInvoicesForForm(ctx context.Context, formCode registry.InvoiceFormCode, files []registry.CollectionFile) error {
 	// first, let's prepare metadata info
 	initSessionReq, err := b.generateMetadataByFormCode(formCode, files)
@@ -79,7 +61,11 @@ func (b *Session) uploadInvoicesForForm(ctx context.Context, formCode registry.I
 		return errors.Join(ErrCannotInitializeCiper, err)
 	}
 
-	initSessionReq.Encryption, err = cipher.PrepareHTTPRequestPayload(b.apiConfig.Certificate.PEM())
+	certificate, err := b.apiConfig.CertificatesDB.GetByUsage(certsdb.UsageSymmetricKeyEncryption)
+	if err != nil {
+		return err
+	}
+	initSessionReq.Encryption, err = cipher.PrepareHTTPRequestPayload(certificate.PEMFile)
 	if err != nil {
 		return err
 	}

@@ -3,6 +3,7 @@ package v2
 import (
 	"context"
 	"ksef/internal/config"
+	"ksef/internal/environment"
 	httpClient "ksef/internal/http"
 	"ksef/internal/logging"
 	registryPkg "ksef/internal/registry"
@@ -22,11 +23,11 @@ type APIClient struct {
 
 type InitializerFunc func(c *APIClient)
 
-func NewClient(ctx context.Context, cfg config.Config, env config.APIEnvironment, options ...InitializerFunc) (*APIClient, error) {
+func NewClient(ctx context.Context, cfg config.Config, env environment.Environment, options ...InitializerFunc) (*APIClient, error) {
 	logging.SeiLogger.Info("klient KSeF v2 - start programu")
 
 	apiConfig := cfg.APIConfig(env)
-	httpClient := &httpClient.Client{Base: "https://" + apiConfig.Host}
+	httpClient := &httpClient.Client{Base: "https://" + apiConfig.Environment.Host}
 
 	client := &APIClient{
 		ctx:        ctx,
