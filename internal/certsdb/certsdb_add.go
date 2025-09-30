@@ -30,8 +30,8 @@ func (cdb *CertificatesDB) AddCertificate(base64Der string, environment environm
 		return strings.Compare(string(e1), string(e2))
 	})
 
-	PEMFilename := path.Dir(certificatesDBFile) + certBaseFilename + ".pem"
-	DERFilename := path.Dir(certificatesDBFile) + certBaseFilename + ".der"
+	PEMFilename := path.Join(path.Dir(certificatesDBFile), certBaseFilename+".pem")
+	DERFilename := path.Join(path.Dir(certificatesDBFile), certBaseFilename+".der")
 	// so the base64-encoded content is actually the essense of PEM so let's use a nifty hack to save it
 	pemFile, err := os.Create(PEMFilename)
 	if err != nil {
