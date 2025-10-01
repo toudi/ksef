@@ -10,7 +10,9 @@ import (
 )
 
 const (
-	authBackendKsefToken = "token"
+	authBackendKsefToken      = "token"
+	authBackendXadesSignature = "xades:epuap"
+	authBackendXadesKsefCert  = "xades:ksef-cert"
 )
 
 // common module for setting up authentication backend properties
@@ -18,9 +20,14 @@ type authParamsKsefToken struct {
 	issuerToken string
 }
 
+type authParamsXadesSignature struct {
+	signedRequestFile string
+}
+
 type authParamsT struct {
-	backend         string
-	ksefTokenParams authParamsKsefToken
+	backend              string
+	ksefTokenParams      authParamsKsefToken
+	xadesSignatureParams authParamsXadesSignature
 }
 
 var (
@@ -33,6 +40,7 @@ var (
 func initAuthParams(flagSet *flag.FlagSet) {
 	flagSet.StringVar(&authParams.backend, "b", authBackendKsefToken, "Backend autoryzacji")
 	flagSet.StringVar(&authParams.ksefTokenParams.issuerToken, "ksef:token", "", "Token sesji interaktywnej lub nazwa zmiennej środowiskowej która go zawiera (tylko jeśli wybranym backendem jest autoryzacja tokenem KSeF)")
+	flagSet.StringVar(&authParams.xadesSignatureParams.signedRequestFile, "xades:signed-challenge", "", "**PODPISANY** plik wyzwania XML. Aby wygenerować wyzwanie, użyj komendy xades-init")
 }
 
 func testGatewayFlag(flagSet *flag.FlagSet) {

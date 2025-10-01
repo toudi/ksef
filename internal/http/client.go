@@ -17,6 +17,7 @@ var ErrUnexpectedStatusCode = errors.New("unexpected status code")
 
 const (
 	JSON = "application/json"
+	XML  = "application/xml"
 )
 
 type RequestConfig struct {
@@ -59,6 +60,7 @@ func (rb *Client) Request(ctx context.Context, config RequestConfig, endpoint st
 	var body io.Reader
 
 	if config.Body != nil {
+		body = config.Body.(io.Reader)
 		if config.ContentType == JSON {
 			body, err = jsonBodyReader(config.Body)
 			if err != nil {
@@ -79,8 +81,8 @@ func (rb *Client) Request(ctx context.Context, config RequestConfig, endpoint st
 		req.URL.RawQuery = params.Encode()
 	}
 
-	if config.ContentType == JSON {
-		req.Header.Set("Content-Type", JSON)
+	if config.ContentType != "" {
+		req.Header.Set("Content-Type", config.ContentType)
 	}
 
 	for headerName, headerValue := range config.Headers {
@@ -100,15 +102,19 @@ func (rb *Client) Request(ctx context.Context, config RequestConfig, endpoint st
 		return resp, err
 	}
 
+	var bodyBuffer bytes.Buffer
+	io.Copy(&bodyBuffer, resp.Body)
+	defer resp.Body.Close()
+	fmt.Printf("content: %s\n", bodyBuffer.String())
+
 	if config.ExpectedStatus > 0 && resp.StatusCode != config.ExpectedStatus {
 		return resp, fmt.Errorf("%w: %d vs %d", ErrUnexpectedStatusCode, resp.StatusCode, config.ExpectedStatus)
 	}
 
-	defer resp.Body.Close()
 	if config.DestContentType == "" {
 		// if no content type is specified, simply copy to dest
 		if config.DestWriter != nil {
-			_, err = io.Copy(config.DestWriter, resp.Body)
+			_, err = io.Copy(config.DestWriter, &bodyBuffer)
 			return resp, err
 		}
 
@@ -116,7 +122,7 @@ func (rb *Client) Request(ctx context.Context, config RequestConfig, endpoint st
 	}
 
 	if config.DestContentType == JSON {
-		decoder := json.NewDecoder(resp.Body)
+		decoder := json.NewDecoder(&bodyBuffer)
 		return resp, decoder.Decode(config.Dest)
 	}
 

@@ -27,17 +27,21 @@ const (
 	StateInitialized                 State = iota
 	StateAwaitingChallenge           State = iota
 	StateAwaitingChallengeValidation State = iota
+	StateValidationReferenceResult   State = iota
+	StateExit                        State = iota
 )
 
 type AuthEvent struct {
 	// when EventType == EventTypeInitialized, then it means that validator has all the
 	// information requried to validate a challenge and the token manager can start
 	// auth challenge procedure
-	State State
-	Error error
+	State               State
+	ValidationReference *ValidationReference
+	Error               error
 }
 
 type AuthChallengeValidator interface {
 	Event() chan AuthEvent
-	ValidateChallenge(ctx context.Context, httpClient *http.Client, challenge AuthChallenge) (*ValidationReference, error)
+	Initialize(httpClient *http.Client)
+	ValidateChallenge(ctx context.Context, challenge AuthChallenge) error
 }

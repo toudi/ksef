@@ -26,7 +26,7 @@ type validationRequest struct {
 	EncryptedToken string            `json:"encryptedToken"`
 }
 
-func (kt *KsefTokenHandler) ValidateChallenge(ctx context.Context, httpClient *http.Client, challenge validator.AuthChallenge) (*validator.ValidationReference, error) {
+func (kt *KsefTokenHandler) ValidateChallenge(ctx context.Context, challenge validator.AuthChallenge) error {
 	var err error
 
 	var body = validationRequest{
@@ -38,12 +38,12 @@ func (kt *KsefTokenHandler) ValidateChallenge(ctx context.Context, httpClient *h
 	}
 
 	if body.EncryptedToken, err = kt.encryptToken(kt.ksefToken, challenge.Timestamp); err != nil {
-		return nil, err
+		return err
 	}
 
 	var resp validator.ValidationReference
 
-	_, err = httpClient.Request(
+	_, err = kt.httpClient.Request(
 		ctx,
 		http.RequestConfig{
 			Body:            body,
@@ -55,10 +55,17 @@ func (kt *KsefTokenHandler) ValidateChallenge(ctx context.Context, httpClient *h
 	)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &resp, nil
+	go func() {
+		kt.eventChannel <- validator.AuthEvent{
+			State:               validator.StateValidationReferenceResult,
+			ValidationReference: &resp,
+		}
+	}()
+
+	return nil
 }
 
 func (kt *KsefTokenHandler) encryptToken(tokenPlaintext string, timestamp time.Time) (string, error) {

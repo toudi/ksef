@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	HTTP "ksef/internal/http"
 	"ksef/internal/sei/api/client/v2/auth/validator"
 	"net/http"
@@ -24,6 +25,8 @@ func (t *TokenManager) getAuthChallenge(ctx context.Context) (*validator.AuthCha
 		},
 		endpointAuthChallenge,
 	)
+
+	fmt.Printf("obtained response: %+v\n", authResponse)
 
 	if err != nil {
 		return nil, err

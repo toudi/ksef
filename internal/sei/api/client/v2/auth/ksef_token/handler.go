@@ -2,6 +2,7 @@ package kseftoken
 
 import (
 	"ksef/internal/config"
+	"ksef/internal/http"
 	"ksef/internal/logging"
 	"ksef/internal/sei/api/client/v2/auth/validator"
 
@@ -14,29 +15,30 @@ type KsefTokenHandler struct {
 	apiConfig    config.APIConfig
 	eventChannel chan validator.AuthEvent
 	finished     bool
+	httpClient   *http.Client
 }
 
 func NewKsefTokenHandler(apiConfig config.APIConfig, nip string) validator.AuthChallengeValidator {
-	var err error
-
 	validator := &KsefTokenHandler{
 		nip:          nip,
 		apiConfig:    apiConfig,
 		eventChannel: make(chan validator.AuthEvent),
 	}
 
+	return validator
+}
+
+func (kt *KsefTokenHandler) Initialize(httpClient *http.Client) {
+	kt.httpClient = httpClient
+
 	// let's try to retrieve it from keyring
-	ksefToken, err := retrieveKsefTokenFromKeyring(apiConfig.Environment.Host, nip)
+	ksefToken, err := retrieveKsefTokenFromKeyring(kt.apiConfig.Environment.Host, kt.nip)
 	if err != nil {
 		// that's not a fatal error because the program also supports overriding the token directly
 		logging.AuthLogger.Warn("unable to retrieve KSeF token from keyring")
 	} else {
-		defer func() {
-			go validator.SetKsefToken(ksefToken)
-		}()
+		kt.SetKsefToken(ksefToken)
 	}
-
-	return validator
 }
 
 func (kt *KsefTokenHandler) Event() chan validator.AuthEvent {

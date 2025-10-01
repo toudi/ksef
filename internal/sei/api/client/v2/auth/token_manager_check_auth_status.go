@@ -24,8 +24,10 @@ func (t *TokenManager) checkAuthStatus(ctx context.Context) error {
 		Dest:            &authStatus,
 		DestContentType: http.JSON,
 		ExpectedStatus:  baseHttp.StatusOK,
-		Method:          baseHttp.MethodPost,
+		Method:          baseHttp.MethodGet,
 	}, fmt.Sprintf(endpointAuthStatus, t.validationReference.ReferenceNumber))
+
+	fmt.Printf("auth response: %+v; err: %v\n", authStatus, err)
 
 	if err != nil {
 		return err

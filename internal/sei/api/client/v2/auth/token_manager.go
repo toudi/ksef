@@ -26,10 +26,12 @@ type TokenInfo struct {
 	Token     string    `json:"token"`
 	ExpiresAt time.Time `json:"validUntil"`
 }
+
 type SessionTokens struct {
 	AuthorizationToken *TokenInfo `json:"accessToken"`
 	RefreshToken       *TokenInfo `json:"refreshToken"`
 }
+
 type TokenManager struct {
 	challengeValidator  validator.AuthChallengeValidator
 	finished            bool
@@ -38,13 +40,17 @@ type TokenManager struct {
 	mutex               sync.RWMutex
 	httpClient          *http.Client
 	validationReference *validator.ValidationReference
+	done                chan struct{}
 }
 
 func NewTokenManager(httpClient *http.Client, challengeValidator validator.AuthChallengeValidator) *TokenManager {
+	challengeValidator.Initialize(httpClient)
+
 	return &TokenManager{
 		updateChannel:      make(chan TokenUpdate),
 		httpClient:         httpClient,
 		challengeValidator: challengeValidator,
+		done:               make(chan struct{}),
 	}
 }
 
