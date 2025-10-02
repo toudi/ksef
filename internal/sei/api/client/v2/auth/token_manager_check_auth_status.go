@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	endpointAuthStatus    = "/api/v2/auth/%s"
-	authStatusCodeSuccess = 200
+	endpointAuthStatus        = "/api/v2/auth/%s"
+	authStatusCodeSuccess int = 200
 )
 
 func (t *TokenManager) checkAuthStatus(ctx context.Context) error {
@@ -32,6 +32,8 @@ func (t *TokenManager) checkAuthStatus(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf("checking if code is success: %v\n", authStatus.Status.Code == authStatusCodeSuccess)
 
 	if authStatus.Status.Code == authStatusCodeSuccess {
 		return t.redeemTokens(ctx)

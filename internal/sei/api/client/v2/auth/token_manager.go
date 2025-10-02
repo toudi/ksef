@@ -107,7 +107,7 @@ func (t *TokenManager) updateAuthorizationToken(authToken string, commit func())
 		Token: authToken,
 	}
 
-	t.validationReference = nil
+	// t.validationReference = nil
 
 	t.mutex.Lock()
 	defer t.mutex.Unlock()

@@ -24,8 +24,9 @@ func (t *TokenManager) Logout() error {
 	_, err := t.httpClient.Request(
 		context.Background(),
 		http.RequestConfig{
+			Headers:        map[string]string{"Authorization": "Bearer " + t.sessionTokens.AuthorizationToken.Token},
 			Method:         baseHTTP.MethodDelete,
-			ExpectedStatus: baseHTTP.StatusGone,
+			ExpectedStatus: baseHTTP.StatusNoContent,
 		},
 		fmt.Sprintf(endpointLogout, t.validationReference.ReferenceNumber),
 	)

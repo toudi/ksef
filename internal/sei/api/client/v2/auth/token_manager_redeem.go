@@ -16,13 +16,13 @@ func (t *TokenManager) redeemTokens(ctx context.Context) error {
 	var tokens SessionTokens
 
 	_, err := t.httpClient.Request(ctx, http.RequestConfig{
-		Method:          baseHttp.MethodGet,
+		Method:          baseHttp.MethodPost,
 		Headers:         map[string]string{"Authorization": "Bearer " + t.validationReference.AuthenticationToken.Token},
 		Dest:            &tokens,
 		DestContentType: http.JSON,
 	}, endpointAuthTokenRedeem)
 	if err != nil {
-		logging.AuthLogger.Error("unable to redeem token: %w", err)
+		logging.AuthLogger.Error("unable to redeem token", "err", err)
 		return err
 	}
 
