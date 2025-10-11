@@ -1,6 +1,10 @@
 package environment
 
-import "ksef/internal/utils"
+import (
+	"context"
+	appCtx "ksef/cmd/ksef/context"
+	"ksef/internal/utils"
+)
 
 type Environment string
 
@@ -32,4 +36,13 @@ var envConfigs = map[Environment]Config{
 
 func GetConfig(env Environment) Config {
 	return envConfigs[env]
+}
+
+func FromContext(ctx context.Context) Environment {
+	envI := ctx.Value(appCtx.KeyEnvironment)
+	env, ok := envI.(Environment)
+	if !ok {
+		panic("environment not found")
+	}
+	return env
 }

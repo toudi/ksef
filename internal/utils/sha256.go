@@ -13,18 +13,28 @@ type FilesizeAndHash struct {
 	Hash     string
 }
 
-func FileSizeAndSha256Hash(input string) (*FilesizeAndHash, error) {
-	file, err := os.Open(input)
+func Sha256File(filename string) (int64, []byte, error) {
+	file, err := os.Open(filename)
 	if err != nil {
-		return nil, err
+		return -1, nil, err
 	}
 	defer file.Close()
 	hasher := sha256.New()
+	fileSize, err := io.Copy(hasher, file)
+	if err != nil {
+		return -1, nil, err
+	}
+	return fileSize, hasher.Sum(nil), nil
+}
+
+func FileSizeAndSha256Hash(input string) (*FilesizeAndHash, error) {
+	var err error
+	var hashBytes []byte
 	var output = &FilesizeAndHash{}
-	if output.FileSize, err = io.Copy(hasher, file); err != nil {
+	if output.FileSize, hashBytes, err = Sha256File(input); err != nil {
 		return nil, err
 	}
-	output.Hash = hex.EncodeToString(hasher.Sum(nil))
+	output.Hash = hex.EncodeToString(hashBytes)
 	return output, nil
 }
 

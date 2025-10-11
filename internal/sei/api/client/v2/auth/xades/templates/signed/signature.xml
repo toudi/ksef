@@ -1,0 +1,15 @@
+<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:xades="http://uri.etsi.org/01903/v1.3.2#" Id="signature-{{ .ID }}">{{ .SignedInfo.Content }}<ds:SignatureValue Id="signature-value-{{ .ID }}"></ds:SignatureValue>
+	<ds:KeyInfo>
+        <ds:X509Data>
+            <ds:X509IssuerSerial>
+                <ds:X509IssuerName>{{ .Certificate.Raw.Issuer | rdname }}</ds:X509IssuerName>
+                <ds:X509SerialNumber>{{ .Certificate.Raw.SerialNumber }}</ds:X509SerialNumber>
+            </ds:X509IssuerSerial>
+            <ds:X509SubjectName>{{ .Certificate.Raw.Subject | rdname }}</ds:X509SubjectName>
+            <ds:X509Certificate>{{ .Certificate.Raw.Raw | base64 }}</ds:X509Certificate>
+        </ds:X509Data>
+    </ds:KeyInfo>
+	<ds:Object Id="QualifyingInfos-{{ .ID }}">
+        <xades:QualifyingProperties xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:xades="http://uri.etsi.org/01903/v1.3.2#" Id="QualifyingProps-{{ .ID }}" Target="#{{ .ID }}">{{ .SignedProperties.Content }}</xades:QualifyingProperties>
+    </ds:Object>
+</ds:Signature>

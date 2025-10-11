@@ -1,4 +1,4 @@
-package esignature
+package xades
 
 import (
 	"context"
@@ -13,7 +13,7 @@ const (
 	endpointValidateSignedChallenge = "/api/v2/auth/xades-signature"
 )
 
-func (e *eSignatureTokenHandler) validateSignedChallenge(signedFilePath string) error {
+func (e *signedRequestHandler) validateSignedChallenge(signedFilePath string) error {
 	var resp validator.ValidationReference
 	var ctx = context.Background()
 
