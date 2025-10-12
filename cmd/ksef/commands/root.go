@@ -2,16 +2,19 @@ package commands
 
 import (
 	"context"
+	"fmt"
 	"ksef/cmd/ksef/commands/authorization"
+	"ksef/cmd/ksef/commands/certificates"
 	appCtx "ksef/cmd/ksef/context"
 	"ksef/internal/config"
 	environmentPkg "ksef/internal/environment"
+	"ksef/internal/logging"
 
 	"github.com/spf13/cobra"
 )
 
 var RootCommand = &cobra.Command{
-	Short:             "ksef",
+	Use:               "ksef",
 	Long:              "KSeF - aplikacja kliencka",
 	PersistentPreRunE: setContext,
 }
@@ -19,25 +22,42 @@ var RootCommand = &cobra.Command{
 var (
 	env        environmentPkg.Environment = environmentPkg.Production
 	configFile string
+	logOutput  string
 )
 
 func init() {
+	RootCommand.PersistentFlags().StringVarP(&logOutput, "log", "l", "-", "wyjście logowania (wartość - oznacza wyjście standardowe)")
 	RootCommand.PersistentFlags().StringVarP(&configFile, "config", "c", "", "lokalizacja pliku konfiguracyjnego")
+	RootCommand.PersistentFlags().BoolFuncP("verbose", "v", "tryb verbose", func(s string) error {
+		logging.Verbose = true
+		return nil
+	})
 	RootCommand.PersistentFlags().BoolFuncP("test-gateway", "t", "Użyj bramki testowej", func(s string) error {
 		env = environmentPkg.Test
 		return nil
 	})
 
 	RootCommand.AddCommand(authorization.AuthCommand)
+	RootCommand.AddCommand(certificates.CertificatesCommand)
+	RootCommand.AddCommand(syncInvoicesCommand)
 	RootCommand.CompletionOptions = cobra.CompletionOptions{DisableDefaultCmd: true}
 }
 
 func setContext(cmd *cobra.Command, _ []string) error {
+	var err error
+
 	if configFile != "" {
-		if err := config.ReadConfig(configFile); err != nil {
+		if err = config.ReadConfig(configFile); err != nil {
 			return err
 		}
 	}
+
+	if err = logging.InitLogging(logOutput); err != nil {
+		fmt.Printf("[ ERROR ] Błąd inicjalizacji logowania: %v", err)
+		return err
+	}
+
+	logging.SeiLogger.Info("start programu")
 
 	var ctx = context.WithValue(
 		cmd.Context(),

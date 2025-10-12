@@ -6,6 +6,7 @@ import (
 	"ksef/internal/config"
 	"ksef/internal/http"
 	"ksef/internal/sei/api/client/v2/auth/validator"
+	"os"
 )
 
 type signedRequestHandler struct {
@@ -32,7 +33,22 @@ func (e *signedRequestHandler) initialize() {
 func (e *signedRequestHandler) Initialize(httpClient *http.Client) {
 	e.httpClient = httpClient
 
-	go e.validateSignedChallenge(e.signedFile)
+	signedChallenge, err := os.Open(e.signedFile)
+	if err != nil {
+		panic(err)
+	}
+
+	go validateSignedChallenge(
+		context.Background(),
+		e.httpClient,
+		signedChallenge,
+		func(resp validator.ValidationReference) {
+			e.eventChannel <- validator.AuthEvent{
+				State:               validator.StateValidationReferenceResult,
+				ValidationReference: &resp,
+			}
+		},
+	)
 }
 
 func (e *signedRequestHandler) Event() chan validator.AuthEvent {

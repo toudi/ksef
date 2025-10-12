@@ -2,32 +2,28 @@ package xades
 
 import (
 	"context"
-	"fmt"
+	"io"
 	"ksef/internal/http"
+	"ksef/internal/logging"
 	"ksef/internal/sei/api/client/v2/auth/validator"
 	baseHTTP "net/http"
-	"os"
 )
 
 const (
 	endpointValidateSignedChallenge = "/api/v2/auth/xades-signature"
 )
 
-func (e *signedRequestHandler) validateSignedChallenge(signedFilePath string) error {
+func validateSignedChallenge(ctx context.Context, httpClient *http.Client, signedChallenge io.Reader, success func(resp validator.ValidationReference)) error {
+	logging.AuthLogger.Debug("validate signed challenge")
+
 	var resp validator.ValidationReference
-	var ctx = context.Background()
+	var err error
 
-	signedFile, err := os.Open(signedFilePath)
-	if err != nil {
-		return err
-	}
-	defer signedFile.Close()
-
-	_, err = e.httpClient.Request(
+	_, err = httpClient.Request(
 		ctx,
 		http.RequestConfig{
 			ContentType:     http.XML,
-			Body:            signedFile,
+			Body:            signedChallenge,
 			Dest:            &resp,
 			DestContentType: http.JSON,
 			ExpectedStatus:  baseHTTP.StatusAccepted,
@@ -36,15 +32,11 @@ func (e *signedRequestHandler) validateSignedChallenge(signedFilePath string) er
 		endpointValidateSignedChallenge,
 	)
 
-	fmt.Printf("challenge validation response: %+v; err=%v\n", resp, err)
-
-	if err == nil {
-		go func() {
-			e.eventChannel <- validator.AuthEvent{
-				State:               validator.StateValidationReferenceResult,
-				ValidationReference: &resp,
-			}
-		}()
+	if err != nil {
+		logging.AuthLogger.Error("error validating challenge response", "err", err)
+	} else {
+		logging.AuthLogger.Debug("challenge validation successful")
+		go success(resp)
 	}
 
 	return err

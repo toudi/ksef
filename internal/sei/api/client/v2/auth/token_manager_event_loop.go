@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"fmt"
 	"ksef/internal/logging"
 	"ksef/internal/sei/api/client/v2/auth/validator"
 	"time"
@@ -20,21 +19,21 @@ func (t *TokenManager) Run() {
 	ticker := time.NewTicker(1 * time.Second)
 
 	ctx := context.Background()
+	logger := logging.AuthLogger.With("auth", "token manager")
 
 	for !t.finished {
 		select {
 		case now := <-ticker.C:
-			fmt.Printf("token manager event loop tick\n")
+			logger.Debug("event loop tick")
 			// let's check if we have to refresh the session token
 			if t.sessionTokens == nil {
 				if t.validationReference == nil {
-					fmt.Printf("validation reference is nil - skip\n")
+					logger.Debug("authorization in process")
 					break
 				}
 
-				fmt.Printf("validation reference != nil - trying to check auth status\n")
 				if err := t.checkAuthStatus(ctx); err != nil {
-					logging.AuthLogger.Error("unable to check validation status", "err", err)
+					logger.Error("unable to check validation status", "err", err)
 				}
 
 				break
@@ -49,21 +48,21 @@ func (t *TokenManager) Run() {
 						})
 					}
 				} else {
-					fmt.Printf("too late to refresh token")
+					logger.Error("too late to refresh token")
 				}
 			}
 
 		case validatorEvent := <-t.challengeValidator.Event():
 			if validatorEvent.State == validator.StateInitialized {
-				fmt.Printf("state initialized received - obtain auth challenge")
+				logger.Debug("auth handler initialized - receive challenge")
 				// validator is ready to validate challenge so we have to obtain the challenge first.
 				authChallenge, err := t.getAuthChallenge(ctx)
 				if err != nil {
-					logging.AuthLogger.Error("unable to obtain auth challenge", "err", err)
+					logger.Error("unable to obtain auth challenge", "err", err)
 					break
 				}
 				if err := t.challengeValidator.ValidateChallenge(ctx, *authChallenge); err != nil {
-					logging.AuthLogger.Error("unable to validate challenge", "err", err)
+					logger.Error("unable to validate challenge", "err", err)
 				}
 			}
 			if validatorEvent.State == validator.StateValidationReferenceResult {

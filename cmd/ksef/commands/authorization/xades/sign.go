@@ -28,10 +28,15 @@ func init() {
 }
 
 func signChallengeFile(cmd *cobra.Command, _ []string) error {
+	challengeFileReader, err := os.Open(challengeFile)
+	if err != nil {
+		return err
+	}
+	defer challengeFileReader.Close()
 	destFile, err := os.Create(outputFile)
 	if err != nil {
 		return err
 	}
 	defer destFile.Close()
-	return xades.SignAuthChallenge(challengeFile, certFile, destFile)
+	return xades.SignAuthChallenge(challengeFileReader, certFile, destFile)
 }

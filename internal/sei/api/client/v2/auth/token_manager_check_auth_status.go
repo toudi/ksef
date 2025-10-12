@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"ksef/internal/http"
+	"ksef/internal/logging"
 	baseHttp "net/http"
 )
 
@@ -27,15 +28,15 @@ func (t *TokenManager) checkAuthStatus(ctx context.Context) error {
 		Method:          baseHttp.MethodGet,
 	}, fmt.Sprintf(endpointAuthStatus, t.validationReference.ReferenceNumber))
 
-	fmt.Printf("auth response: %+v; err: %v\n", authStatus, err)
+	logging.AuthLogger.Debug("auth response", "content", authStatus)
 
 	if err != nil {
+		logging.AuthLogger.Error("error checking auth status", "err", err)
 		return err
 	}
 
-	fmt.Printf("checking if code is success: %v\n", authStatus.Status.Code == authStatusCodeSuccess)
-
 	if authStatus.Status.Code == authStatusCodeSuccess {
+		logging.AuthLogger.Debug("authentication is successful - proceed to redeeming tokens")
 		return t.redeemTokens(ctx)
 	}
 

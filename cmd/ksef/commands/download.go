@@ -1,9 +1,9 @@
 package commands
 
 import (
-	"flag"
 	"fmt"
 	"ksef/internal/config"
+	environmentPkg "ksef/internal/environment"
 	registryPkg "ksef/internal/registry"
 	v2 "ksef/internal/sei/api/client/v2"
 	"ksef/internal/sei/api/client/v2/auth/validator"
@@ -11,72 +11,58 @@ import (
 	typesInvoices "ksef/internal/sei/api/client/v2/types/invoices"
 	"path"
 	"time"
+
+	"github.com/spf13/cobra"
 )
 
-type syncInvoicesCommand struct {
-	Command
+var syncInvoicesCommand = &cobra.Command{
+	Use:   "download",
+	Short: "Pobranie listy faktur",
+	RunE:  syncInvoices,
 }
 
 type syncInvoicesArgsType struct {
-	params         invoices.SyncParams
-	startDateInput string
-	startDate      time.Time
-	subjectNIP     string
-	refresh        string
+	params     invoices.SyncParams
+	startDate  time.Time
+	subjectNIP string
+	refresh    string
 }
 
-var (
-	SyncInvoicesCommand *syncInvoicesCommand
-	syncInvoicesArgs    = &syncInvoicesArgsType{}
-)
+var syncInvoicesArgs = &syncInvoicesArgsType{}
 
 func init() {
-	SyncInvoicesCommand = &syncInvoicesCommand{
-		Command: Command{
-			Name:        "download",
-			FlagSet:     flag.NewFlagSet("download", flag.ExitOnError),
-			Description: "Synchronizuje listę faktur z KSeF do katalogu lokalnego",
-			Run:         syncInvoicesRun,
-		},
-	}
+	flagSet := syncInvoicesCommand.Flags()
+	authFlags(flagSet, syncInvoicesCommand)
 
-	flagSet := SyncInvoicesCommand.FlagSet
-	initAuthParams(flagSet)
-	testGatewayFlag(flagSet)
-	flagSet.StringVar(&syncInvoicesArgs.params.DestPath, "d", "", "Katalog docelowy")
-
-	// specify subject type
-	flagSet.BoolFunc("income", "Synchronizuj faktury przychodowe (Podmiot1)", func(s string) error {
+	flagSet.BoolFunc("income", "pobranie faktur przychodowych (type=Subject1)", func(s string) error {
 		syncInvoicesArgs.params.SubjectType = typesInvoices.SubjectTypeIssuer
 		return nil
 	})
-	flagSet.BoolFunc("cost", "Synchronizuj faktury kosztowe (Podmiot2)", func(s string) error {
+	flagSet.BoolFunc("cost", "pobranie faktur kosztowych (type=Subject2)", func(s string) error {
 		syncInvoicesArgs.params.SubjectType = typesInvoices.SubjectTypeRecipient
 		return nil
 	})
-	flagSet.BoolFunc("payer", "Synchronizuj faktury podmiotu innego (Podmiot3)", func(s string) error {
+	flagSet.BoolFunc("payer", "pobranie faktur podmiotu innego (type=Subject3)", func(s string) error {
 		syncInvoicesArgs.params.SubjectType = typesInvoices.SubjectTypePayer
 		return nil
 	})
-	flagSet.BoolFunc("subjectAuthorized", "Synchronizuj faktury podmiotu upoważnionego (???)", func(s string) error {
-		syncInvoicesArgs.params.SubjectType = typesInvoices.SubjectTypeAuthorized
-		return nil
-	})
+	flagSet.BoolVarP(&syncInvoicesArgs.params.PDF, "pdf", "p", false, "generuj PDF dla pobranych faktur")
+	flagSet.StringVarP(&syncInvoicesArgs.subjectNIP, "nip", "n", "", "numer NIP podmiotu")
+	flagSet.IntVarP(&syncInvoicesArgs.params.PageSize, "page-size", "", 50, "liczba faktur na stronę odpowiedzi")
+	flagSet.TimeVarP(&syncInvoicesArgs.startDate, "start-date", "s", time.Now().Truncate(24*time.Hour), []string{"2006-01-02"}, "data początkowa")
+	flagSet.StringVarP(&syncInvoicesArgs.params.DestPath, "registry", "o", "", "katalog rejestru (zostanie stworzony jeśli nie istnieje)")
+	flagSet.StringVarP(&syncInvoicesArgs.refresh, "refresh", "r", "", "odświeża istniejący rejestr faktur")
 
-	flagSet.BoolVar(&syncInvoicesArgs.params.PDF, "pdf", false, "Generuj PDF dla pobranych faktur")
-	flagSet.IntVar(&syncInvoicesArgs.params.PageSize, "page-size", 50, "Liczba faktur na stronę odpowiedzi")
-	flagSet.StringVar(&syncInvoicesArgs.subjectNIP, "nip", "", "Numer NIP podmiotu")
-	flagSet.StringVar(&syncInvoicesArgs.startDateInput, "start-date", "", "Data początkowa")
-	flagSet.StringVar(&syncInvoicesArgs.refresh, "refresh", "", "odświeża istniejący rejestr faktur według istniejącego pliku")
-
-	registerCommand(&SyncInvoicesCommand.Command)
+	syncInvoicesCommand.Flags().SortFlags = false
+	syncInvoicesCommand.MarkFlagsMutuallyExclusive("income", "cost", "payer")
 }
 
-func syncInvoicesRun(c *Command) error {
+func syncInvoices(cmd *cobra.Command, _ []string) error {
 	var err error
 	var initializers []v2.InitializerFunc
 	var registry *registryPkg.InvoiceRegistry
 	var authValidator validator.AuthChallengeValidator
+	var env = environmentPkg.FromContext(cmd.Context())
 
 	// is it a refresh operation?
 	if syncInvoicesArgs.refresh != "" {
@@ -85,20 +71,19 @@ func syncInvoicesRun(c *Command) error {
 			return fmt.Errorf("nie udało się załadować pliku rejestru: %v", err)
 		}
 		syncInvoicesArgs.params.DestPath = path.Dir(syncInvoicesArgs.refresh)
-		environment = registry.Environment
-		authValidator = authValidatorInstance(registry.Issuer)
+		env = registry.Environment
+		if authValidator, err = authChallengeValidatorInstance(
+			cmd.Flags(), registry.Issuer, env,
+		); err != nil {
+			return err
+		}
 	} else {
 		// is it a new request?
 		if syncInvoicesArgs.subjectNIP == "" ||
 			syncInvoicesArgs.params.DestPath == "" ||
-			syncInvoicesArgs.startDateInput == "" ||
+			syncInvoicesArgs.startDate.IsZero() ||
 			syncInvoicesArgs.params.SubjectType == typesInvoices.SubjectTypeInvalid {
-			c.FlagSet.Usage()
-			return nil
-		}
-
-		if syncInvoicesArgs.startDate, err = time.ParseInLocation("2006-01-02", syncInvoicesArgs.startDateInput, time.Now().Location()); err != nil {
-			return fmt.Errorf("invalid date supplied: %s", syncInvoicesArgs.startDate)
+			return cmd.Help()
 		}
 
 		registry, err = registryPkg.OpenOrCreate(syncInvoicesArgs.params.DestPath)
@@ -109,15 +94,21 @@ func syncInvoicesRun(c *Command) error {
 		registry.QueryCriteria.DateFrom = syncInvoicesArgs.startDate
 		registry.Issuer = syncInvoicesArgs.subjectNIP
 
-		authValidator = authValidatorInstance(syncInvoicesArgs.subjectNIP)
+		if authValidator, err = authChallengeValidatorInstance(
+			cmd.Flags(), syncInvoicesArgs.subjectNIP, env,
+		); err != nil {
+			return err
+		}
 	}
 
 	initializers = append(initializers, v2.WithRegistry(registry), v2.WithAuthValidator(authValidator))
 
-	cli, err := v2.NewClient(c.Context, config.GetConfig(), environment, initializers...)
+	cli, err := v2.NewClient(cmd.Context(), config.GetConfig(), env, initializers...)
 	if err != nil {
 		return fmt.Errorf("błąd inicjalizacji klienta: %v", err)
 	}
+	defer cli.Close()
 
-	return cli.SyncInvoices(c.Context, syncInvoicesArgs.params)
+	return cli.SyncInvoices(cmd.Context(), syncInvoicesArgs.params)
+
 }

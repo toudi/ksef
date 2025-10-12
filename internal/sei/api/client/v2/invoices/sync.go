@@ -33,19 +33,23 @@ type InvoiceMetadataRequest struct {
 
 func Sync(ctx context.Context, httpClient *http.Client, params SyncParams, registry *registry.InvoiceRegistry) error {
 	var (
-		finished bool
-		page     int
-		req      InvoiceMetadataRequest
-		resp     types.InvoiceMetadataResponse
-		err      error
+		finished       bool
+		page           int
+		req            InvoiceMetadataRequest
+		resp           types.InvoiceMetadataResponse
+		err            error
+		printingEngine pdf.PDFPrinter
 	)
 
+	req.SubjectType = params.SubjectType
 	req.DateRange.DateType = DateRangeTypeIssue
 	req.DateRange.From = registry.QueryCriteria.DateFrom
 
-	printingEngine, err := pdf.GetLocalPrintingEngine()
-	if err != nil {
-		return ErrUnableToInitializePDFPrintingEngine
+	if params.PDF {
+		printingEngine, err = pdf.GetLocalPrintingEngine()
+		if err != nil {
+			return ErrUnableToInitializePDFPrintingEngine
+		}
 	}
 
 	downloader := NewInvoiceDownloader(httpClient, registry)

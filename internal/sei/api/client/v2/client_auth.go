@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"ksef/internal/sei/api/client/v2/auth"
 	"time"
 )
 
@@ -40,4 +41,8 @@ func (c *APIClient) Logout() error {
 
 	c.tokenManager.Stop()
 	return nil
+}
+
+func (c *APIClient) BindNIPToPESEL(ctx context.Context, nip, pesel string) error {
+	return auth.BindNIPToPESEL(ctx, c.httpClient, nip, pesel)
 }

@@ -2,7 +2,9 @@ package authorization
 
 import (
 	"errors"
+	"ksef/internal/config"
 	"ksef/internal/environment"
+	v2 "ksef/internal/sei/api/client/v2"
 
 	"github.com/spf13/cobra"
 )
@@ -14,6 +16,7 @@ type bindNipArgsType struct {
 var (
 	bindNipArgs            bindNipArgsType
 	errTestModeNotSelected = errors.New("komenda dostępna tylko przy użyciu testowej bramki KSeF")
+	errNipIsRequired       = errors.New("numer NIP jest wymagany")
 )
 
 var bindNipCommand = &cobra.Command{
@@ -33,5 +36,16 @@ func bindNipRun(cmd *cobra.Command, _ []string) error {
 	if env != environment.Test {
 		return errTestModeNotSelected
 	}
-	return nil
+	nip, err := cmd.Flags().GetString("nip")
+	if err != nil || nip == "" {
+		return errNipIsRequired
+	}
+	cfg := config.GetConfig()
+
+	cli, err := v2.NewClient(cmd.Context(), cfg, env)
+	if err != nil {
+		return err
+	}
+
+	return cli.BindNIPToPESEL(cmd.Context(), nip, bindNipArgs.pesel)
 }

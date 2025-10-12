@@ -56,6 +56,7 @@ func (c *APIClient) authenticatedHTTPClient() *httpClient.Client {
 }
 
 func (c *APIClient) Close() {
+	c.tokenManager.Logout()
 	c.tokenManager.Stop()
 }
 

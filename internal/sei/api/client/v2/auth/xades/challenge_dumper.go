@@ -2,6 +2,7 @@ package xades
 
 import (
 	"context"
+	"io"
 	"ksef/internal/config"
 	"ksef/internal/http"
 	"ksef/internal/sei/api/client/v2/auth/validator"
@@ -61,13 +62,7 @@ func (e *AuthChallengeDumper) dumpChallenge(challenge validator.AuthChallenge) e
 
 	defer challengeFile.Close()
 
-	err = challengeRequestTemplate.Execute(
-		challengeFile,
-		authChallengeRequestVars{
-			Challenge:  challenge.Challenge,
-			SubjectNIP: e.nip,
-		},
-	)
+	err = dumpChallengeToWriter(challenge, e.nip, challengeFile)
 	if err != nil {
 		return err
 	}
@@ -79,4 +74,14 @@ func (e *AuthChallengeDumper) dumpChallenge(challenge validator.AuthChallenge) e
 	}()
 
 	return nil
+}
+
+func dumpChallengeToWriter(challenge validator.AuthChallenge, nip string, dest io.Writer) error {
+	return challengeRequestTemplate.Execute(
+		dest,
+		authChallengeRequestVars{
+			Challenge:  challenge.Challenge,
+			SubjectNIP: nip,
+		},
+	)
 }

@@ -38,7 +38,7 @@ type TemplateVars struct {
 	}
 }
 
-func SignAuthChallenge(challengeFile string, certificateFile string, dest io.Writer) error {
+func SignAuthChallenge(challenge io.Reader, certificateFile string, dest io.Writer) error {
 	var templateVars = TemplateVars{
 		SigningTime: time.Now().UTC(),
 	}
@@ -72,7 +72,7 @@ func SignAuthChallenge(challengeFile string, certificateFile string, dest io.Wri
 
 	// let's deal with the original message
 	signedDocument := etree.NewDocument()
-	if err := signedDocument.ReadFromFile(challengeFile); err != nil {
+	if _, err := signedDocument.ReadFrom(challenge); err != nil {
 		return err
 	}
 	// now we need to dump it to a temporary buffer so that we could hash the content

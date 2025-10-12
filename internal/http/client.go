@@ -8,12 +8,17 @@ import (
 	"fmt"
 	"io"
 	"ksef/internal/interfaces"
+	"ksef/internal/logging"
 	"net/http"
 	"net/url"
 	"time"
 )
 
-var ErrUnexpectedStatusCode = errors.New("unexpected status code")
+var (
+	ErrUnexpectedStatusCode = errors.New("unexpected status code")
+	ErrUnableToCopyResponse = errors.New("unable to copy HTTP response to buffer")
+	ErrUnexpectedBody       = errors.New("unexpected body (content type not specified and body is not a reader)")
+)
 
 const (
 	JSON = "application/json"
@@ -60,14 +65,22 @@ func (rb *Client) Request(ctx context.Context, config RequestConfig, endpoint st
 	var body io.Reader
 
 	if config.Body != nil {
-		body = config.Body.(io.Reader)
+		var isReader bool
+
 		if config.ContentType == JSON {
 			body, err = jsonBodyReader(config.Body)
 			if err != nil {
 				return nil, err
 			}
+		} else {
+			body, isReader = config.Body.(io.Reader)
+			if !isReader {
+				return nil, ErrUnexpectedBody
+			}
 		}
 	}
+
+	logging.HTTPLogger.With("method", config.Method, "url", fullUrl.String()).Debug("request")
 
 	req, err := http.NewRequestWithContext(ctx, config.Method, fullUrl.String(), body)
 	if err != nil {
@@ -103,9 +116,16 @@ func (rb *Client) Request(ctx context.Context, config RequestConfig, endpoint st
 	}
 
 	var bodyBuffer bytes.Buffer
-	io.Copy(&bodyBuffer, resp.Body)
+	if _, err = io.Copy(&bodyBuffer, resp.Body); err != nil {
+		return nil, ErrUnableToCopyResponse
+	}
 	defer resp.Body.Close()
-	fmt.Printf("content: %s\n", bodyBuffer.String())
+
+	logging.HTTPLogger.Debug(
+		"response",
+		"body",
+		bodyBuffer.String(),
+	)
 
 	if config.ExpectedStatus > 0 && resp.StatusCode != config.ExpectedStatus {
 		return resp, fmt.Errorf("%w: %d vs %d", ErrUnexpectedStatusCode, resp.StatusCode, config.ExpectedStatus)
