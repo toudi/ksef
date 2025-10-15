@@ -16,7 +16,7 @@ type CipherHTTPRequest struct {
 
 func (c Cipher) PrepareHTTPRequestPayload(certificateFile string) (CipherHTTPRequest, error) {
 	var chr CipherHTTPRequest
-	var encoder = base64.RawURLEncoding
+	var encoder = base64.StdEncoding
 
 	encryptedKeyBytes, err := EncryptMessageWithCertificate(certificateFile, c.Key)
 	if err != nil {

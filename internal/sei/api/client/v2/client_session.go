@@ -9,6 +9,7 @@ func (c *APIClient) InteractiveSession() (*interactive.Session, error) {
 	return interactive.NewSession(
 		c.authenticatedHTTPClient(),
 		c.registry,
+		c.apiConfig,
 	), nil
 }
 

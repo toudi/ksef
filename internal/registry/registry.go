@@ -17,7 +17,7 @@ type InvoiceUploadResult struct {
 	Filename string `yaml:"filename"`
 	Checksum string `yaml:"checksum"`
 	SeiRefNo string `yaml:"seiRefNo"`
-	Failed   bool   `yaml:"failed,omitzero"` // whether the invoice was processed successfuly
+	Failed   bool   `yaml:"failed,omitempty"` // whether the invoice was processed successfuly
 }
 
 type UploadSessionStatus struct {
@@ -81,9 +81,9 @@ type InvoiceRegistry struct {
 	checksumIndex  map[string]int                  `                     yaml:"-"`
 	PaymentIds     []PaymentId                     `                     yaml:"payment-ids,omitempty"`
 	UploadSessions map[string]*UploadSessionStatus `yaml:"upload-sessions"` // map between upload session ID and list of seiRefNumbers
-	sourcePath     string
-	Dir            string
-	collection     *InvoiceCollection `yaml:"-"` // cache invoice collection ptr
+	sourcePath     string                          `yaml:"-"`
+	Dir            string                          `yaml:"-"` // diretory for invoice registry. we cache it so that the registry knows where to save itself
+	collection     *InvoiceCollection              `yaml:"-"` // cache invoice collection ptr
 }
 
 var ErrDoesNotExist = errors.New("registry file does not exist")

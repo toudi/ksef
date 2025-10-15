@@ -17,6 +17,10 @@ func (r *InvoiceRegistry) SetUploadResult(
 		r.UploadSessions = make(map[string]*UploadSessionStatus)
 	}
 
+	if _, exists := r.UploadSessions[uploadSessionRefNo]; !exists {
+		r.UploadSessions[uploadSessionRefNo] = &UploadSessionStatus{}
+	}
+
 	r.UploadSessions[uploadSessionRefNo].Invoices = append(r.UploadSessions[uploadSessionRefNo].Invoices, uploadResult)
 
 	// TODO: save file to a temp directory to prevent data loss ?

@@ -71,9 +71,10 @@ func (s *Session) initialize(ctx context.Context, invoiceFormCode registry.Invoi
 	}
 
 	return &uploadSession{
-		refNo:     resp.ReferenceNumber,
-		cipher:    cipher,
-		uploadUrl: fmt.Sprintf(endpointSessionUploadInvoice, resp.ReferenceNumber),
+		refNo:         resp.ReferenceNumber,
+		cipher:        cipher,
+		uploadUrl:     fmt.Sprintf(endpointSessionUploadInvoice, resp.ReferenceNumber),
+		seiRefNumbers: make(map[string]string),
 	}, nil
 }
 

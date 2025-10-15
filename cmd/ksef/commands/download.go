@@ -32,7 +32,7 @@ var syncInvoicesArgs = &syncInvoicesArgsType{}
 
 func init() {
 	flagSet := syncInvoicesCommand.Flags()
-	authFlags(flagSet, syncInvoicesCommand)
+	authFlags(syncInvoicesCommand)
 
 	flagSet.BoolFunc("income", "pobranie faktur przychodowych (type=Subject1)", func(s string) error {
 		syncInvoicesArgs.params.SubjectType = typesInvoices.SubjectTypeIssuer
@@ -73,7 +73,7 @@ func syncInvoices(cmd *cobra.Command, _ []string) error {
 		syncInvoicesArgs.params.DestPath = path.Dir(syncInvoicesArgs.refresh)
 		env = registry.Environment
 		if authValidator, err = authChallengeValidatorInstance(
-			cmd.Flags(), registry.Issuer, env,
+			cmd, registry.Issuer, env,
 		); err != nil {
 			return err
 		}
@@ -95,7 +95,7 @@ func syncInvoices(cmd *cobra.Command, _ []string) error {
 		registry.Issuer = syncInvoicesArgs.subjectNIP
 
 		if authValidator, err = authChallengeValidatorInstance(
-			cmd.Flags(), syncInvoicesArgs.subjectNIP, env,
+			cmd, syncInvoicesArgs.subjectNIP, env,
 		); err != nil {
 			return err
 		}

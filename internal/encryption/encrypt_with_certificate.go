@@ -16,13 +16,13 @@ func EncryptMessageWithCertificate(certificateFile string, message []byte) ([]by
 	}
 
 	block, _ := pem.Decode(certFileBytes)
-	parsedKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+	parsedCert, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		return nil, fmt.Errorf("could not parse public key from %s: %v", certificateFile, err)
+		return nil, fmt.Errorf("could not parse certificate from %s: %v", certificateFile, err)
 	}
 	var publicKey *rsa.PublicKey
 	var ok bool
-	if publicKey, ok = parsedKey.(*rsa.PublicKey); !ok {
+	if publicKey, ok = parsedCert.PublicKey.(*rsa.PublicKey); !ok {
 		return nil, fmt.Errorf("cannot parse public key: %v", err)
 	}
 	encryptedBytes, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey, message)

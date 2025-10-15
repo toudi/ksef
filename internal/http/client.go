@@ -63,11 +63,13 @@ func (rb *Client) Request(ctx context.Context, config RequestConfig, endpoint st
 	}
 
 	var body io.Reader
+	var logger = logging.HTTPLogger.With("method", config.Method, "url", fullUrl.String())
 
 	if config.Body != nil {
 		var isReader bool
 
 		if config.ContentType == JSON {
+			logger = logger.With("body", fmt.Sprintf("%+v", config.Body))
 			body, err = jsonBodyReader(config.Body)
 			if err != nil {
 				return nil, err
@@ -80,7 +82,7 @@ func (rb *Client) Request(ctx context.Context, config RequestConfig, endpoint st
 		}
 	}
 
-	logging.HTTPLogger.With("method", config.Method, "url", fullUrl.String()).Debug("request")
+	logger.Debug("request")
 
 	req, err := http.NewRequestWithContext(ctx, config.Method, fullUrl.String(), body)
 	if err != nil {

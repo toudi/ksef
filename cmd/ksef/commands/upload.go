@@ -1,16 +1,20 @@
 package commands
 
 import (
-	"flag"
 	"fmt"
 	"ksef/internal/config"
+	environmentPkg "ksef/internal/environment"
 	registryPkg "ksef/internal/registry"
 	v2 "ksef/internal/sei/api/client/v2"
 	"ksef/internal/sei/api/client/v2/session/interactive"
+
+	"github.com/spf13/cobra"
 )
 
-type uploadCommand struct {
-	Command
+var uploadCommand = &cobra.Command{
+	Use:   "upload",
+	Short: "przesyła faktury do KSeF",
+	RunE:  uploadRun,
 }
 
 type uploadArgsType struct {
@@ -19,50 +23,33 @@ type uploadArgsType struct {
 	interactiveUploadParams interactive.UploadParams
 }
 
-var UploadCommand *uploadCommand
 var uploadArgs = &uploadArgsType{}
 
 func init() {
-	UploadCommand = &uploadCommand{
-		Command: Command{
-			Name:        "upload",
-			FlagSet:     flag.NewFlagSet("upload", flag.ExitOnError),
-			Description: "wysyła podpisany plik KSEF do bramki ministerstwa finansów",
-			Run:         uploadRun,
-		},
-	}
+	authFlags(uploadCommand)
+	var flags = uploadCommand.Flags()
 
-	flagSet := UploadCommand.FlagSet
-	initAuthParams(flagSet)
-	testGatewayFlag(flagSet)
+	flags.BoolVarP(&uploadArgs.interactive, "interactive", "i", false, "użyj sesji interaktywnej")
+	flags.StringVarP(&uploadArgs.path, "path", "p", "", "ścieżka do katalogu z wygenerowanymi fakturami")
+	flags.BoolVarP(&uploadArgs.interactiveUploadParams.ForceUpload, "force", "f", false, "potwierdź wysyłkę faktur pomimo istniejących sum kontrolnych")
 
-	UploadCommand.FlagSet.BoolVar(&uploadArgs.interactive, "i", false, "użyj sesji interaktywnej")
-	UploadCommand.FlagSet.StringVar(
-		&uploadArgs.path,
-		"p",
-		"",
-		"ścieżka do katalogu z wygenerowanymi fakturami",
-	)
-	UploadCommand.FlagSet.BoolVar(
-		&uploadArgs.interactiveUploadParams.ForceUpload,
-		"f",
-		false,
-		"potwierdź wysyłkę faktur pomimo istniejących sum kontrolnych",
-	)
-
-	registerCommand(&UploadCommand.Command)
+	_ = cobra.MarkFlagRequired(flags, "path")
+	flags.SortFlags = false
 }
 
-func uploadRun(c *Command) error {
-	if uploadArgs.path == "" {
-		c.FlagSet.Usage()
-		return nil
-	}
+func uploadRun(cmd *cobra.Command, _ []string) error {
+	var ctx = cmd.Context()
+	env = environmentPkg.FromContext(ctx)
 
 	registry, err := registryPkg.OpenOrCreate(uploadArgs.path)
 	if err != nil {
 		return err
 	}
+	if registry.Environment == "" {
+		registry.Environment = env
+	}
+
+	defer registry.Save("")
 
 	// load invoice collection to retrieve the issuer
 	collection, err := registry.InvoiceCollection()
@@ -70,12 +57,21 @@ func uploadRun(c *Command) error {
 		return err
 	}
 
-	authValidator := authValidatorInstance(collection.Issuer)
+	authValidator, err := authChallengeValidatorInstance(cmd, collection.Issuer, env)
+	if err != nil {
+		return err
+	}
 
-	cli, err := v2.NewClient(c.Context, config.GetConfig(), environment, v2.WithRegistry(registry), v2.WithAuthValidator(authValidator))
+	cli, err := v2.NewClient(
+		ctx,
+		config.GetConfig(),
+		env, v2.WithRegistry(registry), v2.WithAuthValidator(authValidator),
+	)
 	if err != nil {
 		return fmt.Errorf("błąd inicjalizacji klienta: %v", err)
 	}
+
+	defer cli.Logout()
 
 	if uploadArgs.interactive {
 		interactiveSession, err := cli.InteractiveSession()
@@ -83,7 +79,7 @@ func uploadRun(c *Command) error {
 			return err
 		}
 
-		err = interactiveSession.UploadInvoices(c.Context, uploadArgs.interactiveUploadParams)
+		err = interactiveSession.UploadInvoices(ctx, uploadArgs.interactiveUploadParams)
 		if err == interactive.ErrProbablyUsedSend {
 			fmt.Printf(
 				"Wygląda na to, że poprzednio użyta została komenda 'upload' na tym rejestrze.\nJeśli na pewno chcesz ponowić wysyłkę, uzyj flagi '-f'\n",
@@ -98,5 +94,5 @@ func uploadRun(c *Command) error {
 		return err
 	}
 
-	return batchSession.UploadInvoices(c.Context)
+	return batchSession.UploadInvoices(ctx)
 }

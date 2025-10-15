@@ -5,6 +5,7 @@ import (
 	"errors"
 	"ksef/internal/config"
 	HTTP "ksef/internal/http"
+	"ksef/internal/logging"
 	"ksef/internal/registry"
 )
 
@@ -19,10 +20,11 @@ var (
 	ErrProbablyUsedSend          = errors.New("upload command probably used previously")
 )
 
-func NewSession(httpClient *HTTP.Client, registry *registry.InvoiceRegistry) *Session {
+func NewSession(httpClient *HTTP.Client, registry *registry.InvoiceRegistry, apiConfig config.APIConfig) *Session {
 	return &Session{
 		httpClient: httpClient,
 		registry:   registry,
+		apiConfig:  apiConfig,
 	}
 }
 
@@ -33,6 +35,7 @@ func (s *Session) UploadInvoices(ctx context.Context, params UploadParams) error
 	// v2 specs forces us to group invoices by their form code
 	// on the other hand, it no longer forces us to send invoices through a 3rd party server
 	for formCode, files := range collection.Files {
+		logging.InteractiveLogger.With("formCode", formCode).Info("przesyłanie faktur")
 		if err := s.uploadInvoicesForForm(ctx, formCode, files); err != nil {
 			return err
 		}

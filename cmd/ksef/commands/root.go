@@ -40,6 +40,7 @@ func init() {
 	RootCommand.AddCommand(authorization.AuthCommand)
 	RootCommand.AddCommand(certificates.CertificatesCommand)
 	RootCommand.AddCommand(syncInvoicesCommand)
+	RootCommand.AddCommand(uploadCommand)
 	RootCommand.CompletionOptions = cobra.CompletionOptions{DisableDefaultCmd: true}
 }
 
@@ -58,6 +59,7 @@ func setContext(cmd *cobra.Command, _ []string) error {
 	}
 
 	logging.SeiLogger.Info("start programu")
+	logging.SeiLogger.Info("wybrane środowisko", "env", env)
 
 	var ctx = context.WithValue(
 		cmd.Context(),

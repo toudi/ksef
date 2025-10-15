@@ -38,7 +38,7 @@ func (cdb *CertificatesDB) AddCertificate(base64Der string, environment environm
 		return err
 	}
 	defer pemFile.Close()
-	if _, err = fmt.Fprintf(pemFile, "-----BEGIN PUBLIC KEY-----\n%s\n-----END PUBLIC KEY-----\n", base64Der); err != nil {
+	if _, err = fmt.Fprintf(pemFile, "-----BEGIN CERTIFICATE-----\n%s\n-----END CERTIFICATE-----\n", base64Der); err != nil {
 		return err
 	}
 
