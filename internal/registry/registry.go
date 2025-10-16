@@ -23,6 +23,7 @@ type InvoiceUploadResult struct {
 type UploadSessionStatus struct {
 	Processed bool                   `yaml:"processed"`
 	Invoices  []*InvoiceUploadResult `yaml:"invoices"`
+	UPO       []string               `yaml:"upo,omitempty"`
 }
 
 type QueryCriteria struct {

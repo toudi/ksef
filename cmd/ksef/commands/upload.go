@@ -57,6 +57,10 @@ func uploadRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	if registry.Issuer == "" {
+		registry.Issuer = collection.Issuer
+	}
+
 	authValidator, err := authChallengeValidatorInstance(cmd, collection.Issuer, env)
 	if err != nil {
 		return err

@@ -4,116 +4,71 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
-	"flag"
-	"fmt"
-	"ksef/internal/logging"
 	"ksef/internal/pdf"
-	"ksef/internal/registry"
-	"ksef/internal/utils"
+	registryPkg "ksef/internal/registry"
 	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/spf13/cobra"
 )
 
-type renderPDFCommand struct {
-	Command
-}
-type renderPDFArgsType struct {
-	path           string
-	resolverConfig utils.FilepathResolverConfig
-	invoice        string
+var renderPDFCommand = &cobra.Command{
+	Use:   "pdf",
+	Short: "drukuje PDF dla wskazanego dokumentu",
 }
 
-var RenderPDFCommand *renderPDFCommand
-var renderPDFArgs renderPDFArgsType
+var renderInvoicePDFCommand = &cobra.Command{
+	Use:   "invoice",
+	Short: "drukuje PDF dla wskazanej faktury",
+	Args:  cobra.ExactArgs(1),
+	RunE:  renderInvoicePDF,
+}
+var renderUPOPDFCommand = &cobra.Command{
+	Use:   "upo",
+	Short: "drukuje PDF dla wkazanego UPO",
+	Args:  cobra.ExactArgs(1),
+}
 
 func init() {
-	RenderPDFCommand = &renderPDFCommand{
-		Command: Command{
-			Name:        "render-pdf",
-			FlagSet:     flag.NewFlagSet("render-pdf", flag.ExitOnError),
-			Description: "drukuje PDF dla wskazanej faktury używając lokalnego szablonu",
-			Run:         renderPDFRun,
-		},
-	}
-
-	RenderPDFCommand.FlagSet.StringVar(
-		&renderPDFArgs.path,
-		"p",
-		"",
-		"ścieżka do pliku rejestru",
-	)
-	RenderPDFCommand.FlagSet.StringVar(
-		&renderPDFArgs.resolverConfig.Path,
-		"o",
-		"",
-		"ścieżka do zapisu PDF (domyślnie katalog pliku statusu + {nrRef}.pdf)",
-	)
-	RenderPDFCommand.FlagSet.BoolVar(
-		&renderPDFArgs.resolverConfig.Mkdir,
-		"m",
-		false,
-		"stwórz katalog, jeśli wskazany do zapisu nie istnieje",
-	)
-	RenderPDFCommand.FlagSet.StringVar(
-		&renderPDFArgs.invoice,
-		"i",
-		"",
-		"plik XML do wizualizacji",
-	)
-
-	registerCommand(&RenderPDFCommand.Command)
+	renderPDFCommand.AddCommand(renderInvoicePDFCommand)
+	renderPDFCommand.AddCommand(renderUPOPDFCommand)
 }
 
-func renderPDFRun(c *Command) error {
-	if renderPDFArgs.path == "" || renderPDFArgs.invoice == "" {
-		RenderPDFCommand.FlagSet.Usage()
-		return nil
-	}
+func renderInvoicePDF(cmd *cobra.Command, args []string) error {
+	// let's grab the source filename
+	invoiceSourceXML := args[0]
 
-	registry, err := registry.LoadRegistry(renderPDFArgs.path)
-	if err != nil {
-		return fmt.Errorf("unable to load registry from file: %v", err)
-	}
-
-	if registry.Environment == "" {
-		return fmt.Errorf("file deserialized correctly, but environment is empty")
-	}
-
-	fileContent, err := os.ReadFile(renderPDFArgs.invoice)
-	if err != nil {
-		return fmt.Errorf("nie udało się odczytać pliku źródłowego")
-	}
-
-	hasher := sha256.New()
-	hasher.Write(fileContent)
-	fileChecksum := hex.EncodeToString(hasher.Sum(nil))
-	fileBase64 := base64.StdEncoding.EncodeToString(fileContent)
-
-	logging.PDFRendererLogger.Debug("calculated checksum", "checksum", fileChecksum)
-
-	invoiceMeta, err := registry.GetInvoiceByChecksum(fileChecksum)
+	// based on that, we can open registry
+	registry, err := registryPkg.LoadRegistry(filepath.Dir(invoiceSourceXML))
 	if err != nil {
 		return err
 	}
-	if invoiceMeta.Checksum != fileChecksum {
-		return fmt.Errorf("nie udało się znaleźć faktury na podstawie kryteriów wejściowych")
-	}
 
-	renderPDFArgs.resolverConfig.DefaultFilename = fmt.Sprintf(
-		"%s.pdf",
-		invoiceMeta.SEIReferenceNumber,
-	)
-
-	outputPath, err := utils.ResolveFilepath(renderPDFArgs.resolverConfig)
-	if err == utils.ErrDoesNotExistAndMkdirNotSpecified {
-		return fmt.Errorf("wskazany katalog nie istnieje a nie użyłeś opcji `-m`")
-	}
+	// let's read the invoice into memory. we will need it anyway to pass it to the renderer
+	// and to hash it (in order to generate the qrcode url)
+	invoiceBytes, err := os.ReadFile(invoiceSourceXML)
 	if err != nil {
-		return fmt.Errorf("błąd tworzenia katalogu wyjściowego: %v", err)
+		return err
+	}
+	// invoice, invoiceBytes, err := registryPkg.ReadAndParseInvoice(invoiceSourceXML)
+	// if err != nil {
+	// 	return err
+	// }
+	hash := sha256.Sum256(invoiceBytes)
+	invoiceMeta, err := registry.GetInvoiceByChecksum(hex.EncodeToString(hash[:]))
+	if err != nil {
+		return err
 	}
 
-	printingEngine, err := pdf.GetLocalPrintingEngine()
+	// we're almost done. now let's prepare the qrcode URL
+	// var qrcode string = "https://" + string(registry.Environment) + "/client-app/invoice/" + registry.Issuer + "/" + base64.URLEncoding.EncodeToString(hash[:])
+
+	engine, err := pdf.GetLocalPrintingEngine()
 	if err != nil {
-		return fmt.Errorf("nie udało się zainicjować silnika drukowania: %v", err)
+		return err
 	}
-	return printingEngine.Print(fileBase64, invoiceMeta, outputPath)
+	basename, _ := strings.CutSuffix(filepath.Base(invoiceSourceXML), filepath.Ext(invoiceSourceXML))
+	output := filepath.Join(registry.Dir, basename+".pdf")
+	return engine.Print(base64.StdEncoding.EncodeToString(invoiceBytes), invoiceMeta, output)
 }

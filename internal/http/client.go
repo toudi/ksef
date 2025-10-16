@@ -151,6 +151,23 @@ func (rb *Client) Request(ctx context.Context, config RequestConfig, endpoint st
 	return resp, nil
 }
 
+func (rb *Client) Download(ctx context.Context, url string, dest io.Writer) error {
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	_, err = io.Copy(dest, resp.Body)
+	return err
+}
+
 func jsonBodyReader(body any) (*bytes.Buffer, error) {
 	var buffer bytes.Buffer
 	var encoder = json.NewEncoder(&buffer)

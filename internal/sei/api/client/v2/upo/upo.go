@@ -5,6 +5,8 @@ import (
 	"fmt"
 	HTTP "ksef/internal/http"
 	"ksef/internal/utils"
+	"os"
+	"path/filepath"
 )
 
 type UPODownloadFormat string
@@ -40,7 +42,7 @@ func NewDownloader(httpClient *HTTP.Client, params UPODownloaderParams) *UPODown
 	}
 }
 
-func (ud *UPODownloader) Download(ctx context.Context, uploadSessionId string, pages []UPODownloadPage) error {
+func (ud *UPODownloader) Download(ctx context.Context, uploadSessionId string, pages []UPODownloadPage, success func(upoRefNo string)) error {
 	// outputPath
 	_, err := utils.ResolveFilepath(
 		utils.FilepathResolverConfig{
@@ -61,7 +63,22 @@ func (ud *UPODownloader) Download(ctx context.Context, uploadSessionId string, p
 		return fmt.Errorf("błąd tworzenia katalogu wyjściowego: %v", err)
 	}
 
-	// TODO: actual downloading through httpClient
+	for _, page := range pages {
+		outputFile, err := os.Create(filepath.Join(ud.params.Path, page.ReferenceNumber) + ".xml")
+		if err != nil {
+			return err
+		}
+		if err := ud.httpClient.Download(
+			ctx,
+			page.DownloadUrl,
+			outputFile,
+		); err != nil {
+			return err
+		}
+		outputFile.Close()
+
+		success(page.ReferenceNumber)
+	}
 
 	return nil
 }

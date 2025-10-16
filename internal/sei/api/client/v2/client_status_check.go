@@ -42,7 +42,9 @@ func (c *APIClient) UploadSessionsStatusCheck(ctx context.Context, upoDownloader
 
 		if statusResponse.Status.Code == status.SessionStatusProcessed {
 			logging.SeiLogger.Info("sesja przetworzona pomyślnie. Przystępuję do pobierania UPO")
-			if err = upoDownloader.Download(ctx, uploadSessionId, statusResponse.Upo.Pages); err != nil {
+			if err = upoDownloader.Download(ctx, uploadSessionId, statusResponse.Upo.Pages, func(upoRefNo string) {
+				c.registry.AddUPOToSession(uploadSessionId, upoRefNo)
+			}); err != nil {
 				logging.SeiLogger.Error("błąd pobierania UPO", "error", err)
 			}
 		}

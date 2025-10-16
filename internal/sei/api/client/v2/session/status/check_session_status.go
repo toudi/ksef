@@ -28,5 +28,5 @@ func CheckSessionStatus(ctx context.Context, httpClient *HTTP.Client, sessionId 
 		return nil, err
 	}
 
-	return nil, nil
+	return &resp, nil
 }

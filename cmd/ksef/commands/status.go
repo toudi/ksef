@@ -1,67 +1,48 @@
 package commands
 
 import (
-	"flag"
 	"fmt"
 	"ksef/internal/config"
 	registryPkg "ksef/internal/registry"
 	v2 "ksef/internal/sei/api/client/v2"
 	"ksef/internal/sei/api/client/v2/upo"
-	"path/filepath"
+
+	"github.com/spf13/cobra"
 )
 
-type statusCommand struct {
-	Command
+const (
+	flagNameRegistry = "registry"
+)
+
+var statusCommand = &cobra.Command{
+	Use:   "status",
+	Short: "sprawdza status wysłanych faktur i pobiera dokument UPO",
+	RunE:  statusRun,
 }
 
 var registryPath string
 
-var StatusCommand *statusCommand
 var upoDownloaderParams upo.UPODownloaderParams
-var issuerToken string
-var xml bool
 
 func init() {
+	flagSet := statusCommand.Flags()
+	authFlags(statusCommand)
+	cobra.MarkFlagRequired(flagSet, flagNameRegistry)
+
 	upoDownloaderParams.Format = upo.UPOFormatPDF
-	StatusCommand = &statusCommand{
-		Command: Command{
-			Name:        "status",
-			FlagSet:     flag.NewFlagSet("status", flag.ExitOnError),
-			Description: "wysyła sprawdza status przesyłki i pobiera dokument UPO",
-			Run:         statusRun,
-		},
-	}
 
-	flagSet := StatusCommand.FlagSet
-	initAuthParams(flagSet)
-
-	StatusCommand.FlagSet.StringVar(&registryPath, "p", "", "ścieżka do pliku rejestru")
-	StatusCommand.FlagSet.StringVar(
-		&upoDownloaderParams.Path,
-		"o",
-		"",
-		"ścieżka do zapisu UPO (domyślnie katalog pliku rejestru + {nrRef}.pdf)",
-	)
-	StatusCommand.FlagSet.BoolVar(
-		&upoDownloaderParams.Mkdir,
-		"m",
-		false,
-		"stwórz katalog, jeśli wskazany do zapisu nie istnieje",
-	)
-	StatusCommand.FlagSet.BoolFunc("xml", "zapis UPO jako plik XML", func(s string) error {
-		upoDownloaderParams.Format = upo.UPOFormatPDF
+	flagSet.StringVarP(&registryPath, flagNameRegistry, "r", "", "ścieżka do katalogu z rejestrem")
+	flagSet.StringVarP(&upoDownloaderParams.Path, "output", "o", "", "ścieżka do zapisu UPO (domyślnie katalog rejestru + {nrRef}.pdf)")
+	flagSet.BoolVarP(&upoDownloaderParams.Mkdir, "m", "", false, "stwórz ktalog do zapisu, jeśli wskazany nie istnieje")
+	flagSet.BoolFunc("xml", "zapis UPO jako plik XML", func(s string) error {
+		upoDownloaderParams.Format = upo.UPOFormatXML
 		return nil
 	})
 
-	registerCommand(&StatusCommand.Command)
+	flagSet.SortFlags = false
 }
 
-func statusRun(c *Command) error {
-	if registryPath == "" {
-		StatusCommand.FlagSet.Usage()
-		return nil
-	}
-
+func statusRun(cmd *cobra.Command, _ []string) error {
 	registry, err := registryPkg.LoadRegistry(registryPath)
 	if err != nil {
 		return fmt.Errorf("unable to load status from file: %v", err)
@@ -74,16 +55,23 @@ func statusRun(c *Command) error {
 		)
 	}
 
-	authValidator := authValidatorInstance(registry.Issuer)
+	env = registry.Environment
 
-	cli, err := v2.NewClient(c.Context, config.GetConfig(), registry.Environment, v2.WithRegistry(registry), v2.WithAuthValidator(authValidator))
+	authValidator, err := authChallengeValidatorInstance(cmd, registry.Issuer, env)
+	if err != nil {
+		return err
+	}
+
+	cli, err := v2.NewClient(cmd.Context(), config.GetConfig(), registry.Environment, v2.WithRegistry(registry), v2.WithAuthValidator(authValidator))
 	if err != nil {
 		return fmt.Errorf("błąd inicjalizacji klienta: %v", err)
 	}
 
+	defer cli.Logout()
+
 	if upoDownloaderParams.Path == "" {
-		upoDownloaderParams.Path = filepath.Dir(registryPath)
+		upoDownloaderParams.Path = registry.Dir
 	}
 
-	return cli.UploadSessionsStatusCheck(c.Context, upoDownloaderParams)
+	return cli.UploadSessionsStatusCheck(cmd.Context(), upoDownloaderParams)
 }

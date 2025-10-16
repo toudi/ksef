@@ -4,6 +4,7 @@ import (
 	"context"
 	HTTP "ksef/internal/http"
 	"ksef/internal/registry"
+	"ksef/internal/utils"
 	"net/http"
 )
 
@@ -38,7 +39,7 @@ func (s *Session) uploadFile(ctx context.Context, us *uploadSession, filename st
 	// received `resp.ReferenceNumber`. This will be important when we'll want to retrieve UPO's
 	s.registry.SetUploadResult(us.refNo, &registry.InvoiceUploadResult{
 		Filename: filename,
-		Checksum: payload.InvoiceHash,
+		Checksum: utils.Base64ToHex(payload.InvoiceHash),
 		SeiRefNo: resp.ReferenceNumber,
 	})
 

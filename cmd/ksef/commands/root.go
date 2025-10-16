@@ -41,6 +41,8 @@ func init() {
 	RootCommand.AddCommand(certificates.CertificatesCommand)
 	RootCommand.AddCommand(syncInvoicesCommand)
 	RootCommand.AddCommand(uploadCommand)
+	RootCommand.AddCommand(statusCommand)
+	RootCommand.AddCommand(renderPDFCommand)
 	RootCommand.CompletionOptions = cobra.CompletionOptions{DisableDefaultCmd: true}
 }
 

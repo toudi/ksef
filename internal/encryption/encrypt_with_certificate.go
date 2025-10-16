@@ -3,6 +3,7 @@ package encryption
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -25,7 +26,7 @@ func EncryptMessageWithCertificate(certificateFile string, message []byte) ([]by
 	if publicKey, ok = parsedCert.PublicKey.(*rsa.PublicKey); !ok {
 		return nil, fmt.Errorf("cannot parse public key: %v", err)
 	}
-	encryptedBytes, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey, message)
+	encryptedBytes, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, publicKey, message, nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not encrypt cipher key with finance ministry's public key: %v", err)
 	}
