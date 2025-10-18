@@ -3,7 +3,7 @@ package v2
 import (
 	"context"
 	"errors"
-	"fmt"
+	"ksef/internal/environment"
 	"ksef/internal/sei/api/client/v2/auth"
 	"time"
 )
@@ -25,13 +25,19 @@ func (c *APIClient) WaitForTokenManagerLoop() error {
 }
 
 func (c *APIClient) ObtainToken() error {
-	sessionToken, err := c.tokenManager.GetAuthorizationToken(30 * time.Second)
+	_, err := c.tokenManager.GetAuthorizationToken(30 * time.Second)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("token obtained successfully! %s\n", sessionToken)
 	return nil
+}
+
+func (c *APIClient) PersistTokens(env environment.Environment, nip string) error {
+	return c.tokenManager.PersistTokens(env, nip)
+}
+func (c *APIClient) SetSessionTokens(tokens *auth.SessionTokens) {
+	c.tokenManager.SetSessionTokens(tokens)
 }
 
 func (c *APIClient) Logout() error {

@@ -1,6 +1,7 @@
 package xades
 
 import (
+	"errors"
 	"ksef/internal/config"
 	"ksef/internal/environment"
 	v2 "ksef/internal/sei/api/client/v2"
@@ -45,7 +46,7 @@ func authSessionDebug(cmd *cobra.Command, _ []string) error {
 		// 2. if the user passed path to the certificate - we will do everything automatically
 		nip, err := cmd.Flags().GetString("nip")
 		if nip == "" || err != nil {
-			return errInvalidNIP
+			return errors.New("brak numeru NIP")
 		}
 		authValidator = xades.NewAuthHandler(
 			cfg.APIConfig(env),

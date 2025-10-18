@@ -44,7 +44,9 @@ type TokenManager struct {
 }
 
 func NewTokenManager(httpClient *http.Client, challengeValidator validator.AuthChallengeValidator) *TokenManager {
-	challengeValidator.Initialize(httpClient)
+	if challengeValidator != nil {
+		challengeValidator.Initialize(httpClient)
+	}
 
 	return &TokenManager{
 		updateChannel:      make(chan TokenUpdate),

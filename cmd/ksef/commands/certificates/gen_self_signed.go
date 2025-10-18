@@ -1,46 +1,60 @@
-package xades
+package certificates
 
 import (
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"errors"
+	"ksef/cmd/ksef/flags"
 	"ksef/internal/config"
 	"ksef/internal/environment"
 
 	"github.com/spf13/cobra"
 )
 
+var generateSelfSignedCommand = &cobra.Command{
+	Use:     "gen-self-signed",
+	Short:   "generuje samopodpisany certyfikat dla uwierzytelniania (*TYLKO* środowisko testowe)",
+	RunE:    generateSelfSignedCert,
+	PreRunE: validateParams,
+}
+
 var (
-	pesel                     string
-	errInvalidNIP             = errors.New("nieprawidłowy numer NIP")
 	errTestGatewayNotSelected = errors.New("komenda działa tylko dla bramki testowej")
+	errInvalidNIP             = errors.New("nieprawidłowy numer NIP")
 )
 
-var genSelfSignedCertCommand = &cobra.Command{
-	Use:   "generate-cert",
-	Short: "generuje samopodpisany certyfikat dla podanego numeru NIP (jedynie przy użyciu bramki testowej)",
-	RunE:  generateSelfSignedCert,
-}
-
 func init() {
-	genSelfSignedCertCommand.Flags().StringVarP(&pesel, "pesel", "p", "", "numer PESEL (w przypadku użycia tej flagi zostanie wygenerowany certyfikat dla osoby fizycznej)")
-	XadesCommand.AddCommand(genSelfSignedCertCommand)
+	flags.PESEL(generateSelfSignedCommand)
+	flags.NIP(generateSelfSignedCommand)
+
+	CertificatesCommand.AddCommand(generateSelfSignedCommand)
 }
 
-func generateSelfSignedCert(cmd *cobra.Command, _ []string) error {
-	cfg := config.GetConfig()
+func validateParams(cmd *cobra.Command, _ []string) error {
 	env := environment.FromContext(cmd.Context())
 
 	if env != environment.Test {
 		return errTestGatewayNotSelected
 	}
 
-	var certBasename = "individual"
+	return nil
+}
+
+func generateSelfSignedCert(cmd *cobra.Command, _ []string) error {
+	cfg := config.GetConfig()
+	var env = environment.FromContext(cmd.Context())
+	certsDB := cfg.APIConfig(env).CertificatesDB
+	defer certsDB.Save()
+
+	pesel, err := cmd.Flags().GetString(flags.FlagNamePESEL)
+	if err != nil {
+		return err
+	}
+
 	var subject pkix.Name
 	subject.Country = []string{"PL"}
 
 	if pesel != "" {
-		certBasename += "-" + pesel
 		// we're generating a certificate for individual person
 		subject.CommonName = "Michał Drzymała"
 		subject.SerialNumber = "PESEL-" + pesel
@@ -64,7 +78,7 @@ func generateSelfSignedCert(cmd *cobra.Command, _ []string) error {
 		if !nipValidator(nip) {
 			return errInvalidNIP
 		}
-		certBasename = "company-" + nip
+		// certBasename = "company-" + nip
 		subject.Organization = []string{"Gżegżółka sp z.o.o."}
 		subject.CommonName = "Gżegżółka"
 		subject.ExtraNames = append(subject.ExtraNames, []pkix.AttributeTypeAndValue{
@@ -73,9 +87,8 @@ func generateSelfSignedCert(cmd *cobra.Command, _ []string) error {
 				Value: "VATPL-" + nip,
 			},
 		}...)
+
 	}
 
-	return cfg.APIConfig(env).CertificatesDB.GenerateSelfSignedCert(
-		subject, certBasename,
-	)
+	return certsDB.GenerateSelfSignedCert(subject)
 }

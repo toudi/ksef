@@ -43,11 +43,11 @@ func (s *Session) initialize(ctx context.Context, invoiceFormCode registry.Invoi
 	var req uploadSessionRequest = uploadSessionRequest{
 		FormCode: invoiceFormCode,
 	}
-	certificate, err := s.apiConfig.CertificatesDB.GetByUsage(certsdb.UsageSymmetricKeyEncryption)
+	certificate, err := s.apiConfig.CertificatesDB.GetByUsage(certsdb.UsageSymmetricKeyEncryption, "")
 	if err != nil {
 		return nil, err
 	}
-	req.Encryption, err = cipher.PrepareHTTPRequestPayload(certificate.PEMFile)
+	req.Encryption, err = cipher.PrepareHTTPRequestPayload(certificate.Filename())
 	if err != nil {
 		return nil, err
 	}

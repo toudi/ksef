@@ -28,6 +28,7 @@ const (
 	StateAwaitingChallenge           State = iota
 	StateAwaitingChallengeValidation State = iota
 	StateValidationReferenceResult   State = iota
+	StateTokensReady                 State = iota
 	StateExit                        State = iota
 )
 
@@ -37,6 +38,7 @@ type AuthEvent struct {
 	// auth challenge procedure
 	State               State
 	ValidationReference *ValidationReference
+	SessionTokens       string
 	Error               error
 }
 

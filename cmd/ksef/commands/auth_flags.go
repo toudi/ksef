@@ -17,14 +17,6 @@ var (
 	errUnableToSelectAuthBackend = errors.New("Nie udało się wybrać metody autoryzacji")
 )
 
-func authFlags(cmd *cobra.Command) {
-	var flagSet = cmd.Flags()
-	flagSet.String(flags.FlagNameCertPath, "", "ścieżka do certyfikatu używanego do autoryzacji")
-	flagSet.String(flags.FlagNameKSeFToken, "", "token KSeF lub nazwa zmiennej srodowiskowej która go zawiera")
-
-	cmd.MarkFlagsOneRequired(flags.FlagNameCertPath, flags.FlagNameKSeFToken)
-}
-
 func authChallengeValidatorInstance(cmd *cobra.Command, nip string, env environmentPkg.Environment) (validator.AuthChallengeValidator, error) {
 	var certPath string
 	var ksefToken string

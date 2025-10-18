@@ -1,6 +1,7 @@
 package authorization
 
 import (
+	"ksef/cmd/ksef/flags"
 	"ksef/internal/config"
 	"ksef/internal/environment"
 	v2 "ksef/internal/sei/api/client/v2"
@@ -19,6 +20,7 @@ var outputFile string
 
 func init() {
 	initAuthCommand.Flags().StringVarP(&outputFile, "output", "o", "AuthTokenRequest.xml", "plik wyjściowy")
+	initAuthCommand.MarkFlagRequired(flags.FlagNameNIP)
 	AuthCommand.AddCommand(initAuthCommand)
 }
 
@@ -36,5 +38,4 @@ func dumpAuthChallenge(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 	return cli.WaitForTokenManagerLoop()
-
 }

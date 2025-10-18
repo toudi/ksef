@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"ksef/cmd/ksef/flags"
 	"ksef/internal/config"
 	environmentPkg "ksef/internal/environment"
 	registryPkg "ksef/internal/registry"
@@ -32,7 +33,8 @@ var syncInvoicesArgs = &syncInvoicesArgsType{}
 
 func init() {
 	flagSet := syncInvoicesCommand.Flags()
-	authFlags(syncInvoicesCommand)
+
+	flags.AuthMethod(syncInvoicesCommand)
 
 	flagSet.BoolFunc("income", "pobranie faktur przychodowych (type=Subject1)", func(s string) error {
 		syncInvoicesArgs.params.SubjectType = typesInvoices.SubjectTypeIssuer

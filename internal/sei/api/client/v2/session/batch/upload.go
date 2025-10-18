@@ -61,11 +61,11 @@ func (b *Session) uploadInvoicesForForm(ctx context.Context, formCode registry.I
 		return errors.Join(ErrCannotInitializeCiper, err)
 	}
 
-	certificate, err := b.apiConfig.CertificatesDB.GetByUsage(certsdb.UsageSymmetricKeyEncryption)
+	certificate, err := b.apiConfig.CertificatesDB.GetByUsage(certsdb.UsageSymmetricKeyEncryption, "")
 	if err != nil {
 		return err
 	}
-	initSessionReq.Encryption, err = cipher.PrepareHTTPRequestPayload(certificate.PEMFile)
+	initSessionReq.Encryption, err = cipher.PrepareHTTPRequestPayload(certificate.Filename())
 	if err != nil {
 		return err
 	}

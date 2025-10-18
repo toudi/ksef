@@ -43,6 +43,10 @@ type Client struct {
 	AuthTokenRetrieverFunc interfaces.TokenRetrieverFunc
 }
 
+func NewClient(host string) *Client {
+	return &Client{Base: "https://" + host}
+}
+
 func (rb *Client) Request(ctx context.Context, config RequestConfig, endpoint string) (*http.Response, error) {
 	var cancel context.CancelFunc
 
@@ -57,7 +61,7 @@ func (rb *Client) Request(ctx context.Context, config RequestConfig, endpoint st
 	ctx, cancel = context.WithTimeout(ctx, config.Timeout)
 	defer cancel()
 
-	fullUrl, err := url.Parse(rb.Base + "/" + endpoint)
+	fullUrl, err := url.Parse(rb.Base + endpoint)
 	if err != nil {
 		return nil, err
 	}

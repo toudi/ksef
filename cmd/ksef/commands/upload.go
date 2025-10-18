@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"ksef/cmd/ksef/flags"
 	"ksef/internal/config"
 	environmentPkg "ksef/internal/environment"
 	registryPkg "ksef/internal/registry"
@@ -26,7 +27,7 @@ type uploadArgsType struct {
 var uploadArgs = &uploadArgsType{}
 
 func init() {
-	authFlags(uploadCommand)
+	flags.AuthMethod(uploadCommand)
 	var flags = uploadCommand.Flags()
 
 	flags.BoolVarP(&uploadArgs.interactive, "interactive", "i", false, "użyj sesji interaktywnej")

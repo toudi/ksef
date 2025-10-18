@@ -1,75 +1,61 @@
 package certsdb
 
 import (
-	"encoding/base64"
-	"fmt"
-	"io"
-	"ksef/internal/environment"
-	"os"
-	"path"
-	"slices"
-	"strings"
-
-	"github.com/samber/lo"
+	"github.com/jaevor/go-nanoid"
 )
 
-func (cdb *CertificatesDB) AddCertificate(base64Der string, environment environment.Environment, usage []Usage) error {
-	// example:
-	// ksef-test.mf.gov.pl-KSeFTokenEncryption
-	certBaseFilename := fmt.Sprintf(
-		"%s-%s",
-		environment,
-		strings.Join(
-			lo.Map(usage, func(elem Usage, _ int) string { return string(elem) }), "-",
-		),
-	)
+var uidFactory func() string
 
-	// sort the usage slice so that we don't end up writing the same certificate twice
-	// just because it's usage array will be reversed
-	slices.SortFunc(usage, func(e1, e2 Usage) int {
-		return strings.Compare(string(e1), string(e2))
-	})
+func init() {
+	uidFactory = nanoid.MustCustomASCII("abcdefgh0123456789", 5)
+}
 
-	PEMFilename := path.Join(path.Dir(certificatesDBFile), certBaseFilename+".pem")
-	DERFilename := path.Join(path.Dir(certificatesDBFile), certBaseFilename+".der")
-	// so the base64-encoded content is actually the essense of PEM so let's use a nifty hack to save it
-	pemFile, err := os.Create(PEMFilename)
-	if err != nil {
-		return err
+func (cdb *CertificatesDB) AddCert(handler func(newCert *Certificate) error) error {
+	var collision = true
+	var uid string
+	for collision {
+		uid = uidFactory()
+		_, collision = cdb.index[uid]
 	}
-	defer pemFile.Close()
-	if _, err = fmt.Fprintf(pemFile, "-----BEGIN CERTIFICATE-----\n%s\n-----END CERTIFICATE-----\n", base64Der); err != nil {
+	newCert := &Certificate{
+		UID: uid,
+	}
+	newCert.Environment = cdb.env
+
+	if err := handler(newCert); err != nil {
 		return err
 	}
 
-	// and the der file is just the binary version of it
-	var base64Decoder = base64.NewDecoder(base64.StdEncoding, strings.NewReader(base64Der))
-
-	derFile, err := os.Create(DERFilename)
-	if err != nil {
-		return err
-	}
-	defer derFile.Close()
-
-	if _, err = io.Copy(derFile, base64Decoder); err != nil {
-		return err
-	}
-
-	// let's check if we have to update entry in the db:
-	exists := slices.ContainsFunc(cdb.certs, func(cert CertificateFile) bool {
-		return cert.Environment == environment && slices.Equal(cert.Usage, usage)
-	})
-
-	if !exists {
-		cdb.certs = append(cdb.certs, CertificateFile{
-			Environment: environment,
-			Usage:       usage,
-			PEMFile:     PEMFilename,
-			DERFile:     DERFilename,
-		})
-
-		cdb.dirty = true
-	}
+	cdb.certs = append(cdb.certs, newCert)
+	cdb.index[uid] = len(cdb.certs) - 1
+	cdb.dirty = true
 
 	return nil
+}
+
+func (cdb *CertificatesDB) AddIfHashNotFound(hash CertificateHash, handler func(newCert *Certificate) error) error {
+	_, exists := cdb.index[hash.Hash()]
+	if exists {
+		return nil
+	}
+	return cdb.AddCert(handler)
+}
+
+func (cdb *CertificatesDB) Upsert(
+	lookup func(cert Certificate) bool,
+	modify func(newCert *Certificate) error,
+) error {
+	var err error
+
+	for _, cert := range cdb.certs {
+		if lookup(*cert) {
+			if err = modify(cert); err != nil {
+				return err
+			}
+			return nil
+		}
+	}
+
+	// cert is not found - let's create a new one
+	return cdb.AddCert(modify)
 }

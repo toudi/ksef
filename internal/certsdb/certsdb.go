@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"slices"
+	"time"
 
 	"github.com/samber/lo"
 	"gopkg.in/yaml.v3"
@@ -13,41 +14,97 @@ import (
 
 var ErrCertificateNotFound = errors.New("unable to find a certificate suitable for the selected usage")
 
-type Usage string
-
-const (
-	certificatesDBFile                = "certificates/certificates.yaml"
-	UsageTokenEncryption        Usage = "KsefTokenEncryption"
-	UsageSymmetricKeyEncryption Usage = "SymmetricKeyEncryption"
+type (
+	Usage string
 )
 
-type CertificateFile struct {
-	Environment environment.Environment `yaml:"environment"`
-	Usage       []Usage                 `yaml:"usage"`
-	DERFile     string                  `yaml:"der-file"`
-	PEMFile     string                  `yaml:"pem-file"`
+func (u Usage) Description() string {
+	if u == UsageAuthentication {
+		return "certyfikat autoryzacyjny"
+	} else if u == UsageOffline {
+		return "certyfikat offline"
+	}
+	panic("nieoczekiwana wartość Usage")
 }
+
+const (
+	certificatesDBFile = "certificates/certificates.yaml"
+	// certyfikaty RSA używane przez ministerstwo finansów
+	UsageTokenEncryption        Usage = "KsefTokenEncryption"
+	UsageSymmetricKeyEncryption Usage = "SymmetricKeyEncryption"
+	// certyfikaty wustawiane przez KSeF
+	UsageAuthentication Usage = "Authentication"
+	UsageOffline        Usage = "Offline"
+)
 
 type CertificatesDB struct {
-	certs []CertificateFile
+	certs []*Certificate
 	// whether the db requires to be saved
 	dirty bool
+	// map between certificate hash and it's position in the array
+	index map[string]int
+	// used during opening so that all of the certs inserted inherit this value
+	env environment.Environment
 }
 
-func (cdb *CertificatesDB) GetByUsage(usage Usage) (CertificateFile, error) {
+func (cdb *CertificatesDB) Certs() []*Certificate {
+	return cdb.certs
+}
+
+func (cdb *CertificatesDB) GetByUsage(usage Usage, nip string) (Certificate, error) {
+	var foundCerts []Certificate
+
+	var now = time.Now()
+
 	for _, cert := range cdb.certs {
+		if cert.ValidFrom.After(now) || cert.ValidTo.Before(now) {
+			continue
+		}
+		if nip != "" && cert.NIP != nip {
+			continue
+		}
 		if slices.Contains(cert.Usage, usage) {
-			return cert, nil
+			foundCerts = append(foundCerts, *cert)
 		}
 	}
 
-	return CertificateFile{}, ErrCertificateNotFound
+	// for Authentication there are two possible choices - self-signed and ksef-issued.
+	// let's sort the list in that order and try to use ksef-issued (if it hasn't expired yet)
+	// and the self-signed (if it exists)
+
+	if foundCerts != nil {
+		slices.SortFunc(foundCerts, func(a, b Certificate) int {
+			if a.SelfSigned && !b.SelfSigned {
+				return 1
+			} else if !a.SelfSigned && b.SelfSigned {
+				return -1
+			}
+			return 0
+		})
+
+		return foundCerts[0], nil
+	}
+
+	return Certificate{}, ErrCertificateNotFound
 }
 
 func (cdb *CertificatesDB) Save() error {
+	for _, cert := range cdb.certs {
+		if cert.Expired() {
+			// logging.CertsDBLogger.With("id", cert.UID).Warn("certyfikat stracił ważność - usuwam plik")
+			os.Remove(cert.Filename())
+			cert.removed = true
+			cdb.dirty = true
+		}
+	}
+
 	if !cdb.dirty {
 		return nil
 	}
+
+	cdb.certs = lo.Filter(cdb.certs, func(item *Certificate, _ int) bool {
+		return !item.removed
+	})
 
 	targetFile, err := os.Create(certificatesDBFile)
 	if err != nil {
@@ -62,7 +119,10 @@ func (cdb *CertificatesDB) Save() error {
 }
 
 func OpenOrCreate(environment environment.Environment) (*CertificatesDB, error) {
-	var certificatesDB CertificatesDB
+	var certificatesDB = CertificatesDB{
+		index: make(map[string]int),
+		env:   environment,
+	}
 
 	if err := os.MkdirAll(path.Dir(certificatesDBFile), 0775); err != nil {
 		return nil, err
@@ -76,16 +136,21 @@ func OpenOrCreate(environment environment.Environment) (*CertificatesDB, error) 
 	// reading any certs as there won't be any
 	if err == nil {
 		defer dbFile.Close()
-		var certificates []CertificateFile
+		var certificates []*Certificate
 		decoder := yaml.NewDecoder(dbFile)
 		if err := decoder.Decode(&certificates); err != nil {
 			return nil, err
 		}
 
 		// load up only the certificates that belong to the selected environment
-		certificatesDB.certs = lo.Filter(certificates, func(c CertificateFile, _ int) bool {
+		certificatesDB.certs = lo.Filter(certificates, func(c *Certificate, _ int) bool {
 			return c.Environment == environment
 		})
+
+		for index, cert := range certificatesDB.certs {
+			certificatesDB.index[cert.Hash()] = index
+		}
+
 	}
 
 	return &certificatesDB, nil

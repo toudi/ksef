@@ -6,18 +6,14 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"encoding/pem"
-	"fmt"
 	"log"
 	"math/big"
-	"os"
-	"path"
 	"time"
 )
 
 // based on https://go.dev/src/crypto/tls/generate_cert.go
 
-func (c *CertificatesDB) GenerateSelfSignedCert(subject pkix.Name, basename string) error {
+func (c *CertificatesDB) GenerateSelfSignedCert(subject pkix.Name) error {
 	var err error
 
 	var validFor = time.Duration(10 * 365 * 24 * time.Hour) // 10 years
@@ -57,35 +53,24 @@ func (c *CertificatesDB) GenerateSelfSignedCert(subject pkix.Name, basename stri
 		log.Fatalf("Failed to create certificate: %v", err)
 	}
 
-	certOutDir := path.Dir(certificatesDBFile)
-	certOutFilename := path.Join(certOutDir, fmt.Sprintf("%s-cert.pem", basename))
-	certOut, err := os.Create(certOutFilename)
-	if err != nil {
-		log.Fatalf("Failed to open cert.pem for writing: %v", err)
-	}
-	if err := pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes}); err != nil {
-		log.Fatalf("Failed to write data to cert.pem: %v", err)
-	}
-	if err := certOut.Close(); err != nil {
-		log.Fatalf("Error closing cert.pem: %v", err)
-	}
+	return c.Upsert(
+		func(cert Certificate) bool {
+			return cert.SelfSigned
+		},
+		func(newCert *Certificate) error {
+			var err error
+			newCert.SelfSigned = true
+			newCert.Usage = []Usage{UsageAuthentication}
+			newCert.ValidFrom = template.NotBefore
+			newCert.ValidTo = template.NotAfter
+			if err = newCert.SavePKey(private); err != nil {
+				return err
+			}
+			if err = newCert.SaveCert(derBytes); err != nil {
+				return err
+			}
 
-	keyOutFilename := path.Join(certOutDir, fmt.Sprintf("%s-key.pem", basename))
-	keyOut, err := os.OpenFile(keyOutFilename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-	if err != nil {
-		log.Fatalf("Failed to open key.pem for writing: %v", err)
-	}
-	// for RSA:
-	// privBytes, err := x509.MarshalPKCS8PrivateKey(private)
-	privBytes, err := x509.MarshalECPrivateKey(private)
-	if err != nil {
-		log.Fatalf("Unable to marshal private key: %v", err)
-	}
-	if err := pem.Encode(keyOut, &pem.Block{Type: "EC PRIVATE KEY", Bytes: privBytes}); err != nil {
-		log.Fatalf("Failed to write data to key.pem: %v", err)
-	}
-	if err := keyOut.Close(); err != nil {
-		log.Fatalf("Error closing key.pem: %v", err)
-	}
-	return nil
+			return nil
+		},
+	)
 }

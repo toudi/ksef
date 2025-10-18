@@ -4,10 +4,8 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/spf13/pflag"
+	"github.com/spf13/cobra"
 )
-
-type NIP string
 
 const (
 	FlagNameNIP = "nip"
@@ -19,22 +17,6 @@ var (
 	errNotADigit     = errors.New("nieprawidłowa cyfra")
 	errInvalidModulo = errors.New("nieprawidłowa cyfra kontrolna")
 )
-
-func (n *NIP) Type() string {
-	return "string"
-}
-
-func (n *NIP) String() string {
-	return string(*n)
-}
-
-func (n *NIP) Set(value string) error {
-	if err := validateNIP(value); err != nil {
-		return err
-	}
-	*n = NIP(value)
-	return nil
-}
 
 func validateNIP(input string) error {
 	var checksum int
@@ -60,6 +42,6 @@ func validateNIP(input string) error {
 	return nil
 }
 
-func NIPVarP(nip *NIP, flagSet *pflag.FlagSet) {
-	flagSet.VarP(nip, "nip", "n", "numer NIP podmiotu")
+func NIP(cmd *cobra.Command) {
+	cmd.Flags().StringP(FlagNameNIP, "n", "", "numer NIP podmiotu")
 }

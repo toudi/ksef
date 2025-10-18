@@ -21,16 +21,15 @@ func defaultLogger() *slog.Logger {
 }
 
 var AuthLogger *slog.Logger = defaultLogger()
+var CertsDBLogger *slog.Logger = defaultLogger().With("module", "certsdb")
 var SeiLogger *slog.Logger = defaultLogger()
 var GenerateLogger *slog.Logger = defaultLogger()
 var UploadLogger *slog.Logger = defaultLogger()
 var HTTPLogger *slog.Logger = defaultLogger()
 var InteractiveLogger *slog.Logger = defaultLogger()
 var BatchLogger *slog.Logger = defaultLogger()
-var BatchHTTPLogger *slog.Logger = defaultLogger()
 var DownloadLogger *slog.Logger = defaultLogger()
 var UPOLogger *slog.Logger = defaultLogger()
-var UPOHTTPLogger *slog.Logger = defaultLogger()
 var ParserLogger *slog.Logger = defaultLogger()
 var PDFRendererLogger *slog.Logger = defaultLogger()
 
@@ -39,16 +38,15 @@ func init() {
 	// is read.
 	loggers = map[string]*slog.Logger{
 		"main":         SeiLogger,
+		"certsdb":      CertsDBLogger,
 		"auth":         AuthLogger,
 		"http":         HTTPLogger,
 		"generate":     GenerateLogger,
 		"upload":       UploadLogger,
 		"interactive":  InteractiveLogger,
 		"batch":        BatchLogger,
-		"batch.http":   BatchHTTPLogger,
 		"download":     DownloadLogger,
 		"upo":          UPOLogger,
-		"upo.http":     UPOHTTPLogger,
 		"parser":       ParserLogger,
 		"pdf-renderer": PDFRendererLogger,
 	}

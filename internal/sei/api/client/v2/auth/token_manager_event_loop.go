@@ -1,7 +1,9 @@
 package auth
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"ksef/internal/logging"
 	"ksef/internal/sei/api/client/v2/auth/validator"
 	"time"
@@ -67,6 +69,15 @@ func (t *TokenManager) Run() {
 			}
 			if validatorEvent.State == validator.StateValidationReferenceResult {
 				t.validationReference = validatorEvent.ValidationReference
+			}
+			if validatorEvent.State == validator.StateTokensReady {
+				var buffer bytes.Buffer
+				if _, err := buffer.WriteString(validatorEvent.SessionTokens); err != nil {
+					logger.Error("unable to write tokens to buffer")
+				}
+				if err := json.NewDecoder(&buffer).Decode(&t.sessionTokens); err != nil {
+					logger.Error("unable to decode tokens")
+				}
 			}
 			if validatorEvent.State == validator.StateExit {
 				// at the moment it's used only by the "fake" validator of type xadesInit

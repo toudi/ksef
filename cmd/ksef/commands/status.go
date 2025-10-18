@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"ksef/cmd/ksef/flags"
 	"ksef/internal/config"
 	registryPkg "ksef/internal/registry"
 	v2 "ksef/internal/sei/api/client/v2"
@@ -26,7 +27,7 @@ var upoDownloaderParams upo.UPODownloaderParams
 
 func init() {
 	flagSet := statusCommand.Flags()
-	authFlags(statusCommand)
+	flags.AuthMethod(statusCommand)
 	cobra.MarkFlagRequired(flagSet, flagNameRegistry)
 
 	upoDownloaderParams.Format = upo.UPOFormatPDF

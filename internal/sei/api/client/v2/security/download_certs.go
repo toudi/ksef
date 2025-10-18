@@ -3,18 +3,20 @@ package security
 import (
 	"context"
 	"ksef/internal/certsdb"
-	"ksef/internal/config"
 	"ksef/internal/http"
+	"time"
 )
 
 const endpointDownloadCertificates = "/api/v2/security/public-key-certificates"
 
 type certificateRow struct {
 	Certificate string          `json:"certificate"`
+	ValidFrom   time.Time       `json:"validFrom"`
+	ValidTo     time.Time       `json:"validTo"`
 	Usage       []certsdb.Usage `json:"usage"`
 }
 
-func DownloadCertificates(ctx context.Context, client *http.Client, cfg config.APIConfig) error {
+func DownloadCertificates(ctx context.Context, client *http.Client) ([]certificateRow, error) {
 	var certificates []certificateRow
 
 	_, err := client.Request(
@@ -26,15 +28,5 @@ func DownloadCertificates(ctx context.Context, client *http.Client, cfg config.A
 		endpointDownloadCertificates,
 	)
 
-	if err != nil {
-		return err
-	}
-
-	for _, certificate := range certificates {
-		if err := cfg.CertificatesDB.AddCertificate(certificate.Certificate, cfg.Environment.Environment, certificate.Usage); err != nil {
-			return err
-		}
-	}
-
-	return cfg.CertificatesDB.Save()
+	return certificates, err
 }

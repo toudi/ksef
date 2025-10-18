@@ -9,6 +9,7 @@ import (
 	registryPkg "ksef/internal/registry"
 	"ksef/internal/sei/api/client/v2/auth"
 	"ksef/internal/sei/api/client/v2/auth/validator"
+	"ksef/internal/sei/api/client/v2/certificates"
 )
 
 type APIClient struct {
@@ -18,7 +19,8 @@ type APIClient struct {
 	httpClient             *httpClient.Client
 	ctx                    context.Context
 	// for uploading sessions
-	registry *registryPkg.InvoiceRegistry
+	registry     *registryPkg.InvoiceRegistry
+	certificates *certificates.Manager
 }
 
 type InitializerFunc func(c *APIClient)
