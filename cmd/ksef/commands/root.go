@@ -6,11 +6,11 @@ import (
 	"ksef/cmd/ksef/commands/authorization"
 	"ksef/cmd/ksef/commands/certificates"
 	appCtx "ksef/cmd/ksef/context"
-	"ksef/internal/config"
 	environmentPkg "ksef/internal/environment"
 	"ksef/internal/logging"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var RootCommand = &cobra.Command{
@@ -27,7 +27,7 @@ var (
 
 func init() {
 	RootCommand.PersistentFlags().StringVarP(&logOutput, "log", "l", "-", "wyjście logowania (wartość - oznacza wyjście standardowe)")
-	RootCommand.PersistentFlags().StringVarP(&configFile, "config", "c", "", "lokalizacja pliku konfiguracyjnego")
+	RootCommand.PersistentFlags().StringVarP(&configFile, "config", "c", "config.yaml", "lokalizacja pliku konfiguracyjnego")
 	RootCommand.PersistentFlags().BoolFuncP("verbose", "v", "tryb verbose", func(s string) error {
 		logging.Verbose = true
 		return nil
@@ -49,8 +49,17 @@ func init() {
 func setContext(cmd *cobra.Command, _ []string) error {
 	var err error
 
+	viper.SetConfigType("yaml")
+	viper.SetEnvPrefix("ksef")
+	viper.AutomaticEnv()
+
+	if err = viper.BindPFlags(cmd.Flags()); err != nil {
+		return err
+	}
+
 	if configFile != "" {
-		if err = config.ReadConfig(configFile); err != nil {
+		viper.SetConfigFile(configFile)
+		if err = viper.ReadInConfig(); err != nil {
 			return err
 		}
 	}

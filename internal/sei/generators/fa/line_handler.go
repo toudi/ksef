@@ -3,6 +3,7 @@ package fa
 import (
 	"fmt"
 	"ksef/internal/invoice"
+	"ksef/internal/sei/generators/fa/mnemonics"
 	"strconv"
 	"strings"
 )
@@ -26,31 +27,32 @@ func (fg *FAGenerator) LineHandler(
 		for field, value := range data {
 			field_lowercase := strings.ToLower(field)
 			switch field_lowercase {
-			case "p_7", "item":
+			case mnemonics.Item.Name, mnemonics.Item.Mnemonic:
 				item.Description = value
-			case "p_8a", "units":
+			case mnemonics.Units.Name, mnemonics.Units.Mnemonic:
 				item.Unit = value
-			case "p_8b", "quantity":
+			case mnemonics.Quantity.Name, mnemonics.Quantity.Mnemonic:
 				if err = item.Quantity.LoadFromString(value); err != nil {
 					return fmt.Errorf("cannot parse item quantity: %v", err)
 				}
-			case "p_9a", "unit-price-net":
+			case mnemonics.UnitPriceNet.Name, mnemonics.UnitPriceNet.Mnemonic:
 				if err = item.UnitPrice.LoadFromString(value); err != nil {
 					return fmt.Errorf("cannot parse item net price: %v", err)
 				}
-			case "p_9b", "unit-price-gross":
+			case mnemonics.UnitPriceGross.Name, mnemonics.UnitPriceGross.Mnemonic:
 				if err = item.UnitPrice.LoadFromString(value); err != nil {
 					return fmt.Errorf("cannot parse item gross price: %v", err)
 				}
 				item.UnitPrice.IsGross = true
-			case "p_12", "vat-rate":
+			case mnemonics.VatRate.Name, mnemonics.VatRate.Mnemonic:
 				item.UnitPrice.Vat.Description = value
 				if vatRate, err := strconv.ParseInt(value, 10, 32); err == nil {
 					item.UnitPrice.Vat.Rate = int(vatRate)
 				}
 			case "vat-rate.except", "p_12.except":
+				// old mnemonic for FA_2
 				if value == "1" {
-					item.UnitPrice.Vat.Except = true
+					item.UnitPrice.Vat.Description = "np I"
 				}
 			default:
 				item.Attributes[field] = value

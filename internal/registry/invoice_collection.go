@@ -73,7 +73,7 @@ func (r *InvoiceRegistry) InvoiceCollection() (*InvoiceCollection, error) {
 				return nil, fmt.Errorf("unable to hash source file: %v", err)
 			}
 			invoice, _ := r.GetInvoiceByChecksum(checksum)
-			if invoice.SEIReferenceNumber != "" {
+			if invoice.KSeFReferenceNumber != "" {
 				logging.UploadLogger.Info(
 					"invoice was already uploaded - skipping",
 					"invoice",

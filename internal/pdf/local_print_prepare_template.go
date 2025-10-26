@@ -15,7 +15,7 @@ func preparePrerenderedTemplate(
 ) (string, error) {
 	replacer := strings.NewReplacer(
 		"__qrcode_url__", invoiceMeta.SEIQRCode,
-		"__invoice_sei_ref_no__", invoiceMeta.SEIReferenceNumber,
+		"__invoice_sei_ref_no__", invoiceMeta.KSeFReferenceNumber,
 		"__invoice_base64__", contentBase64,
 	)
 

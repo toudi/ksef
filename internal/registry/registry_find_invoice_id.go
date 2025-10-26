@@ -31,7 +31,7 @@ func (r *InvoiceRegistry) GetSEIRefNoFromArray(invoiceIds []string) ([]string, e
 			return nil, fmt.Errorf("unable to find invoice with the following ID in the registry: %v", invoiceId)
 		}
 
-		result[index] = invoice.SEIReferenceNumber
+		result[index] = invoice.KSeFReferenceNumber
 	}
 
 	return result, nil
@@ -48,8 +48,8 @@ func (r *InvoiceRegistry) GetInvoiceIdsForPaymentId(paymentId string) ([]Invoice
 					return nil, fmt.Errorf("unable to find invoice with the specified ID: %s", invoiceId)
 				}
 				result = append(result, InvoiceRefId{
-					ReferenceNumber:    invoice.ReferenceNumber,
-					SEIReferenceNumber: invoice.SEIReferenceNumber,
+					ReferenceNumber:     invoice.ReferenceNumber,
+					KSeFReferenceNumber: invoice.KSeFReferenceNumber,
 				})
 			}
 

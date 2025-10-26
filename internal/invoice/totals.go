@@ -57,7 +57,7 @@ func (f *FieldToVATRatesMapping) Accumulate(item *InvoiceItem) {
 	// a fake VAT rate, just because KSeF reports net amounts in two different fields
 	// depending on whether it's "with" the bill or "with except of the bill"
 	if item.UnitPrice.Vat.Except {
-		vatRate += ".except"
+		vatRate = "np I"
 	}
 
 	reverseMapping, exists := f.reverseMapping[vatRate]

@@ -38,7 +38,8 @@ func parseSchema(schemaFile string, outFilePath string) error {
 	outFile.WriteString(fmt.Sprintf("package %s\n", packageName))
 	outFile.WriteString("\n")
 	outFile.WriteString(fmt.Sprintf("var %sChildrenOrder = map[string]map[string]int{\n", strings.Replace(filepath.Base(schemaFile), ".xsd", "", 1)))
-	for section, childrenNodes := range specNodeOrder(decoder) {
+	parsedXsdInfo := specNodeOrder(decoder)
+	for section, childrenNodes := range parsedXsdInfo.sequenceOrder {
 		outFile.WriteString("\t" + fmt.Sprintf(`"%s": {`, section))
 		numChildren = len(childrenNodes)
 		for i, child := range childrenNodes {
@@ -49,13 +50,26 @@ func parseSchema(schemaFile string, outFilePath string) error {
 		}
 		outFile.WriteString("},\n")
 	}
-	outFile.WriteString("}")
+	outFile.WriteString("}\n")
+	if len(parsedXsdInfo.arrayTypes) > 0 {
+		// now we can write info about which elements are arrays. this will be helpful when we'll be unmarshalling xml into a flat map[string]any
+		outFile.WriteString(fmt.Sprintf("\nvar %sArrayElements = map[string]bool{\n", strings.Replace(filepath.Base(schemaFile), ".xsd", "", 1)))
+		var nodeNum int
+		for nodeName, _ := range parsedXsdInfo.arrayTypes {
+			outFile.WriteString("\t" + fmt.Sprintf(`"%s": true`, nodeName))
+			if nodeNum < len(parsedXsdInfo.arrayTypes)-1 {
+				outFile.WriteString(",\n")
+			}
+		}
+		outFile.WriteString("}\n")
+	}
 
 	return nil
 }
 
 type NodeOrderTree struct {
 	complexTypes  map[string]bool
+	arrayTypes    map[string]bool
 	sequenceOrder map[string][]string
 	nodeType      map[string]string
 }
@@ -99,7 +113,7 @@ func (not *NodeOrderTree) recurseResolveNodeOrderIterator(rootPath string, _type
 // 	not.sequenceOrder[path] =
 // }
 
-func specNodeOrder(decoder *xml.Decoder) map[string][]string {
+func specNodeOrder(decoder *xml.Decoder) *NodeOrderTree {
 	var localPath = []string{}
 	var nodeName string
 	var fullPath string
@@ -107,6 +121,7 @@ func specNodeOrder(decoder *xml.Decoder) map[string][]string {
 
 	var nodeOrderTree *NodeOrderTree = &NodeOrderTree{
 		complexTypes:  make(map[string]bool),
+		arrayTypes:    make(map[string]bool),
 		sequenceOrder: make(map[string][]string),
 		nodeType:      make(map[string]string),
 	}
@@ -120,6 +135,7 @@ func specNodeOrder(decoder *xml.Decoder) map[string][]string {
 		switch element := token.(type) {
 		case xml.StartElement:
 			elementName = element.Name.Local
+			attributes := element.Attr
 
 			nodeName = elementName
 			if name := getAttrib(element.Attr, "name"); name != "" {
@@ -168,6 +184,13 @@ func specNodeOrder(decoder *xml.Decoder) map[string][]string {
 			localPath = append(localPath, nodeName)
 			fullPath = getFullPath(localPath)
 
+			for _, attr := range attributes {
+				if attr.Name.Local == "maxOccurs" {
+					nodeOrderTree.arrayTypes[fullPath] = true
+					break
+				}
+			}
+
 			// fmt.Printf("currentPath = %s\n", strings.Join(localPath, "."))
 		case xml.EndElement:
 			localPath = localPath[0 : len(localPath)-1]
@@ -211,7 +234,7 @@ func specNodeOrder(decoder *xml.Decoder) map[string][]string {
 	// 	}
 	// }
 
-	return nodeOrderTree.sequenceOrder
+	return nodeOrderTree
 }
 
 func getAttrib(attribs []xml.Attr, name string) string {

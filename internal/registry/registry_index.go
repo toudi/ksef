@@ -13,8 +13,8 @@ func (r *InvoiceRegistry) Contains(ksefRefNo string) bool {
 
 func (r *InvoiceRegistry) GetSEIRefNo(invoiceNo string) (string, error) {
 	for _, invoice := range r.Invoices {
-		if invoice.ReferenceNumber == invoiceNo || invoice.SEIReferenceNumber == invoiceNo {
-			return invoice.SEIReferenceNumber, nil
+		if invoice.ReferenceNumber == invoiceNo || invoice.KSeFReferenceNumber == invoiceNo {
+			return invoice.KSeFReferenceNumber, nil
 		}
 	}
 

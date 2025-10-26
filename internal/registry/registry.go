@@ -49,22 +49,23 @@ type InvoiceSubject struct {
 }
 
 type Invoice struct {
-	ReferenceNumber    string         `json:"invoiceReferenceNumber" yaml:"referenceNumber,omitempty"`
-	SEIReferenceNumber string         `json:"ksefReferenceNumber"    yaml:"ksefReferenceNumber,omitempty"`
-	SEIQRCode          string         `json:"-"                      yaml:"qrcode-url,omitempty"`
-	InvoicingDate      string         `json:"invoicingDate"          yaml:"invoicingDate,omitempty"`
-	SubjectFrom        InvoiceSubject `json:"subjectBy,omitempty"    yaml:"subjectFrom,omitempty"`
-	SubjectTo          InvoiceSubject `json:"subjectTo,omitempty"    yaml:"subjectTo,omitempty"`
-	InvoiceType        string         `json:"invoiceType"            yaml:"invoiceType,omitempty"`
-	Net                string         `json:"net"                    yaml:"net,omitempty"`
-	Vat                string         `json:"vat"                    yaml:"vat,omitempty"`
-	Gross              string         `json:"gross"                  yaml:"gross,omitempty"`
-	Checksum           string         `                              yaml:"checksum,omitempty"`
+	ReferenceNumber     string         `json:"invoiceReferenceNumber" yaml:"referenceNumber,omitempty"`
+	KSeFReferenceNumber string         `json:"ksefReferenceNumber"    yaml:"ksefReferenceNumber,omitempty"`
+	SEIQRCode           string         `json:"-"                      yaml:"qrcode-url,omitempty"`
+	InvoicingDate       string         `json:"invoicingDate"          yaml:"invoicingDate,omitempty"`
+	SubjectFrom         InvoiceSubject `json:"subjectBy,omitempty"    yaml:"subjectFrom,omitempty"`
+	SubjectTo           InvoiceSubject `json:"subjectTo,omitempty"    yaml:"subjectTo,omitempty"`
+	InvoiceType         string         `json:"invoiceType"            yaml:"invoiceType,omitempty"`
+	Net                 string         `json:"net"                    yaml:"net,omitempty"`
+	Vat                 string         `json:"vat"                    yaml:"vat,omitempty"`
+	Gross               string         `json:"gross"                  yaml:"gross,omitempty"`
+	Checksum            string         `                              yaml:"checksum,omitempty"`
+	Offline             bool           `yaml:"offline"`
 }
 
 type InvoiceRefId struct {
-	ReferenceNumber    string `json:"invoiceRefNo"     yaml:"invoiceRefNo"`
-	SEIReferenceNumber string `json:"ksefInvoiceRefNo" yaml:"ksefInvoiceRefNo"`
+	ReferenceNumber     string `json:"invoiceRefNo"     yaml:"invoiceRefNo"`
+	KSeFReferenceNumber string `json:"ksefInvoiceRefNo" yaml:"ksefInvoiceRefNo"`
 }
 
 type PaymentId struct {
@@ -131,7 +132,7 @@ func LoadRegistry(dirName string) (*InvoiceRegistry, error) {
 		return nil, fmt.Errorf("unable to decode invoice registry: %v", err)
 	}
 	for index, invoice := range registry.Invoices {
-		registry.seiRefNoIndex[invoice.SEIReferenceNumber] = index
+		registry.seiRefNoIndex[invoice.KSeFReferenceNumber] = index
 		registry.refNoIndex[invoice.ReferenceNumber] = index
 		if invoice.Checksum != "" {
 			registry.checksumIndex[invoice.Checksum] = index

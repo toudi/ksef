@@ -54,7 +54,7 @@ func (r *InvoiceRegistry) MarkUploadSessionProcessed(uploadSessionRefNo string) 
 		if err != nil {
 			return err
 		}
-		invoice.SEIReferenceNumber = uploadResult.SeiRefNo
+		invoice.KSeFReferenceNumber = uploadResult.SeiRefNo
 		if _, err = r.Update(invoice); err != nil {
 			return err
 		}

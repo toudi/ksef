@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"ksef/internal/config"
 	"ksef/internal/pdf"
 	registryPkg "ksef/internal/registry"
 	"os"
@@ -31,6 +32,9 @@ var renderUPOPDFCommand = &cobra.Command{
 }
 
 func init() {
+	if err := config.PDFPrinterFlags(renderPDFCommand, renderPDFCommand.PersistentFlags()); err != nil {
+		panic(err)
+	}
 	renderPDFCommand.AddCommand(renderInvoicePDFCommand)
 	renderPDFCommand.AddCommand(renderUPOPDFCommand)
 }

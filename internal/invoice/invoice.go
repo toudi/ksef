@@ -24,6 +24,12 @@ type Amount struct {
 	VAT   int
 }
 
+func (a *Amount) Add(other Amount) {
+	a.Gross += other.Gross
+	a.Net += other.Net
+	a.VAT += other.VAT
+}
+
 type Invoice struct {
 	Number           string
 	Issued           time.Time
