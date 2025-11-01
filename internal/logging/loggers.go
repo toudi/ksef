@@ -5,6 +5,10 @@ import (
 	"log/slog"
 )
 
+const (
+	defaultLevel = slog.LevelError
+)
+
 // these are the actual loggers that the program can reference
 // initialize the default values of the loggers so that they
 // become valid slog.Logger objects and so that we can use them
@@ -14,7 +18,7 @@ func defaultLogger() *slog.Logger {
 		slog.NewTextHandler(
 			io.Discard,
 			&slog.HandlerOptions{
-				Level: slog.LevelInfo,
+				Level: defaultLevel,
 			},
 		),
 	)
@@ -33,6 +37,8 @@ var UPOLogger *slog.Logger = defaultLogger()
 var ParserLogger *slog.Logger = defaultLogger()
 var PDFRendererLogger *slog.Logger = defaultLogger()
 
+var logLevels = map[string]slog.Level{}
+
 func init() {
 	// populate the helper map so that we can alter the loggers after config
 	// is read.
@@ -49,5 +55,9 @@ func init() {
 		"upo":          UPOLogger,
 		"parser":       ParserLogger,
 		"pdf-renderer": PDFRendererLogger,
+	}
+
+	for loggerName, _ := range loggers {
+		logLevels[loggerName] = defaultLevel
 	}
 }

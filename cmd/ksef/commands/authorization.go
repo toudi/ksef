@@ -2,11 +2,6 @@ package commands
 
 import (
 	"flag"
-	"ksef/internal/config"
-	environmentPkg "ksef/internal/environment"
-	"ksef/internal/logging"
-	kseftoken "ksef/internal/sei/api/client/v2/auth/ksef_token"
-	"ksef/internal/sei/api/client/v2/auth/validator"
 )
 
 const (
@@ -34,7 +29,7 @@ var (
 	authParams = authParamsT{
 		backend: authBackendKsefToken,
 	}
-	environment environmentPkg.Environment = environmentPkg.Production
+	// environment environmentPkg.Environment = environmentPkg.Production
 )
 
 func initAuthParams(flagSet *flag.FlagSet) {
@@ -45,22 +40,22 @@ func initAuthParams(flagSet *flag.FlagSet) {
 
 func testGatewayFlag(flagSet *flag.FlagSet) {
 	flagSet.BoolFunc("t", "Użyj bramki testowej", func(s string) error {
-		environment = environmentPkg.Test
+		// environment = environmentPkg.Test
 		return nil
 	})
 }
 
-func authValidatorInstance(issuerNip string) validator.AuthChallengeValidator {
-	// harcode challenge validator to ksef token for now
-	// TODO: implement XADeS
-	tokenValidator := kseftoken.NewKsefTokenHandler(
-		config.GetConfig().APIConfig(environment), issuerNip,
-	)
-	if authParams.ksefTokenParams.issuerToken != "" {
-		logging.AuthLogger.Warn("overriding KSeF token")
-		// TODO: remember to properly handle casting to interface error once XaDes auth validator is implemented
-		tokenValidatorInstance := tokenValidator.(*kseftoken.KsefTokenHandler)
-		tokenValidatorInstance.SetKsefToken(authParams.ksefTokenParams.issuerToken)
-	}
-	return tokenValidator
-}
+// func authValidatorInstance(issuerNip string) validator.AuthChallengeValidator {
+// 	// harcode challenge validator to ksef token for now
+// 	// TODO: implement XADeS
+// 	tokenValidator := kseftoken.NewKsefTokenHandler(
+// 		config.GetConfig().APIConfig(environment), issuerNip,
+// 	)
+// 	if authParams.ksefTokenParams.issuerToken != "" {
+// 		logging.AuthLogger.Warn("overriding KSeF token")
+// 		// TODO: remember to properly handle casting to interface error once XaDes auth validator is implemented
+// 		tokenValidatorInstance := tokenValidator.(*kseftoken.KsefTokenHandler)
+// 		tokenValidatorInstance.SetKsefToken(authParams.ksefTokenParams.issuerToken)
+// 	}
+// 	return tokenValidator
+// }

@@ -1,10 +1,5 @@
 package environment
 
-import (
-	"ksef/internal/config"
-	"path"
-)
-
 type EnvironmentType string
 
 const (
@@ -24,8 +19,4 @@ var Environments = map[EnvironmentType]EnvironmentConfig{
 	EnvironmentTest: EnvironmentConfig{
 		Host: "ksef-test.mf.gov.pl",
 	},
-}
-
-func (ec EnvironmentConfig) GetCertificateFile(cfg config.Config) string {
-	return path.Join(cfg.CertificatesPath, ec.Host+".der")
 }

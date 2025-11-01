@@ -2,6 +2,7 @@ package v2
 
 import (
 	"context"
+	"ksef/internal/certsdb"
 	"ksef/internal/config"
 	"ksef/internal/environment"
 	httpClient "ksef/internal/http"
@@ -21,6 +22,7 @@ type APIClient struct {
 	// for uploading sessions
 	registry     *registryPkg.InvoiceRegistry
 	certificates *certificates.Manager
+	certsDB      *certsdb.CertificatesDB
 }
 
 type InitializerFunc func(c *APIClient)
@@ -71,5 +73,11 @@ func WithRegistry(registry *registryPkg.InvoiceRegistry) func(client *APIClient)
 func WithAuthValidator(validator validator.AuthChallengeValidator) func(client *APIClient) {
 	return func(client *APIClient) {
 		client.authChallengeValidator = validator
+	}
+}
+
+func WithCertificatesDB(certsDB *certsdb.CertificatesDB) func(client *APIClient) {
+	return func(client *APIClient) {
+		client.certsDB = certsDB
 	}
 }

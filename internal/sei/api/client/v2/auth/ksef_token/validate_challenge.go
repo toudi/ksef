@@ -69,7 +69,7 @@ func (kt *KsefTokenHandler) ValidateChallenge(ctx context.Context, challenge val
 }
 
 func (kt *KsefTokenHandler) encryptToken(tokenPlaintext string, timestamp time.Time) (string, error) {
-	certificate, err := kt.apiConfig.CertificatesDB.GetByUsage(certsdb.UsageTokenEncryption, "")
+	certificate, err := kt.certsDB.GetByUsage(certsdb.UsageTokenEncryption, "")
 	if err != nil {
 		return "", err
 	}

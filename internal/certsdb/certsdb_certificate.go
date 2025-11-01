@@ -2,6 +2,8 @@ package certsdb
 
 import (
 	"crypto/ecdsa"
+	"crypto/rand"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -85,4 +87,27 @@ func (c *Certificate) SaveCert(derBytes []byte) error {
 		Bytes: derBytes,
 	})
 
+}
+
+func (c *Certificate) SignContent(content []byte) ([]byte, error) {
+	// we can only do it if we have a private key
+	pkeyFilename := c.PrivateKeyFilename()
+	privKeyBytes, err := os.ReadFile(pkeyFilename)
+	if err != nil {
+		return nil, err
+	}
+	privKeyBlock, _ := pem.Decode(privKeyBytes)
+	ecPrivKey, err := x509.ParseECPrivateKey(privKeyBlock.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	contentHash := sha256.Sum256(content)
+	r, s, err := ecdsa.Sign(rand.Reader, ecPrivKey, contentHash[:])
+	if err != nil {
+		return nil, err
+	}
+	digest := r.Bytes()
+	digest = append(digest, s.Bytes()...)
+	return digest, nil
 }

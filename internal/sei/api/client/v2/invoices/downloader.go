@@ -63,7 +63,7 @@ func (d *invoiceDownloader) Download(
 		return "", "", err
 	}
 
-	d.registry.AddInvoice(invoiceMeta, checksum)
+	err = d.registry.AddInvoice(invoiceMeta, checksum, nil)
 
-	return outputFilename, fileMeta.Hash, nil
+	return outputFilename, fileMeta.Hash, err
 }

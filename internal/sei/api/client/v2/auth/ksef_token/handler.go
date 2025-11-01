@@ -1,6 +1,7 @@
 package kseftoken
 
 import (
+	"ksef/internal/certsdb"
 	"ksef/internal/config"
 	"ksef/internal/http"
 	"ksef/internal/logging"
@@ -13,15 +14,17 @@ type KsefTokenHandler struct {
 	nip          string
 	ksefToken    string // just to distinguish it from the session token
 	apiConfig    config.APIConfig
+	certsDB      *certsdb.CertificatesDB
 	eventChannel chan validator.AuthEvent
 	finished     bool
 	httpClient   *http.Client
 }
 
-func NewKsefTokenHandler(apiConfig config.APIConfig, nip string) validator.AuthChallengeValidator {
+func NewKsefTokenHandler(apiConfig config.APIConfig, certsDB *certsdb.CertificatesDB, nip string) validator.AuthChallengeValidator {
 	validator := &KsefTokenHandler{
 		nip:          nip,
 		apiConfig:    apiConfig,
+		certsDB:      certsDB,
 		eventChannel: make(chan validator.AuthEvent),
 	}
 

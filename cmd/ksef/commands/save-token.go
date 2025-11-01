@@ -2,8 +2,6 @@ package commands
 
 import (
 	"flag"
-	"ksef/internal/config"
-	kseftoken "ksef/internal/sei/api/client/v2/auth/ksef_token"
 )
 
 type saveTokenCommand struct {
@@ -41,9 +39,11 @@ func saveTokenRun(c *Command) error {
 		return nil
 	}
 
-	return kseftoken.PersistKsefTokenToKeyring(
-		config.GetConfig().APIConfig(environment).Environment.Host,
-		saveTokenArgs.NIP,
-		saveTokenArgs.token,
-	)
+	return nil
+	// return kseftoken.PersistKsefTokenToKeyring(
+
+	// 	config.GetConfig().APIConfig(environment).Environment.Host,
+	// 	saveTokenArgs.NIP,
+	// 	saveTokenArgs.token,
+	// )
 }

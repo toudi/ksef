@@ -23,7 +23,7 @@ func TestOutputFilename(t *testing.T) {
 			subjectType: invoices.SubjectTypeIssuer,
 			meta: invoices.InvoiceMetadata{
 				Seller: invoices.InvoiceSellerMetadata{
-					Identifier: "sellerId123",
+					NIP: "sellerId123",
 				},
 				InvoiceNumber: "a/b/c",
 			},

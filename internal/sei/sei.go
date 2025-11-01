@@ -1,10 +1,19 @@
 package sei
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
+	"ksef/internal/certsdb"
+	"ksef/internal/environment"
 	"ksef/internal/interfaces"
 	"ksef/internal/invoice"
+	"ksef/internal/logging"
+	"ksef/internal/registry"
+	"ksef/internal/sei/api/client/v2/types/invoices"
 	"ksef/internal/sei/generators"
 	inputprocessors "ksef/internal/sei/input_processors"
 	"ksef/internal/sei/parser"
@@ -18,26 +27,32 @@ var errUnknownSourceExtension = errors.New("unknown file extension")
 
 // SEI is an government acronym for Structured Electronic Invoice
 type SEI struct {
+	env environment.Environment
 	// conversion parameters for the input processor
 	conversionParameters inputprocessors.InputProcessorConfig
 	// xml files will be saved here
 	outputPath string
 	// how many invoices will be produced
-	numInvoices int
-	parser      *parser.Parser
-	IssuerTIN   string
-	generator   interfaces.Generator
+	numInvoices               int
+	parser                    *parser.Parser
+	IssuerTIN                 string
+	generator                 interfaces.Generator
+	registry                  *registry.InvoiceRegistry
+	invoiceContentBuffer      bytes.Buffer
+	certificateForOfflineMode *certsdb.Certificate
 }
 
-func SEI_Init(outputPath string, conversionParams inputprocessors.InputProcessorConfig) (*SEI, error) {
+func SEI_Init(env environment.Environment, outputPath string, conversionParams inputprocessors.InputProcessorConfig) (*SEI, error) {
 	var err error
 
-	if _, err = os.Stat(outputPath); os.IsNotExist(err) {
-		// output path does not exist, let's try to create it
-		if err = os.MkdirAll(outputPath, 0755); err != nil {
-			return nil, fmt.Errorf("error creating dir: %v", err)
-		}
+	var r *registry.InvoiceRegistry
+	if r, err = registry.OpenOrCreate(outputPath); err != nil {
+		return nil, err
 	}
+	if r.Environment == "" {
+		r.Environment = env
+	}
+
 	var generator interfaces.Generator
 
 	if generator, err = generators.Generator(conversionParams.Generator); err != nil {
@@ -45,31 +60,64 @@ func SEI_Init(outputPath string, conversionParams inputprocessors.InputProcessor
 	}
 
 	return &SEI{
+		env:                  env,
 		outputPath:           outputPath,
 		conversionParameters: conversionParams,
 		parser:               &parser.Parser{},
 		generator:            generator,
+		registry:             r,
+		numInvoices:          len(r.Invoices),
 	}, nil
 }
 
 // when the invoice is ready, we use the generator to convert it to
 // xml.Node and persist to disk
 func (s *SEI) AddInvoice(invoice *invoice.Invoice) error {
+	s.invoiceContentBuffer.Reset()
+
 	invoiceXML, err := s.generator.InvoiceToXMLTree(invoice)
 	if err != nil {
 		return err
 	}
 
-	err = s.saveInvoice(invoiceXML)
+	invoiceHash, err := s.calculateInvoiceHash(invoiceXML)
 	if err != nil {
 		return err
 	}
 
-	s.numInvoices += 1
+	if s.registry.ContainsHash(invoiceHash) {
+		logging.GenerateLogger.Info("faktura o obliczonej sumie kontrolnej już istnieje w zbiorze rejestru. no-op.")
+		return nil
+	}
 
 	if s.IssuerTIN == "" {
 		s.IssuerTIN = s.generator.IssuerTIN()
+		s.registry.Issuer = s.IssuerTIN
 	}
+
+	if err := s.saveInvoice(); err != nil {
+		return err
+	}
+
+	var invoiceMeta = invoices.InvoiceMetadata{
+		InvoiceNumber: invoice.Number,
+		IssueDate:     invoice.Issued.Format("2006-01-02"),
+		Seller: invoices.InvoiceSellerMetadata{
+			NIP: s.IssuerTIN,
+		},
+		Offline: s.conversionParameters.OfflineMode,
+	}
+
+	certificate, err := s.getOfflineModeCertificate()
+	if err != nil {
+		return err
+	}
+
+	if err = s.registry.AddInvoice(invoiceMeta, invoiceHash, certificate); err != nil {
+		return err
+	}
+
+	s.numInvoices += 1
 
 	return err
 }
@@ -102,12 +150,16 @@ func (s *SEI) ProcessSourceFile(sourceFile string) error {
 	s.parser.InvoiceReadyFunc = s.AddInvoice
 	s.parser.LineHandler = s.generator.LineHandler
 
-	return processor.Process(sourceFile, s.parser)
+	processErr := processor.Process(sourceFile, s.parser)
+	if processErr != nil {
+		return processErr
+	}
+	return s.registry.Save("")
 }
 
-func (s *SEI) saveInvoice(root *xml.Node) error {
-	destFileName := strings.Join([]string{s.outputPath, fmt.Sprintf("invoice-%d.xml", s.numInvoices)}, string(os.PathSeparator))
-	destFile, err := os.OpenFile(destFileName, os.O_CREATE|os.O_RDWR, 0644)
+func (s *SEI) saveInvoice() (err error) {
+	fileName := filepath.Join(s.outputPath, fmt.Sprintf("invoice-%d.xml", s.numInvoices))
+	destFile, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		return fmt.Errorf("cannot create target file: %v", err)
 	}
@@ -115,8 +167,36 @@ func (s *SEI) saveInvoice(root *xml.Node) error {
 		return err
 	}
 	defer destFile.Close()
-	if _, err = destFile.WriteString("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"); err != nil {
-		return err
+	_, err = io.Copy(destFile, &s.invoiceContentBuffer)
+	return err
+}
+
+func (s *SEI) calculateInvoiceHash(root *xml.Node) (checksum string, err error) {
+	if _, err = s.invoiceContentBuffer.WriteString("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"); err != nil {
+		return checksum, err
 	}
-	return root.DumpToFile(destFile, 0)
+	if err = root.DumpToWriter(&s.invoiceContentBuffer, 0); err != nil {
+		return checksum, err
+	}
+	var hashBytes = sha256.Sum256(s.invoiceContentBuffer.Bytes())
+	checksum = hex.EncodeToString(hashBytes[:])
+	return checksum, nil
+}
+
+func (s *SEI) getOfflineModeCertificate() (*certsdb.Certificate, error) {
+	if s.certificateForOfflineMode == nil {
+		certsDB, err := certsdb.OpenOrCreate(s.env)
+		if err != nil {
+			return nil, err
+		}
+		offlineCert, err := certsDB.GetByUsage(
+			certsdb.UsageOffline, s.IssuerTIN,
+		)
+		if err != nil {
+			return nil, err
+		}
+		s.certificateForOfflineMode = &offlineCert
+	}
+
+	return s.certificateForOfflineMode, nil
 }

@@ -20,15 +20,10 @@ type LatexPrinter struct {
 	cfg *latex.LatexPrinterConfig
 }
 
-type QrCodesInfo struct {
-	Invoice     string
-	Certificate string
-}
-
 type LatexTemplateVars struct {
 	Invoice  *Invoice
 	Registry registry.Invoice
-	Qrcodes  QrCodesInfo
+	Qrcodes  registry.InvoiceQRCodes
 	Header   latex.HeaderFooterSettings
 	Footer   latex.HeaderFooterSettings
 }
@@ -51,11 +46,9 @@ func (lp *LatexPrinter) Print(contentBase64 string, meta registry.Invoice, outpu
 	var templateData = LatexTemplateVars{
 		Invoice:  &i,
 		Registry: meta,
-		Qrcodes: QrCodesInfo{
-			Invoice: meta.SEIQRCode,
-		},
-		Header: lp.cfg.Templates.Invoice.Header,
-		Footer: lp.cfg.Templates.Invoice.Footer,
+		Qrcodes:  meta.QRCodes,
+		Header:   lp.cfg.Templates.Invoice.Header,
+		Footer:   lp.cfg.Templates.Invoice.Footer,
 	}
 
 	tmpDir, err := os.MkdirTemp(lp.cfg.Workdir, "")

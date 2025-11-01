@@ -7,7 +7,7 @@ import (
 
 func (c *APIClient) Certificates(env environment.Environment) (*certificates.Manager, error) {
 	if c.certificates == nil {
-		c.certificates = certificates.NewManager(c.authenticatedHTTPClient(), c.apiConfig.CertificatesDB, env)
+		c.certificates = certificates.NewManager(c.authenticatedHTTPClient(), c.certsDB, env)
 	}
 
 	return c.certificates, nil

@@ -3,6 +3,7 @@ package interactive
 import (
 	"context"
 	"errors"
+	"ksef/internal/certsdb"
 	"ksef/internal/config"
 	HTTP "ksef/internal/http"
 	"ksef/internal/logging"
@@ -13,6 +14,7 @@ type Session struct {
 	registry   *registry.InvoiceRegistry
 	httpClient *HTTP.Client
 	apiConfig  config.APIConfig
+	certsDB    *certsdb.CertificatesDB
 }
 
 var (
@@ -20,11 +22,11 @@ var (
 	ErrProbablyUsedSend          = errors.New("upload command probably used previously")
 )
 
-func NewSession(httpClient *HTTP.Client, registry *registry.InvoiceRegistry, apiConfig config.APIConfig) *Session {
+func NewSession(httpClient *HTTP.Client, registry *registry.InvoiceRegistry, certsDB *certsdb.CertificatesDB) *Session {
 	return &Session{
 		httpClient: httpClient,
 		registry:   registry,
-		apiConfig:  apiConfig,
+		certsDB:    certsDB,
 	}
 }
 

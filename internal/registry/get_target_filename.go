@@ -25,7 +25,7 @@ func (r *InvoiceRegistry) GetTargetFilename(
 		fmt.Sprintf(
 			"%03d-%s-%s.xml",
 			len(r.Invoices)+1,
-			invoice.Seller.Identifier,
+			invoice.Seller.NIP,
 			sanitizedInvoiceNumber,
 		),
 	)

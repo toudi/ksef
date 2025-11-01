@@ -25,7 +25,10 @@ func init() {
 func downloadKSeFCerts(cmd *cobra.Command, _ []string) error {
 	env := environment.FromContext(cmd.Context())
 	cfg := config.GetConfig().APIConfig(env)
-	certsDB := cfg.CertificatesDB
+	certsDB, err := certsdb.OpenOrCreate(env)
+	if err != nil {
+		return err
+	}
 
 	httpClient := http.NewClient(cfg.Environment.Host)
 	certificates, err := security.DownloadCertificates(cmd.Context(), httpClient)

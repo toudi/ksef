@@ -1,7 +1,7 @@
 package batch
 
 import (
-	"ksef/internal/config"
+	"ksef/internal/certsdb"
 	HTTP "ksef/internal/http"
 	"ksef/internal/registry"
 )
@@ -9,17 +9,17 @@ import (
 type Session struct {
 	registry   *registry.InvoiceRegistry
 	httpClient *HTTP.Client
-	apiConfig  config.APIConfig
+	certsDB    *certsdb.CertificatesDB
 }
 
 func NewSession(
 	httpClient *HTTP.Client,
 	registry *registry.InvoiceRegistry,
-	apiConfig config.APIConfig,
+	certsDB *certsdb.CertificatesDB,
 ) *Session {
 	return &Session{
 		httpClient: httpClient,
 		registry:   registry,
-		apiConfig:  apiConfig,
+		certsDB:    certsDB,
 	}
 }

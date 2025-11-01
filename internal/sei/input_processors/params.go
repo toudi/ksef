@@ -10,7 +10,8 @@ type xlsxConfig struct {
 }
 
 type InputProcessorConfig struct {
-	CSV       csvConfig
-	XLSX      xlsxConfig
-	Generator string
+	CSV         csvConfig
+	XLSX        xlsxConfig
+	Generator   string
+	OfflineMode bool
 }

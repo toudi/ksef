@@ -61,7 +61,7 @@ func (b *Session) uploadInvoicesForForm(ctx context.Context, formCode registry.I
 		return errors.Join(ErrCannotInitializeCiper, err)
 	}
 
-	certificate, err := b.apiConfig.CertificatesDB.GetByUsage(certsdb.UsageSymmetricKeyEncryption, "")
+	certificate, err := b.certsDB.GetByUsage(certsdb.UsageSymmetricKeyEncryption, "")
 	if err != nil {
 		return err
 	}

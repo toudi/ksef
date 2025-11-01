@@ -11,6 +11,11 @@ func (r *InvoiceRegistry) Contains(ksefRefNo string) bool {
 	return exists
 }
 
+func (r *InvoiceRegistry) ContainsHash(hash string) bool {
+	_, exists := r.checksumIndex[hash]
+	return exists
+}
+
 func (r *InvoiceRegistry) GetSEIRefNo(invoiceNo string) (string, error) {
 	for _, invoice := range r.Invoices {
 		if invoice.ReferenceNumber == invoiceNo || invoice.KSeFReferenceNumber == invoiceNo {

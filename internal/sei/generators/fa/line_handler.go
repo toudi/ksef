@@ -6,6 +6,11 @@ import (
 	"ksef/internal/sei/generators/fa/mnemonics"
 	"strconv"
 	"strings"
+	"time"
+)
+
+const (
+	invoiceHeaderSection = "faktura.fa"
 )
 
 func (fg *FAGenerator) LineHandler(
@@ -16,6 +21,13 @@ func (fg *FAGenerator) LineHandler(
 ) error {
 	var err error
 
+	if strings.ToLower(section) == invoiceHeaderSection {
+		inv.Number = data["P_2"]
+		inv.Issued, err = time.Parse("2006-01-02", data["P_1"])
+		if err != nil {
+			return err
+		}
+	}
 	if fg.isCommonData(section) {
 		for key, value := range data {
 			fg.commonData[section+"."+key] = value

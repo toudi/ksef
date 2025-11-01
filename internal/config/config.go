@@ -2,17 +2,14 @@ package config
 
 import (
 	"fmt"
-	"ksef/internal/certsdb"
 	"ksef/internal/environment"
-	"log"
 	"os"
 
 	"gopkg.in/yaml.v3"
 )
 
 type APIConfig struct {
-	Environment    environment.Config
-	CertificatesDB *certsdb.CertificatesDB
+	Environment environment.Config
 }
 
 type Config struct {
@@ -21,13 +18,8 @@ type Config struct {
 }
 
 func (c Config) APIConfig(env environment.Environment) APIConfig {
-	certsDB, err := certsdb.OpenOrCreate(env)
-	if err != nil {
-		log.Fatalf("unable to open certificates db: %v", err)
-	}
 	return APIConfig{
-		Environment:    environment.GetConfig(env),
-		CertificatesDB: certsDB,
+		Environment: environment.GetConfig(env),
 	}
 }
 

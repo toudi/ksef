@@ -2,6 +2,7 @@ package xades
 
 import (
 	"errors"
+	"ksef/internal/certsdb"
 	"ksef/internal/config"
 	"ksef/internal/environment"
 	v2 "ksef/internal/sei/api/client/v2"
@@ -18,13 +19,13 @@ var debugCommand = &cobra.Command{
 }
 
 var (
-	certFile      string
+	useCert       bool
 	challengeFile string
 	signedFile    string
 )
 
 func init() {
-	debugCommand.Flags().StringVarP(&certFile, "cert", "", "", "ścieżka do pliku certyfikatu służącego do podpisania wyzwania")
+	debugCommand.Flags().BoolVarP(&useCert, "cert", "c", false, "spróbuj użyć certyfikatu")
 	debugCommand.Flags().StringVarP(&signedFile, "signed", "s", "", "ścieżka do *PODPISANEGO* pliku wyzwania")
 	debugCommand.MarkFlagsOneRequired("cert", "signed")
 	XadesCommand.AddCommand(debugCommand)
@@ -42,16 +43,25 @@ func authSessionDebug(cmd *cobra.Command, _ []string) error {
 			cfg.APIConfig(env),
 			signedFile,
 		)
-	} else if certFile != "" {
+	} else if useCert {
 		// 2. if the user passed path to the certificate - we will do everything automatically
 		nip, err := cmd.Flags().GetString("nip")
 		if nip == "" || err != nil {
 			return errors.New("brak numeru NIP")
 		}
+		// pick up cert from the database
+		certsDB, err := certsdb.OpenOrCreate(env)
+		if err != nil {
+			return err
+		}
+		certFile, err := certsDB.GetByUsage(certsdb.UsageAuthentication, nip)
+		if err != nil {
+			return err
+		}
 		authValidator = xades.NewAuthHandler(
 			cfg.APIConfig(env),
 			nip,
-			certFile,
+			certFile.Filename(),
 		)
 	}
 

@@ -2,11 +2,14 @@ package xml
 
 import (
 	"fmt"
-	"os"
+	"io"
+	"slices"
 	"strings"
+
+	"github.com/samber/lo"
 )
 
-func (node *Node) DumpToFile(file *os.File, indent int) error {
+func (node *Node) DumpToWriter(file io.Writer, indent int) error {
 	prefix := strings.Repeat("  ", indent)
 	tailPrefix := ""
 	var err error
@@ -14,9 +17,16 @@ func (node *Node) DumpToFile(file *os.File, indent int) error {
 	fmt.Fprintf(file, "%s<%s", prefix, node.Name)
 
 	if node.Attribs != nil {
-		var attribs = []string{}
-		for name, value := range node.Attribs {
-			attribs = append(attribs, fmt.Sprintf("%s=\"%s\"", name, value))
+		// unfortunetely we have to rely on this hack since iterating over maps is
+		// non-deterministic in go by design. and we need a deterministic order in
+		// order to achieve the same checksum
+		var attribNames = lo.Keys(node.Attribs)
+		slices.Sort(attribNames)
+
+		var attribs []string
+
+		for _, name := range attribNames {
+			attribs = append(attribs, fmt.Sprintf("%s=\"%s\"", name, node.Attribs[name]))
 		}
 		fmt.Fprintf(file, " %s", strings.Join(attribs, " "))
 	}
@@ -29,7 +39,7 @@ func (node *Node) DumpToFile(file *os.File, indent int) error {
 		tailPrefix = prefix
 
 		for _, child := range node.Children {
-			if err = child.DumpToFile(file, indent+1); err != nil {
+			if err = child.DumpToWriter(file, indent+1); err != nil {
 				return fmt.Errorf("error dumping child: %v", err)
 			}
 		}

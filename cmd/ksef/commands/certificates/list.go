@@ -2,7 +2,7 @@ package certificates
 
 import (
 	"fmt"
-	"ksef/internal/config"
+	"ksef/internal/certsdb"
 	"ksef/internal/environment"
 
 	"github.com/alexeyco/simpletable"
@@ -21,8 +21,10 @@ func init() {
 
 func listCerts(cmd *cobra.Command, _ []string) error {
 	env := environment.FromContext(cmd.Context())
-	cfg := config.GetConfig().APIConfig(env)
-	certDB := cfg.CertificatesDB
+	certDB, err := certsdb.OpenOrCreate(env)
+	if err != nil {
+		return err
+	}
 
 	table := simpletable.New()
 

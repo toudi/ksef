@@ -2,6 +2,7 @@ package client
 
 import (
 	"ksef/cmd/ksef/flags"
+	"ksef/internal/certsdb"
 	"ksef/internal/config"
 	"ksef/internal/environment"
 	v2 "ksef/internal/sei/api/client/v2"
@@ -22,9 +23,15 @@ func InitClient(cmd *cobra.Command) (*v2.APIClient, error) {
 		// TODO: handle logout parameter here
 		return nil
 	}
+	certsDB, err := certsdb.OpenOrCreate(env)
+	if err != nil {
+		return nil, err
+	}
 	return v2.NewClient(
 		cmd.Context(),
 		config.GetConfig(),
-		env, v2.WithAuthValidator(token.NewAuthHandler(config.GetConfig().APIConfig(env), nip)),
+		env,
+		v2.WithAuthValidator(token.NewAuthHandler(config.GetConfig().APIConfig(env), nip)),
+		v2.WithCertificatesDB(certsDB),
 	)
 }

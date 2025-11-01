@@ -7,6 +7,8 @@ import (
 	"ksef/internal/config"
 	"log/slog"
 	"os"
+
+	"github.com/spf13/viper"
 )
 
 // this is a utility map that will be used when config file will be read
@@ -37,6 +39,7 @@ func InitLogging(output string) error {
 	}
 
 	var err error
+	var loggingConfig = config.LoggingConfig(viper.GetViper())
 
 	if output == "-" {
 		outputWriter = os.Stdout
@@ -48,34 +51,31 @@ func InitLogging(output string) error {
 		outputWriter = outputFile
 	}
 
-	if Verbose {
-		for _, loggerPtr := range loggers {
-			var logger *slog.Logger = loggerPtr
-			*logger = *slog.New(slog.NewTextHandler(outputWriter, &slog.HandlerOptions{
-				Level: slog.LevelDebug,
-			}))
-		}
-		return nil
-	}
+	// initiate loggers
+	var logger *slog.Logger
+	var loggerName string
 
-	config := config.GetConfig()
+	for loggerName, logger = range loggers {
+		var logLevel = logLevels[loggerName]
 
-	if config.Logging != nil {
-		var logger *slog.Logger
-		var exists bool
-
-		for loggerName, logLevel := range config.Logging {
-			if logger, exists = loggers[loggerName]; exists {
-				// it may look cryptic and ugly but the bottom line here is this:
-				// we take `logger` which is a pointer to `slog.Logger` and we want to
-				// re-initialize it, however we also want the address to stay the same.
-				*logger = *slog.New(slog.NewTextHandler(outputWriter, &slog.HandlerOptions{
-					Level: parseLevel(logLevel),
-				}))
-			} else {
-				return errUnknownLogger
+		if Verbose {
+			logLevel = slog.LevelDebug
+		} else {
+			// let's see if the logger level was overriden via config:
+			if level, exists := loggingConfig[loggerName]; exists {
+				logLevel = parseLevel(level)
+			} else if level, exists := loggingConfig["*"]; exists {
+				logLevel = parseLevel(level)
 			}
 		}
+
+		// it may look cryptic and ugly but the bottom line here is this:
+		// we take `logger` which is a pointer to `slog.Logger` and we want to
+		// re-initialize it, however we also want the address to stay the same.
+		*logger = *slog.New(slog.NewTextHandler(outputWriter, &slog.HandlerOptions{
+			Level: logLevel,
+		}))
+
 	}
 
 	return nil

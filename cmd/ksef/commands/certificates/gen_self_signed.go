@@ -5,6 +5,7 @@ import (
 	"encoding/asn1"
 	"errors"
 	"ksef/cmd/ksef/flags"
+	"ksef/internal/certsdb"
 	"ksef/internal/config"
 	"ksef/internal/environment"
 
@@ -43,7 +44,10 @@ func validateParams(cmd *cobra.Command, _ []string) error {
 func generateSelfSignedCert(cmd *cobra.Command, _ []string) error {
 	cfg := config.GetConfig()
 	var env = environment.FromContext(cmd.Context())
-	certsDB := cfg.APIConfig(env).CertificatesDB
+	certsDB, err := certsdb.OpenOrCreate(env)
+	if err != nil {
+		return err
+	}
 	defer certsDB.Save()
 
 	pesel, err := cmd.Flags().GetString(flags.FlagNamePESEL)

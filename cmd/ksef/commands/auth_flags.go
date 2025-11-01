@@ -3,6 +3,7 @@ package commands
 import (
 	"errors"
 	"ksef/cmd/ksef/flags"
+	"ksef/internal/certsdb"
 	"ksef/internal/config"
 	environmentPkg "ksef/internal/environment"
 	"ksef/internal/logging"
@@ -31,6 +32,10 @@ func authChallengeValidatorInstance(cmd *cobra.Command, nip string, env environm
 	}
 
 	apiConfig := config.GetConfig().APIConfig(env)
+	certsDB, err := certsdb.OpenOrCreate(env)
+	if err != nil {
+		return nil, err
+	}
 
 	if certPath != "" {
 		// cert-based authentication
@@ -45,6 +50,7 @@ func authChallengeValidatorInstance(cmd *cobra.Command, nip string, env environm
 		// token-based authentication
 		return kseftoken.NewKsefTokenHandler(
 			apiConfig,
+			certsDB,
 			nip,
 		), nil
 	}
