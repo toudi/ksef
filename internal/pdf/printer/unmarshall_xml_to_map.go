@@ -1,4 +1,4 @@
-package pdf
+package printer
 
 import (
 	"encoding/xml"
@@ -18,7 +18,7 @@ type Amounts struct {
 type Invoice struct {
 	Xml           map[string]any
 	Amounts       Amounts
-	arrayElements map[string]bool
+	ArrayElements map[string]bool
 }
 
 const (
@@ -54,7 +54,7 @@ func (x *Invoice) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) err
 			newMap := map[string]any{"_": elem.Name.Local}
 			dottedPath = append(dottedPath, elem.Name.Local)
 			fullName := strings.Join(dottedPath, ".")
-			if x.arrayElements[fullName] {
+			if x.ArrayElements[fullName] {
 				var elemSlice []any
 				if sliceI, ok := path[len(path)-1][elem.Name.Local].([]any); ok {
 					elemSlice = sliceI

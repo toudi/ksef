@@ -16,7 +16,7 @@ var syncEnrollmentsCommand = &cobra.Command{
 
 func init() {
 	flags.AuthMethod(syncEnrollmentsCommand)
-	flags.NIP(syncEnrollmentsCommand)
+	flags.NIP(syncEnrollmentsCommand.Flags())
 	syncEnrollmentsCommand.Flags().SortFlags = false
 	CertificatesCommand.AddCommand(syncEnrollmentsCommand)
 }

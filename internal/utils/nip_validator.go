@@ -1,11 +1,20 @@
 package utils
 
 import (
+	"errors"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
-type NIPValidatorType func(nip string) bool
+var (
+	errNIPInvalid    = errors.New("nieprawidłowy numer NIP")
+	errNIPTooShort   = errors.New("numer NIP zbyt krótki")
+	errNotADigit     = errors.New("nieprawidłowa cyfra")
+	errInvalidModulo = errors.New("nieprawidłowa cyfra kontrolna")
+)
+
+type NIPValidatorType func(nip string) error
 
 // check whether NIP matches the predefined pattern. Note that
 // the NIP must already be normalized at this point
@@ -21,30 +30,35 @@ func normalizeNIP(nip string) string {
 // NIPLengthValidator should only be used on the test environment
 // where one can use completely fake NIP numbers, thus the only
 // thing that we actually can validate is the length of the NIP itself
-func NIPLengthValidator(nip string) bool {
-	return nipRegexp.MatchString(normalizeNIP(nip))
+func NIPLengthValidator(nip string) error {
+	if !nipRegexp.MatchString(normalizeNIP(nip)) {
+		return errNIPInvalid
+	}
+	return nil
 }
 
-var nipValidationWeights = [...]int{6, 5, 7, 2, 3, 4, 5, 6, 7}
+var digitWeights = []int{6, 5, 7, 2, 3, 4, 5, 6, 7}
 
-// ASCII starts the numbers at offset 48 which happens to be
-// the result of int('0') therefore we can cast the digit into
-// an int by calling int(char) - offset
-const zeroAsAsciiInt = int('0')
-
-func NIPValidator(nip string) bool {
+func NIPValidator(nip string) error {
 	nip = normalizeNIP(nip)
+	var checksum int
 
-	if !NIPLengthValidator(nip) {
-		return false
+	if len(nip) != 10 {
+		return errors.Join(errNIPInvalid, errNIPTooShort)
 	}
 
-	// https://stackoverflow.com/questions/37765687/golang-how-to-convert-string-to-int
-	var checksum int = 0
-
-	for weightIndex, weight := range nipValidationWeights {
-		checksum += (int(nip[weightIndex]) - zeroAsAsciiInt) * weight
+	for digitNo := range 9 {
+		digit, err := strconv.Atoi(string(nip[digitNo]))
+		if err != nil {
+			return errors.Join(errNIPInvalid, errNotADigit)
+		}
+		checksum += digit * digitWeights[digitNo]
 	}
 
-	return checksum%11 == int(nip[9])-zeroAsAsciiInt
+	var expectedLastDigit = strconv.Itoa(checksum % 11)
+	if string(nip[9]) != expectedLastDigit {
+		return errors.Join(errNIPInvalid, errInvalidModulo)
+	}
+
+	return nil
 }

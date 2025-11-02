@@ -1,7 +1,7 @@
 package authorization
 
 import (
-	"ksef/cmd/ksef/flags"
+	"ksef/cmd/ksef/commands/authorization/challenge"
 	"ksef/internal/config"
 	"ksef/internal/environment"
 	v2 "ksef/internal/sei/api/client/v2"
@@ -20,7 +20,6 @@ var loginCommand = &cobra.Command{
 
 func init() {
 	loginCommand.Flags().SortFlags = false
-	loginCommand.MarkFlagRequired(flags.FlagNameNIP)
 
 	AuthCommand.AddCommand(loginCommand)
 }
@@ -34,7 +33,8 @@ func login(cmd *cobra.Command, args []string) error {
 		cfg.APIConfig(env),
 		signedChallengeFile,
 	)
-	nip, err := cmd.Flags().GetString(flags.FlagNameNIP)
+
+	_, nip, err := challenge.GetNIPFromChallengeFile(signedChallengeFile)
 	if err != nil {
 		return err
 	}

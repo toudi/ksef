@@ -27,6 +27,10 @@ func init() {
 func dumpAuthChallenge(cmd *cobra.Command, _ []string) error {
 	var cfg = config.GetConfig()
 	var env = environment.FromContext(cmd.Context())
+	nip, err := flags.GetNIP(cmd.Flags(), env)
+	if err != nil {
+		return err
+	}
 
 	authValidator := xades.NewChallengeDumperHandler(
 		cfg.APIConfig(env),

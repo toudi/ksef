@@ -6,7 +6,6 @@ import (
 	"errors"
 	"ksef/cmd/ksef/flags"
 	"ksef/internal/certsdb"
-	"ksef/internal/config"
 	"ksef/internal/environment"
 
 	"github.com/spf13/cobra"
@@ -26,7 +25,7 @@ var (
 
 func init() {
 	flags.PESEL(generateSelfSignedCommand)
-	flags.NIP(generateSelfSignedCommand)
+	flags.NIP(generateSelfSignedCommand.Flags())
 
 	CertificatesCommand.AddCommand(generateSelfSignedCommand)
 }
@@ -42,7 +41,6 @@ func validateParams(cmd *cobra.Command, _ []string) error {
 }
 
 func generateSelfSignedCert(cmd *cobra.Command, _ []string) error {
-	cfg := config.GetConfig()
 	var env = environment.FromContext(cmd.Context())
 	certsDB, err := certsdb.OpenOrCreate(env)
 	if err != nil {
@@ -74,13 +72,9 @@ func generateSelfSignedCert(cmd *cobra.Command, _ []string) error {
 		}...)
 	} else {
 		// we're generating a certificate for a company, therefore NIP has to be set
-		nipValidator := cfg.APIConfig(env).Environment.NIPValidator
-		nip, err := cmd.Flags().GetString("nip")
+		nip, err := flags.GetNIP(cmd.Flags(), env)
 		if err != nil {
 			return err
-		}
-		if !nipValidator(nip) {
-			return errInvalidNIP
 		}
 		// certBasename = "company-" + nip
 		subject.Organization = []string{"Gżegżółka sp z.o.o."}

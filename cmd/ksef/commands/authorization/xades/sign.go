@@ -1,7 +1,8 @@
 package xades
 
 import (
-	"ksef/cmd/ksef/flags"
+	"bytes"
+	"ksef/cmd/ksef/commands/authorization/challenge"
 	"ksef/internal/certsdb"
 	"ksef/internal/environment"
 	"ksef/internal/sei/api/client/v2/auth/xades"
@@ -23,7 +24,6 @@ func init() {
 	signCommand.Flags().StringVarP(&outputFile, "dest", "o", "AuthTokenRequest.signed.xml", "plik docelowy")
 
 	signCommand.MarkFlagRequired("challenge")
-	signCommand.MarkFlagRequired("dest")
 
 	XadesCommand.AddCommand(signCommand)
 }
@@ -34,7 +34,7 @@ func signChallengeFile(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-	nip, err := cmd.Flags().GetString(flags.FlagNameNIP)
+	challengeBytes, nip, err := challenge.GetNIPFromChallengeFile(challengeFile)
 	if err != nil {
 		return err
 	}
@@ -42,15 +42,11 @@ func signChallengeFile(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-	challengeFileReader, err := os.Open(challengeFile)
-	if err != nil {
-		return err
-	}
-	defer challengeFileReader.Close()
+
 	destFile, err := os.Create(outputFile)
 	if err != nil {
 		return err
 	}
 	defer destFile.Close()
-	return xades.SignAuthChallenge(challengeFileReader, certFile.Filename(), destFile)
+	return xades.SignAuthChallenge(bytes.NewBuffer(challengeBytes), certFile, destFile)
 }

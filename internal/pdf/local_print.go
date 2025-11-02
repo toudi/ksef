@@ -3,25 +3,22 @@ package pdf
 import (
 	"errors"
 	"ksef/internal/config"
-	"ksef/internal/registry"
+	"ksef/internal/pdf/latex"
+	"ksef/internal/pdf/printer"
 
 	"github.com/spf13/viper"
 )
 
-type PDFPrinter interface {
-	Print(contentBase64 string, meta registry.Invoice, output string) error
-}
-
 var ErrEngineNotConfigured = errors.New("PDF rendering engine not found in config")
 
-func GetLocalPrintingEngine() (PDFPrinter, error) {
+func GetLocalPrintingEngine() (printer.PDFPrinter, error) {
 	cfg, err := config.PDFPrinterConfig(viper.GetViper())
 	if err != nil {
 		return nil, err
 	}
 
 	if cfg.LatexConfig != nil {
-		return &LatexPrinter{cfg: cfg.LatexConfig}, nil
+		return latex.NewLatexPrinter(cfg.LatexConfig), nil
 	}
 
 	// engine := cfg.PDFRenderer["engine"]

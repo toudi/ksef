@@ -2,12 +2,13 @@ package pdf
 
 import (
 	"encoding/base64"
+	"ksef/internal/pdf/printer"
 	"ksef/internal/registry"
 	"os"
 	"strings"
 )
 
-func PrintLocalInvoice(engine PDFPrinter, invoice registry.Invoice, filename string) error {
+func PrintLocalInvoice(engine printer.PDFPrinter, invoice registry.Invoice, filename string) error {
 	var base64Encoder = base64.StdEncoding
 	invoiceContents, err := os.ReadFile(filename)
 	if err != nil {

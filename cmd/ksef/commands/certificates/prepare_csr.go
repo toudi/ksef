@@ -27,7 +27,7 @@ func init() {
 	flagSet.BoolP(flagAuth, "a", false, "przygotuj wniosek dla certyfikatu autoryzacyjnego")
 	flagSet.BoolP(flagOffline, "o", false, "przygotuj wniosek dla certyfikatu offline")
 
-	flags.NIP(prepareCSRCommand)
+	flags.NIP(prepareCSRCommand.Flags())
 
 	flagSet.SortFlags = false
 	prepareCSRCommand.MarkFlagRequired(flags.FlagNameNIP)

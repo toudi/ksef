@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -100,6 +101,9 @@ var funcs = template.FuncMap{
 	"has": func(a_map map[string]any, key string) bool {
 		_, exists := a_map[key]
 		return exists
+	},
+	"datetime_hr": func(timestamp time.Time) string {
+		return timestamp.Format(`2006-01-02\\15:04:05 MST`)
 	},
 }
 

@@ -2,14 +2,13 @@ package xades
 
 import (
 	"bytes"
-	"crypto/ecdsa"
-	"crypto/rand"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
 	"errors"
 	"io"
+	"ksef/internal/certsdb"
 	"os"
 	"strings"
 	"time"
@@ -38,7 +37,7 @@ type TemplateVars struct {
 	}
 }
 
-func SignAuthChallenge(challenge io.Reader, certificateFile string, dest io.Writer) error {
+func SignAuthChallenge(challenge io.Reader, cert certsdb.Certificate, dest io.Writer) error {
 	var templateVars = TemplateVars{
 		SigningTime: time.Now().UTC(),
 	}
@@ -49,7 +48,7 @@ func SignAuthChallenge(challenge io.Reader, certificateFile string, dest io.Writ
 	var hash [32]byte
 
 	// read certificate into memory
-	certificateBytes, err := os.ReadFile(certificateFile)
+	certificateBytes, err := os.ReadFile(cert.Filename())
 	if err != nil {
 		return err
 	}
@@ -61,14 +60,6 @@ func SignAuthChallenge(challenge io.Reader, certificateFile string, dest io.Writ
 		return err
 	}
 	templateVars.Certificate.Raw = certificate
-
-	// read private key into memory
-	privKeyBytes, err := os.ReadFile(strings.Replace(certificateFile, "-cert", "-key", 1))
-	privKeyBlock, _ := pem.Decode(privKeyBytes)
-	privKey, err := x509.ParseECPrivateKey(privKeyBlock.Bytes)
-	if err != nil {
-		return err
-	}
 
 	// let's deal with the original message
 	signedDocument := etree.NewDocument()
@@ -117,14 +108,10 @@ func SignAuthChallenge(challenge io.Reader, certificateFile string, dest io.Writ
 	signatureDoc.ReadFromString(signatureXML)
 	// 2. calculate the signature of the document. We will use signedInfo node as our
 	// input hash
-	r, s, err := ecdsa.Sign(rand.Reader, privKey, templateVars.SignedInfo.Hash)
-	if err != nil {
+	var signature []byte
+	if signature, err = cert.SignContent([]byte(signedInfo)); err != nil {
 		return err
 	}
-	var signature []byte
-
-	signature = r.Bytes()
-	signature = append(signature, s.Bytes()...)
 
 	// now we need to locate the signature node and replace it's content by the actual signature
 	signatureValueNode := signatureDoc.FindElement(`[@Id="signature-value-` + templateVars.ID.String() + `"]`)

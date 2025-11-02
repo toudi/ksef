@@ -29,6 +29,7 @@ var renderUPOPDFCommand = &cobra.Command{
 	Use:   "upo",
 	Short: "drukuje PDF dla wkazanego UPO",
 	Args:  cobra.ExactArgs(1),
+	RunE:  renderUPOPDF,
 }
 
 func init() {
@@ -75,4 +76,26 @@ func renderInvoicePDF(cmd *cobra.Command, args []string) error {
 	basename, _ := strings.CutSuffix(filepath.Base(invoiceSourceXML), filepath.Ext(invoiceSourceXML))
 	output := filepath.Join(registry.Dir, basename+".pdf")
 	return engine.Print(base64.StdEncoding.EncodeToString(invoiceBytes), invoiceMeta, output)
+}
+
+func renderUPOPDF(cmd *cobra.Command, args []string) error {
+	upoSourceXML := args[0]
+	// based on that, we can open registry
+	registry, err := registryPkg.LoadRegistry(filepath.Dir(upoSourceXML))
+	if err != nil {
+		return err
+	}
+	engine, err := pdf.GetLocalPrintingEngine()
+	if err != nil {
+		return err
+	}
+	upoBytes, err := os.ReadFile(upoSourceXML)
+	if err != nil {
+		return err
+	}
+
+	basename, _ := strings.CutSuffix(filepath.Base(upoSourceXML), filepath.Ext(upoSourceXML))
+	output := filepath.Join(registry.Dir, basename+".pdf")
+
+	return engine.PrintUPO(base64.StdEncoding.EncodeToString(upoBytes), output)
 }

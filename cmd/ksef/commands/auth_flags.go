@@ -36,6 +36,10 @@ func authChallengeValidatorInstance(cmd *cobra.Command, nip string, env environm
 	if err != nil {
 		return nil, err
 	}
+	certFile, err := certsDB.GetByUsage(certsdb.UsageAuthentication, nip)
+	if err != nil {
+		return nil, err
+	}
 
 	if certPath != "" {
 		// cert-based authentication
@@ -43,7 +47,7 @@ func authChallengeValidatorInstance(cmd *cobra.Command, nip string, env environm
 		return xades.NewAuthHandler(
 			apiConfig,
 			nip,
-			certPath,
+			certFile,
 		), nil
 	} else if ksefToken != "" {
 		logging.AuthLogger.Debug("wybrano autoryzację tokenem KSeF")

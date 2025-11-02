@@ -2,6 +2,7 @@ package xades
 
 import (
 	"errors"
+	"fmt"
 	"ksef/internal/certsdb"
 	"ksef/internal/config"
 	"ksef/internal/environment"
@@ -25,7 +26,7 @@ var (
 )
 
 func init() {
-	debugCommand.Flags().BoolVarP(&useCert, "cert", "c", false, "spróbuj użyć certyfikatu")
+	debugCommand.Flags().BoolVar(&useCert, "cert", false, "spróbuj użyć certyfikatu")
 	debugCommand.Flags().StringVarP(&signedFile, "signed", "s", "", "ścieżka do *PODPISANEGO* pliku wyzwania")
 	debugCommand.MarkFlagsOneRequired("cert", "signed")
 	XadesCommand.AddCommand(debugCommand)
@@ -58,10 +59,11 @@ func authSessionDebug(cmd *cobra.Command, _ []string) error {
 		if err != nil {
 			return err
 		}
+		fmt.Printf("wybrano certyfikat: %s (%s)\n", certFile.Filename(), certFile.UID)
 		authValidator = xades.NewAuthHandler(
 			cfg.APIConfig(env),
 			nip,
-			certFile.Filename(),
+			certFile,
 		)
 	}
 

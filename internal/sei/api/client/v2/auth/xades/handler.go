@@ -3,6 +3,7 @@ package xades
 import (
 	"bytes"
 	"context"
+	"ksef/internal/certsdb"
 	"ksef/internal/config"
 	"ksef/internal/http"
 	"ksef/internal/sei/api/client/v2/auth/validator"
@@ -10,16 +11,16 @@ import (
 
 type AuthHandler struct {
 	nip          string
-	certFile     string
+	certificate  certsdb.Certificate
 	eventChannel chan validator.AuthEvent
 	httpClient   *http.Client
 }
 
-func NewAuthHandler(apiConfig config.APIConfig, nip string, certFile string) validator.AuthChallengeValidator {
+func NewAuthHandler(apiConfig config.APIConfig, nip string, certificate certsdb.Certificate) validator.AuthChallengeValidator {
 	handler := &AuthHandler{
 		eventChannel: make(chan validator.AuthEvent),
 		nip:          nip,
-		certFile:     certFile,
+		certificate:  certificate,
 	}
 
 	return handler
@@ -50,7 +51,7 @@ func (e *AuthHandler) ValidateChallenge(ctx context.Context, challenge validator
 	}
 	// great. now we can sign it using the certificate
 	var signedDocument bytes.Buffer
-	if err = SignAuthChallenge(&sourceDocument, e.certFile, &signedDocument); err != nil {
+	if err = SignAuthChallenge(&sourceDocument, e.certificate, &signedDocument); err != nil {
 		return err
 	}
 	// perfect. final step - let's post it to the validation endpoint

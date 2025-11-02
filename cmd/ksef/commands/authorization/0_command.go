@@ -2,6 +2,7 @@ package authorization
 
 import (
 	"ksef/cmd/ksef/commands/authorization/xades"
+	"ksef/cmd/ksef/flags"
 
 	"github.com/spf13/cobra"
 )
@@ -11,11 +12,8 @@ var AuthCommand = &cobra.Command{
 	Short: "zarządzanie autoryzacją KSeF",
 }
 
-var nip string
-
 func init() {
-	// flags.NIPVarP(AuthCommand.PersistentFlags())
-	AuthCommand.PersistentFlags().StringVarP(&nip, "nip", "n", "", "numer NIP podmiotu")
+	flags.NIP(AuthCommand.PersistentFlags())
 
 	AuthCommand.AddCommand(xades.XadesCommand)
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"ksef/internal/http"
 	"ksef/internal/pdf"
+	"ksef/internal/pdf/printer"
 	"ksef/internal/registry"
 	types "ksef/internal/sei/api/client/v2/types/invoices"
 	baseHttp "net/http"
@@ -38,7 +39,7 @@ func Sync(ctx context.Context, httpClient *http.Client, params SyncParams, regis
 		req            InvoiceMetadataRequest
 		resp           types.InvoiceMetadataResponse
 		err            error
-		printingEngine pdf.PDFPrinter
+		printingEngine printer.PDFPrinter
 	)
 
 	req.SubjectType = params.SubjectType

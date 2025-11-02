@@ -14,6 +14,7 @@ import (
 func InitClient(cmd *cobra.Command) (*v2.APIClient, error) {
 	var err error
 	var env = environment.FromContext(cmd.Context())
+	var cli *v2.APIClient
 
 	nip, err := cmd.Flags().GetString(flags.FlagNameNIP)
 	if err != nil {
@@ -27,11 +28,16 @@ func InitClient(cmd *cobra.Command) (*v2.APIClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	return v2.NewClient(
+
+	cli, err = v2.NewClient(
 		cmd.Context(),
 		config.GetConfig(),
 		env,
-		v2.WithAuthValidator(token.NewAuthHandler(config.GetConfig().APIConfig(env), nip)),
+		v2.WithAuthValidator(
+			token.NewAuthHandler(config.GetConfig().APIConfig(env), nip),
+		),
 		v2.WithCertificatesDB(certsDB),
 	)
+
+	return cli, err
 }

@@ -58,6 +58,9 @@ func (cdb *CertificatesDB) GetByUsage(usage Usage, nip string) (Certificate, err
 	var now = time.Now()
 
 	for _, cert := range cdb.certs {
+		if !slices.Contains(cert.Usage, usage) {
+			continue
+		}
 		if cert.ValidFrom.After(now) || cert.ValidTo.Before(now) {
 			logging.CertsDBLogger.Debug("certyfikat poza zakresem ważności", "id", cert.UID)
 			continue
@@ -68,9 +71,8 @@ func (cdb *CertificatesDB) GetByUsage(usage Usage, nip string) (Certificate, err
 			logging.CertsDBLogger.Debug("certyfikat wystawiony dla innego numeru NIP", "id", cert.UID)
 			continue
 		}
-		if slices.Contains(cert.Usage, usage) {
-			foundCerts = append(foundCerts, *cert)
-		}
+
+		foundCerts = append(foundCerts, *cert)
 	}
 
 	// for Authentication there are two possible choices - self-signed and ksef-issued.
@@ -86,6 +88,8 @@ func (cdb *CertificatesDB) GetByUsage(usage Usage, nip string) (Certificate, err
 			}
 			return 0
 		})
+
+		logging.CertsDBLogger.Debug("wybrano certyfikat", "id", foundCerts[0].UID, "typ", foundCerts[0].Usage, "self-signed", foundCerts[0].SelfSigned)
 
 		return foundCerts[0], nil
 	}
