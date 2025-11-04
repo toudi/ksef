@@ -69,6 +69,9 @@ func SignAuthChallenge(challenge io.Reader, cert certsdb.Certificate, dest io.Wr
 	// now we need to dump it to a temporary buffer so that we could hash the content
 	// this is important as the "<?xml .." cannot become part of the hash
 	var buffer bytes.Buffer
+	// call SortAttrs because the client app uses unsorted challenge whereas the API challenge does not include extra
+	// namespaces at all
+	signedDocument.Root().SortAttrs()
 	signedDocument.Root().WriteTo(&buffer, &etree.WriteSettings{})
 	// and we can hash it:
 	hash = sha256.Sum256(buffer.Bytes())

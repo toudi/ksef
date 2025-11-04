@@ -1,4 +1,4 @@
-<xades:SignedProperties xmlns="http://ksef.mf.gov.pl/auth/token/2.0" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:xades="http://uri.etsi.org/01903/v1.3.2#" Id="signed-properties-{{ .ID }}">
+<xades:SignedProperties xmlns="http://ksef.mf.gov.pl/auth/token/2.0" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:xades="http://uri.etsi.org/01903/v1.3.2#" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Id="signed-properties-{{ .ID }}">
     <xades:SignedSignatureProperties>
         <xades:SigningTime>{{ .SigningTime.Format "2006-01-02T15:04:05Z" }}</xades:SigningTime>
         <xades:SigningCertificate>
