@@ -23,18 +23,19 @@ var syncInvoicesCommand = &cobra.Command{
 }
 
 type syncInvoicesArgsType struct {
-	params     invoices.SyncParams
-	startDate  time.Time
-	subjectNIP string
-	refresh    string
+	params        invoices.SyncParams
+	startDate     time.Time
+	startDateType registryPkg.DateType
+	subjectNIP    string
+	refresh       string
 }
 
-var syncInvoicesArgs = &syncInvoicesArgsType{}
+var syncInvoicesArgs = &syncInvoicesArgsType{
+	startDateType: registryPkg.DateTypeStorage,
+}
 
 func init() {
 	flagSet := syncInvoicesCommand.Flags()
-
-	flags.AuthMethod(syncInvoicesCommand)
 
 	flagSet.BoolFunc("income", "pobranie faktur przychodowych (type=Subject1)", func(s string) error {
 		syncInvoicesArgs.params.SubjectType = typesInvoices.SubjectTypeIssuer
@@ -52,6 +53,11 @@ func init() {
 	flagSet.StringVarP(&syncInvoicesArgs.subjectNIP, "nip", "n", "", "numer NIP podmiotu")
 	flagSet.IntVarP(&syncInvoicesArgs.params.PageSize, "page-size", "", 50, "liczba faktur na stronę odpowiedzi")
 	flagSet.TimeVarP(&syncInvoicesArgs.startDate, "start-date", "s", time.Now().Truncate(24*time.Hour), []string{"2006-01-02"}, "data początkowa")
+	flagSet.VarP(flags.StringChoice([]string{
+		string(registryPkg.DateTypeIssue),
+		string(registryPkg.DateTypeInvoicing),
+		string(registryPkg.DateTypeStorage),
+	}), "date-type", "", "typ daty używany do odpytywania listy faktur")
 	flagSet.StringVarP(&syncInvoicesArgs.params.DestPath, "registry", "o", "", "katalog rejestru (zostanie stworzony jeśli nie istnieje)")
 	flagSet.StringVarP(&syncInvoicesArgs.refresh, "refresh", "r", "", "odświeża istniejący rejestr faktur")
 
@@ -93,8 +99,11 @@ func syncInvoices(cmd *cobra.Command, _ []string) error {
 			return err
 		}
 
+		registry.QueryCriteria.SubjectType = string(syncInvoicesArgs.params.SubjectType)
 		registry.QueryCriteria.DateFrom = syncInvoicesArgs.startDate
+		registry.QueryCriteria.DateType = syncInvoicesArgs.startDateType
 		registry.Issuer = syncInvoicesArgs.subjectNIP
+		registry.Environment = env
 
 		if authValidator, err = authChallengeValidatorInstance(
 			cmd, syncInvoicesArgs.subjectNIP, env,

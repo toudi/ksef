@@ -44,9 +44,20 @@ func renderInvoicePDF(cmd *cobra.Command, args []string) error {
 	// let's grab the source filename
 	invoiceSourceXML := args[0]
 
-	// based on that, we can open registry
-	registry, err := registryPkg.LoadRegistry(filepath.Dir(invoiceSourceXML))
-	if err != nil {
+	var registry *registryPkg.InvoiceRegistry
+	var outputPath string = filepath.Dir(invoiceSourceXML)
+	var err error
+
+	for _, registryDir := range []string{
+		filepath.Dir(invoiceSourceXML),
+		filepath.Join(filepath.Dir(invoiceSourceXML), ".."),
+	} {
+		if registry, err = registryPkg.LoadRegistry(registryDir); err == nil {
+			break
+		}
+	}
+
+	if registry == nil {
 		return err
 	}
 
@@ -74,7 +85,7 @@ func renderInvoicePDF(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	basename, _ := strings.CutSuffix(filepath.Base(invoiceSourceXML), filepath.Ext(invoiceSourceXML))
-	output := filepath.Join(registry.Dir, basename+".pdf")
+	output := filepath.Join(outputPath, basename+".pdf")
 	return engine.Print(base64.StdEncoding.EncodeToString(invoiceBytes), invoiceMeta, output)
 }
 

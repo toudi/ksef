@@ -11,6 +11,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type DateType string
+
+const (
+	DateTypeIssue     DateType = "Issue"
+	DateTypeInvoicing DateType = "Invoicing"
+	DateTypeStorage   DateType = "PermanentStorage"
+)
+
 const registryName = "registry.yaml"
 
 type InvoiceUploadResult struct {
@@ -27,10 +35,11 @@ type UploadSessionStatus struct {
 }
 
 type QueryCriteria struct {
-	DateFrom    time.Time `json:"invoicingDateFrom" yaml:"invoicingDateFrom"`
-	DateTo      time.Time `json:"invoicingDateTo"   yaml:"invoicingDateTo"`
-	SubjectType string    `json:"subjectType"       yaml:"subjectType"`
-	Type        string    `json:"type"              yaml:"type"`
+	DateType    DateType  `yaml:"invoicingDateType"`
+	DateFrom    time.Time `yaml:"invoicingDateFrom"`
+	DateTo      time.Time `yaml:"invoicingDateTo,omitempty"`
+	SubjectType string    `yaml:"subjectType,omitempty"`
+	Type        string    `yaml:"type,omitempty"`
 }
 
 type invoiceSubjectQueryResponse struct {
@@ -54,23 +63,23 @@ type InvoiceQRCodes struct {
 }
 
 type Invoice struct {
-	ReferenceNumber     string         `json:"invoiceReferenceNumber" yaml:"referenceNumber,omitempty"`
-	KSeFReferenceNumber string         `json:"ksefReferenceNumber"    yaml:"ksefReferenceNumber,omitempty"`
+	ReferenceNumber     string         `yaml:"referenceNumber,omitempty"`
+	KSeFReferenceNumber string         `yaml:"ksefReferenceNumber,omitempty"`
 	QRCodes             InvoiceQRCodes `yaml:"qrcodes"`
-	IssueDate           string         `json:"issueDate"          yaml:"issueDate,omitempty"`
-	SubjectFrom         InvoiceSubject `json:"subjectBy,omitempty"    yaml:"subjectFrom,omitempty"`
-	SubjectTo           InvoiceSubject `json:"subjectTo,omitempty"    yaml:"subjectTo,omitempty"`
-	InvoiceType         string         `json:"invoiceType"            yaml:"invoiceType,omitempty"`
-	Net                 string         `json:"net"                    yaml:"net,omitempty"`
-	Vat                 string         `json:"vat"                    yaml:"vat,omitempty"`
-	Gross               string         `json:"gross"                  yaml:"gross,omitempty"`
-	Checksum            string         `                              yaml:"checksum,omitempty"`
+	IssueDate           string         `yaml:"issueDate,omitempty"`
+	SubjectFrom         InvoiceSubject `yaml:"subjectFrom,omitempty"`
+	SubjectTo           InvoiceSubject `yaml:"subjectTo,omitempty"`
+	InvoiceType         string         `yaml:"invoiceType,omitempty"`
+	Net                 string         `yaml:"net,omitempty"`
+	Vat                 string         `yaml:"vat,omitempty"`
+	Gross               string         `yaml:"gross,omitempty"`
+	Checksum            string         `yaml:"checksum,omitempty"`
 	Offline             bool           `yaml:"offline,omitempty"`
 }
 
 type InvoiceRefId struct {
-	ReferenceNumber     string `json:"invoiceRefNo"     yaml:"invoiceRefNo"`
-	KSeFReferenceNumber string `json:"ksefInvoiceRefNo" yaml:"ksefInvoiceRefNo"`
+	ReferenceNumber     string `yaml:"invoiceRefNo"`
+	KSeFReferenceNumber string `yaml:"ksefInvoiceRefNo"`
 }
 
 type PaymentId struct {
@@ -79,14 +88,14 @@ type PaymentId struct {
 }
 
 type InvoiceRegistry struct {
-	QueryCriteria  QueryCriteria                   `json:"queryCriteria" yaml:"queryCriteria,omitempty"`
-	Environment    environment.Environment         `                     yaml:"environment,omitempty"`
-	Invoices       []Invoice                       `                     yaml:"invoices,omitempty"`
-	Issuer         string                          `                     yaml:"issuer,omitempty"`
-	seiRefNoIndex  map[string]int                  `                     yaml:"-"`
-	refNoIndex     map[string]int                  `                     yaml:"-"`
-	checksumIndex  map[string]int                  `                     yaml:"-"`
-	PaymentIds     []PaymentId                     `                     yaml:"payment-ids,omitempty"`
+	QueryCriteria  QueryCriteria                   `yaml:"queryCriteria,omitempty"`
+	Environment    environment.Environment         `yaml:"environment,omitempty"`
+	Invoices       []Invoice                       `yaml:"invoices,omitempty"`
+	Issuer         string                          `yaml:"issuer,omitempty"`
+	seiRefNoIndex  map[string]int                  `yaml:"-"`
+	refNoIndex     map[string]int                  `yaml:"-"`
+	checksumIndex  map[string]int                  `yaml:"-"`
+	PaymentIds     []PaymentId                     `yaml:"payment-ids,omitempty"`
 	UploadSessions map[string]*UploadSessionStatus `yaml:"upload-sessions,omitempty"` // map between upload session ID and list of seiRefNumbers
 	sourcePath     string                          `yaml:"-"`
 	Dir            string                          `yaml:"-"` // diretory for invoice registry. we cache it so that the registry knows where to save itself

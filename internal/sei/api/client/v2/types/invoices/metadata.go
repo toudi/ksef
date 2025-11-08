@@ -1,14 +1,17 @@
 package invoices
 
-type InvoiceSellerMetadata struct {
-	NIP string `json:"nip"`
+type InvoiceSubjectMetadata struct {
+	NIP  string `json:"nip"`
+	Name string `json:"name"`
 }
 type InvoiceMetadata struct {
-	KSeFNumber    string                `json:"ksefNumber"`
-	InvoiceNumber string                `json:"invoiceNumber"`
-	InvoiceType   string                `json:"invoiceType"`
-	IssueDate     string                `json:"issueDate"`
-	Seller        InvoiceSellerMetadata `json:"seller"`
+	KSeFNumber    string                 `json:"ksefNumber"`
+	InvoiceNumber string                 `json:"invoiceNumber"`
+	InvoiceType   string                 `json:"invoiceType"`
+	IssueDate     string                 `json:"issueDate"`
+	Seller        InvoiceSubjectMetadata `json:"seller"`
+	Buyer         InvoiceSubjectMetadata `json:"buyer"`
+	InvoiceHash   string                 `json:"invoiceHash"`
 	Offline       bool
 }
 

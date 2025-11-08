@@ -43,7 +43,7 @@ func Sync(ctx context.Context, httpClient *http.Client, params SyncParams, regis
 	)
 
 	req.SubjectType = params.SubjectType
-	req.DateRange.DateType = DateRangeTypeIssue
+	req.DateRange.DateType = DateRangeType(registry.QueryCriteria.DateType)
 	req.DateRange.From = registry.QueryCriteria.DateFrom
 
 	if params.PDF {

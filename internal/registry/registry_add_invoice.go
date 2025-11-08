@@ -26,16 +26,18 @@ func (r *InvoiceRegistry) AddInvoice(
 			TIN: invoice.Seller.NIP,
 		},
 	}
+	// let's generate qrcodes. the qrcode for the invoice itself is always the same:
+	invoiceQRCode, err := GenerateInvoiceQRCode(r.Environment, regInvoice)
+	if err != nil {
+		return err
+	}
+	regInvoice.QRCodes.Invoice = invoiceQRCode
+
+	// if it's an offline invoice, we have to generate qrcode for it
 	if invoice.Offline {
-		// let's generate qrcodes. also, let's make sure that the certificate is not nil
 		if certificate == nil {
 			return errCertificateMissingAndOfflineModeSelected
 		}
-		invoiceQRCode, err := GenerateInvoiceQRCode(r.Environment, regInvoice)
-		if err != nil {
-			return err
-		}
-		regInvoice.QRCodes.Invoice = invoiceQRCode
 		certificateQRCode, err := GenerateCertificateQRCode(
 			r.Environment,
 			regInvoice,

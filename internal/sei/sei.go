@@ -102,7 +102,7 @@ func (s *SEI) AddInvoice(invoice *invoice.Invoice) error {
 	var invoiceMeta = invoices.InvoiceMetadata{
 		InvoiceNumber: invoice.Number,
 		IssueDate:     invoice.Issued.Format("2006-01-02"),
-		Seller: invoices.InvoiceSellerMetadata{
+		Seller: invoices.InvoiceSubjectMetadata{
 			NIP: s.IssuerTIN,
 		},
 		Offline: s.conversionParameters.OfflineMode,
