@@ -3,9 +3,10 @@ package certificates
 import (
 	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
-	"ksef/internal/environment"
+	"ksef/internal/config"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var syncEnrollmentsCommand = &cobra.Command{
@@ -25,7 +26,7 @@ func syncEnrollments(cmd *cobra.Command, _ []string) error {
 	if cli, err = client.InitClient(cmd); err != nil {
 		return err
 	}
-	certsManager, err := cli.Certificates(environment.FromContext(cmd.Context()))
+	certsManager, err := cli.Certificates(config.GetGateway(viper.GetViper()))
 	if err != nil {
 		return err
 	}

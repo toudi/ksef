@@ -1,13 +1,18 @@
 package authorization
 
 import (
+	"fmt"
 	"ksef/cmd/ksef/flags"
+	v2 "ksef/internal/client/v2"
+	"ksef/internal/client/v2/auth/token"
 	"ksef/internal/config"
-	"ksef/internal/environment"
-	v2 "ksef/internal/sei/api/client/v2"
-	"ksef/internal/sei/api/client/v2/auth/xades"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+)
+
+const (
+	flagOutput = "output"
 )
 
 var initAuthCommand = &cobra.Command{
@@ -16,28 +21,30 @@ var initAuthCommand = &cobra.Command{
 	RunE:  dumpAuthChallenge,
 }
 
-var outputFile string
-
 func init() {
-	initAuthCommand.Flags().StringVarP(&outputFile, "output", "o", "AuthTokenRequest.xml", "plik wyjściowy")
+	initAuthCommand.Flags().StringP(flagOutput, "o", "AuthTokenRequest.xml", "plik wyjściowy")
+	flags.NIP(initAuthCommand.Flags())
 	initAuthCommand.MarkFlagRequired(flags.FlagNameNIP)
 	AuthCommand.AddCommand(initAuthCommand)
 }
 
 func dumpAuthChallenge(cmd *cobra.Command, _ []string) error {
-	var cfg = config.GetConfig()
-	var env = environment.FromContext(cmd.Context())
-	nip, err := flags.GetNIP(cmd.Flags(), env)
+	vip := viper.GetViper()
+	nip, err := config.GetNIP(vip)
 	if err != nil {
 		return err
 	}
+	output, err := cmd.Flags().GetString(flagOutput)
+	if output == "" || err != nil {
+		return fmt.Errorf("nie podano pliku wyjścia")
+	}
 
-	authValidator := xades.NewChallengeDumperHandler(
-		cfg.APIConfig(env),
+	authValidator := token.NewAuthHandler(
+		config.GetGateway(vip),
 		nip,
-		outputFile,
+		token.WithDumpChallenge(output),
 	)
-	cli, err := v2.NewClient(cmd.Context(), cfg, env, v2.WithAuthValidator(authValidator))
+	cli, err := v2.NewClient(cmd.Context(), config.GetGateway(vip), v2.WithAuthValidator(authValidator))
 	if err != nil {
 		return err
 	}

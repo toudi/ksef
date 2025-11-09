@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"ksef/internal/logging"
+	"ksef/internal/registry/types"
 	"os"
 	"path/filepath"
 	"strings"
@@ -86,7 +87,7 @@ func (r *InvoiceRegistry) InvoiceCollection() (*InvoiceCollection, error) {
 				Filename: fullFileName, Checksum: checksum,
 			})
 
-			_, err = r.Upsert(Invoice{
+			_, err = r.Upsert(types.Invoice{
 				Checksum:        checksum,
 				ReferenceNumber: parsedInvoice.InvoiceNumber,
 			})

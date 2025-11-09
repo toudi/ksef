@@ -2,7 +2,10 @@ package challenge
 
 import (
 	"encoding/xml"
+	"ksef/internal/config"
 	"os"
+
+	"github.com/spf13/viper"
 )
 
 type AuthChallenge struct {
@@ -19,5 +22,6 @@ func GetNIPFromChallengeFile(challengeFile string) (challengeBytes []byte, nip s
 	if err = xml.Unmarshal(challengeBytes, &challenge); err != nil {
 		return nil, "", err
 	}
+	config.SetNIP(viper.GetViper(), challenge.NIP)
 	return challengeBytes, challenge.NIP, nil
 }

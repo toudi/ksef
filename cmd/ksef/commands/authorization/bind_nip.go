@@ -2,11 +2,13 @@ package authorization
 
 import (
 	"errors"
+	"ksef/cmd/ksef/flags"
+	v2 "ksef/internal/client/v2"
 	"ksef/internal/config"
 	"ksef/internal/environment"
-	v2 "ksef/internal/sei/api/client/v2"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 type bindNipArgsType struct {
@@ -27,6 +29,7 @@ var bindNipCommand = &cobra.Command{
 
 func init() {
 	bindNipCommand.Flags().StringVarP(&bindNipArgs.pesel, "pesel", "p", "", "numer PESEL osoby upoważnionej")
+	flags.NIP(bindNipCommand.Flags())
 
 	AuthCommand.AddCommand(bindNipCommand)
 }
@@ -40,9 +43,8 @@ func bindNipRun(cmd *cobra.Command, _ []string) error {
 	if err != nil || nip == "" {
 		return errNipIsRequired
 	}
-	cfg := config.GetConfig()
 
-	cli, err := v2.NewClient(cmd.Context(), cfg, env)
+	cli, err := v2.NewClient(cmd.Context(), config.GetGateway(viper.GetViper()))
 	if err != nil {
 		return err
 	}

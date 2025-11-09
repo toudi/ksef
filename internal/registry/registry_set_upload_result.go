@@ -2,6 +2,7 @@ package registry
 
 import (
 	"errors"
+	"ksef/internal/registry/types"
 )
 
 var (
@@ -11,14 +12,14 @@ var (
 // called during upload session after successful upload, but before session is closed
 func (r *InvoiceRegistry) SetUploadResult(
 	uploadSessionRefNo string,
-	uploadResult *InvoiceUploadResult,
+	uploadResult *types.InvoiceUploadResult,
 ) {
 	if r.UploadSessions == nil {
-		r.UploadSessions = make(map[string]*UploadSessionStatus)
+		r.UploadSessions = make(map[string]*types.UploadSessionStatus)
 	}
 
 	if _, exists := r.UploadSessions[uploadSessionRefNo]; !exists {
-		r.UploadSessions[uploadSessionRefNo] = &UploadSessionStatus{}
+		r.UploadSessions[uploadSessionRefNo] = &types.UploadSessionStatus{}
 	}
 
 	r.UploadSessions[uploadSessionRefNo].Invoices = append(r.UploadSessions[uploadSessionRefNo].Invoices, uploadResult)

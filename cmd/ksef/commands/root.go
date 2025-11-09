@@ -1,16 +1,20 @@
 package commands
 
 import (
-	"context"
 	"fmt"
 	"ksef/cmd/ksef/commands/authorization"
 	"ksef/cmd/ksef/commands/certificates"
-	appCtx "ksef/cmd/ksef/context"
-	environmentPkg "ksef/internal/environment"
+	"ksef/cmd/ksef/commands/download"
+	"ksef/internal/config"
 	"ksef/internal/logging"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+)
+
+const (
+	flagTestGateway = "test-gateway"
+	flagDemoGateway = "demo-gateway"
 )
 
 var RootCommand = &cobra.Command{
@@ -20,26 +24,32 @@ var RootCommand = &cobra.Command{
 }
 
 var (
-	env        environmentPkg.Environment = environmentPkg.Production
 	configFile string
 	logOutput  string
 )
 
 func init() {
+	config.SetGateway(viper.GetViper(), config.ProdGateway)
 	RootCommand.PersistentFlags().StringVarP(&logOutput, "log", "l", "-", "wyjście logowania (wartość - oznacza wyjście standardowe)")
 	RootCommand.PersistentFlags().StringVarP(&configFile, "config", "c", "config.yaml", "lokalizacja pliku konfiguracyjnego")
 	RootCommand.PersistentFlags().BoolFuncP("verbose", "v", "tryb verbose", func(s string) error {
 		logging.Verbose = true
 		return nil
 	})
-	RootCommand.PersistentFlags().BoolFuncP("test-gateway", "t", "Użyj bramki testowej", func(s string) error {
-		env = environmentPkg.Test
+	RootCommand.PersistentFlags().BoolFuncP(flagTestGateway, "t", "Użyj bramki testowej", func(s string) error {
+		config.SetGateway(viper.GetViper(), config.TestGateway)
 		return nil
 	})
+	RootCommand.PersistentFlags().BoolFuncP(flagDemoGateway, "d", "Użyj bramki przedprodukcyjnej (demo)", func(s string) error {
+		config.SetGateway(viper.GetViper(), config.DemoGateway)
+		return nil
+	})
+	RootCommand.PersistentFlags().SortFlags = false
 
 	RootCommand.AddCommand(authorization.AuthCommand)
 	RootCommand.AddCommand(certificates.CertificatesCommand)
-	RootCommand.AddCommand(syncInvoicesCommand)
+	// RootCommand.AddCommand(syncInvoicesCommand)
+	RootCommand.AddCommand(download.DownloadCommand)
 	RootCommand.AddCommand(uploadCommand)
 	RootCommand.AddCommand(statusCommand)
 	RootCommand.AddCommand(renderPDFCommand)
@@ -70,15 +80,7 @@ func setContext(cmd *cobra.Command, _ []string) error {
 	}
 
 	logging.SeiLogger.Info("start programu")
-	logging.SeiLogger.Info("wybrane środowisko", "env", env)
-
-	var ctx = context.WithValue(
-		cmd.Context(),
-		appCtx.KeyEnvironment,
-		env,
-	)
-
-	cmd.SetContext(ctx)
+	logging.SeiLogger.Info("wybrane środowisko", "env", config.GetGateway(viper.GetViper()))
 
 	return nil
 }

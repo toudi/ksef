@@ -6,7 +6,7 @@ import (
 	"encoding/xml"
 	"ksef/internal/config/pdf/latex"
 	"ksef/internal/pdf/printer"
-	"ksef/internal/registry"
+	"ksef/internal/registry/types"
 	"ksef/internal/sei/generators/fa_3_1"
 )
 
@@ -20,13 +20,13 @@ type LatexPrinter struct {
 
 type LatexTemplateVars struct {
 	Invoice  *printer.Invoice
-	Registry registry.Invoice
-	Qrcodes  registry.InvoiceQRCodes
+	Registry types.Invoice
+	Qrcodes  types.InvoiceQRCodes
 	Header   latex.HeaderFooterSettings
 	Footer   latex.HeaderFooterSettings
 }
 
-func (lp *LatexPrinter) Print(contentBase64 string, meta registry.Invoice, output string) error {
+func (lp *LatexPrinter) Print(contentBase64 string, meta types.Invoice, output string) error {
 	var invoiceXMLBuffer bytes.Buffer
 	invoiceXMLBytes, err := base64.StdEncoding.DecodeString(contentBase64)
 	if err != nil {

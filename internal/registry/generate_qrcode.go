@@ -4,12 +4,13 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"ksef/internal/certsdb"
-	"ksef/internal/environment"
+	"ksef/internal/config"
+	"ksef/internal/registry/types"
 	"net/url"
 )
 
 // https://github.com/CIRFMF/ksef-docs/blob/main/kody-qr.md#1-kodi--weryfikacja-i-pobieranie-faktury
-func GenerateInvoiceQRCode(env environment.Environment, invoice Invoice) (string, error) {
+func GenerateInvoiceQRCode(env config.Gateway, invoice types.Invoice) (string, error) {
 	checksumBytes, err := hex.DecodeString(invoice.Checksum)
 	if err != nil {
 		return "", err
@@ -27,7 +28,7 @@ func GenerateInvoiceQRCode(env environment.Environment, invoice Invoice) (string
 
 // https://github.com/CIRFMF/ksef-docs/blob/main/kody-qr.md#2-kodii--weryfikacja-certyfikatu
 func GenerateCertificateQRCode(
-	env environment.Environment, invoice Invoice,
+	env config.Gateway, invoice types.Invoice,
 	ctxIdent string,
 	certificate certsdb.Certificate,
 ) (string, error) {

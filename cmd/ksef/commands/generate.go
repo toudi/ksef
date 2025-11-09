@@ -3,7 +3,7 @@ package commands
 import (
 	"errors"
 	"fmt"
-	"ksef/internal/environment"
+	"ksef/internal/config"
 	"ksef/internal/logging"
 	"ksef/internal/sei"
 	inputprocessors "ksef/internal/sei/input_processors"
@@ -70,7 +70,7 @@ func generateRun(cmd *cobra.Command, args []string) error {
 	conversionParameters.Generator = generateArgs.GeneratorName
 	conversionParameters.OfflineMode = generateArgs.Offline
 
-	sei, err := sei.SEI_Init(environment.FromContext(cmd.Context()), generateArgs.Output, conversionParameters)
+	sei, err := sei.SEI_Init(config.GetGateway(viper.GetViper()), generateArgs.Output, conversionParameters)
 	if err != nil {
 		return err
 	}

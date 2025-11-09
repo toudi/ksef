@@ -3,7 +3,7 @@ package pdf
 import (
 	"fmt"
 	"ksef/internal/logging"
-	"ksef/internal/registry"
+	"ksef/internal/registry/types"
 	"os/exec"
 	"strings"
 )
@@ -17,7 +17,7 @@ type PuppeteerReferencePrinter struct {
 
 func (p *PuppeteerReferencePrinter) Print(
 	contentBase64 string,
-	invoiceMeta registry.Invoice,
+	invoiceMeta types.Invoice,
 	output string,
 ) error {
 	renderedFilePath, err := preparePrerenderedTemplate(

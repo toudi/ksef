@@ -1,6 +1,9 @@
 package registry
 
-import "errors"
+import (
+	"errors"
+	"ksef/internal/registry/types"
+)
 
 var (
 	ErrUnknownInvoice = errors.New("unable to lookup invoice by checksum")
@@ -26,10 +29,10 @@ func (r *InvoiceRegistry) GetSEIRefNo(invoiceNo string) (string, error) {
 	return "", errors.New("invoice number could not be found")
 }
 
-func (r *InvoiceRegistry) GetInvoiceByChecksum(checksum string) (Invoice, error) {
+func (r *InvoiceRegistry) GetInvoiceByChecksum(checksum string) (types.Invoice, error) {
 	index, exists := r.checksumIndex[checksum]
 	if !exists {
-		return Invoice{}, ErrUnknownInvoice
+		return types.Invoice{}, ErrUnknownInvoice
 	}
 	return r.Invoices[index], nil
 }

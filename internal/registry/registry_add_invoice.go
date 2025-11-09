@@ -3,7 +3,8 @@ package registry
 import (
 	"errors"
 	"ksef/internal/certsdb"
-	"ksef/internal/sei/api/client/v2/types/invoices"
+	"ksef/internal/client/v2/types/invoices"
+	"ksef/internal/registry/types"
 )
 
 var (
@@ -15,14 +16,14 @@ func (r *InvoiceRegistry) AddInvoice(
 	checksum string,
 	certificate *certsdb.Certificate,
 ) error {
-	var regInvoice = Invoice{
+	var regInvoice = types.Invoice{
 		ReferenceNumber:     invoice.InvoiceNumber,
 		KSeFReferenceNumber: invoice.KSeFNumber,
 		InvoiceType:         invoice.InvoiceType,
 		IssueDate:           invoice.IssueDate,
 		Checksum:            checksum,
 		Offline:             invoice.Offline,
-		SubjectFrom: InvoiceSubject{
+		SubjectFrom: types.InvoiceSubject{
 			TIN: invoice.Seller.NIP,
 		},
 	}

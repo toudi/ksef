@@ -2,7 +2,7 @@ package pdf
 
 import (
 	"fmt"
-	"ksef/internal/registry"
+	"ksef/internal/registry/types"
 	"os"
 	"path"
 	"strings"
@@ -10,7 +10,7 @@ import (
 
 func preparePrerenderedTemplate(
 	templateFile string,
-	invoiceMeta *registry.Invoice,
+	invoiceMeta *types.Invoice,
 	contentBase64 string,
 ) (string, error) {
 	replacer := strings.NewReplacer(

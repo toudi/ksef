@@ -1,7 +1,7 @@
 package certificates
 
 import (
-	v2 "ksef/internal/sei/api/client/v2"
+	v2 "ksef/internal/client/v2"
 
 	"github.com/spf13/cobra"
 )

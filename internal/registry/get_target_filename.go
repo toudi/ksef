@@ -2,7 +2,7 @@ package registry
 
 import (
 	"fmt"
-	"ksef/internal/sei/api/client/v2/types/invoices"
+	"ksef/internal/client/v2/types/invoices"
 	"path"
 	"strings"
 

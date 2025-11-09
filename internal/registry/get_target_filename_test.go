@@ -1,7 +1,7 @@
 package registry
 
 import (
-	"ksef/internal/sei/api/client/v2/types/invoices"
+	"ksef/internal/client/v2/types/invoices"
 	"testing"
 
 	"github.com/stretchr/testify/require"

@@ -4,10 +4,11 @@ import (
 	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
 	"ksef/internal/certsdb"
-	"ksef/internal/environment"
+	"ksef/internal/config"
 	"ksef/internal/logging"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -36,7 +37,7 @@ func init() {
 }
 
 func sendCsrs(cmd *cobra.Command, _ []string) error {
-	env := environment.FromContext(cmd.Context())
+	env := config.GetGateway(viper.GetViper())
 	nip, _ := cmd.Flags().GetString(flags.FlagNameNIP)
 	if cli, err = client.InitClient(cmd); err != nil {
 		return err

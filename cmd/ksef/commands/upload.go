@@ -2,14 +2,14 @@ package commands
 
 import (
 	"fmt"
+	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
+	"ksef/internal/client/v2/session/interactive"
 	"ksef/internal/config"
-	environmentPkg "ksef/internal/environment"
 	registryPkg "ksef/internal/registry"
-	v2 "ksef/internal/sei/api/client/v2"
-	"ksef/internal/sei/api/client/v2/session/interactive"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var uploadCommand = &cobra.Command{
@@ -40,14 +40,14 @@ func init() {
 
 func uploadRun(cmd *cobra.Command, _ []string) error {
 	var ctx = cmd.Context()
-	env = environmentPkg.FromContext(ctx)
+	var vip = viper.GetViper()
 
 	registry, err := registryPkg.OpenOrCreate(uploadArgs.path)
 	if err != nil {
 		return err
 	}
 	if registry.Environment == "" {
-		registry.Environment = env
+		registry.Environment = config.GetGateway(vip)
 	}
 
 	defer registry.Save("")
@@ -62,16 +62,7 @@ func uploadRun(cmd *cobra.Command, _ []string) error {
 		registry.Issuer = collection.Issuer
 	}
 
-	authValidator, err := authChallengeValidatorInstance(cmd, collection.Issuer, env)
-	if err != nil {
-		return err
-	}
-
-	cli, err := v2.NewClient(
-		ctx,
-		config.GetConfig(),
-		env, v2.WithRegistry(registry), v2.WithAuthValidator(authValidator),
-	)
+	cli, err := client.InitClient(cmd)
 	if err != nil {
 		return fmt.Errorf("błąd inicjalizacji klienta: %v", err)
 	}

@@ -3,7 +3,7 @@ package pdf
 import (
 	"bytes"
 	"fmt"
-	"ksef/internal/registry"
+	"ksef/internal/registry/types"
 	"ksef/internal/utils"
 	"mime/multipart"
 	"net/http"
@@ -19,7 +19,7 @@ type GotenbergPrinter struct {
 
 func (g *GotenbergPrinter) Print(
 	contentBase64 string,
-	invoiceMeta registry.Invoice,
+	invoiceMeta types.Invoice,
 	output string,
 ) error {
 	templateDir := path.Dir(g.templatePath)

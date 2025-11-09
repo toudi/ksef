@@ -3,10 +3,8 @@ package commands
 import (
 	"fmt"
 	"ksef/cmd/ksef/flags"
-	"ksef/internal/config"
+	"ksef/internal/client/v2/upo"
 	registryPkg "ksef/internal/registry"
-	v2 "ksef/internal/sei/api/client/v2"
-	"ksef/internal/sei/api/client/v2/upo"
 
 	"github.com/spf13/cobra"
 )
@@ -56,23 +54,18 @@ func statusRun(cmd *cobra.Command, _ []string) error {
 		)
 	}
 
-	env = registry.Environment
+	return nil
 
-	authValidator, err := authChallengeValidatorInstance(cmd, registry.Issuer, env)
-	if err != nil {
-		return err
-	}
+	// cli, err := v2.NewClient(cmd.Context(), config.GetConfig(), registry.Environment, v2.WithRegistry(registry), v2.WithAuthValidator(authValidator))
+	// if err != nil {
+	// 	return fmt.Errorf("błąd inicjalizacji klienta: %v", err)
+	// }
 
-	cli, err := v2.NewClient(cmd.Context(), config.GetConfig(), registry.Environment, v2.WithRegistry(registry), v2.WithAuthValidator(authValidator))
-	if err != nil {
-		return fmt.Errorf("błąd inicjalizacji klienta: %v", err)
-	}
+	// defer cli.Logout()
 
-	defer cli.Logout()
+	// if upoDownloaderParams.Path == "" {
+	// 	upoDownloaderParams.Path = registry.Dir
+	// }
 
-	if upoDownloaderParams.Path == "" {
-		upoDownloaderParams.Path = registry.Dir
-	}
-
-	return cli.UploadSessionsStatusCheck(cmd.Context(), upoDownloaderParams)
+	// return cli.UploadSessionsStatusCheck(cmd.Context(), upoDownloaderParams)
 }

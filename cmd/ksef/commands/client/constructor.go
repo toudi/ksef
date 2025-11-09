@@ -1,22 +1,22 @@
 package client
 
 import (
-	"ksef/cmd/ksef/flags"
 	"ksef/internal/certsdb"
+	v2 "ksef/internal/client/v2"
+	"ksef/internal/client/v2/auth/token"
 	"ksef/internal/config"
-	"ksef/internal/environment"
-	v2 "ksef/internal/sei/api/client/v2"
-	"ksef/internal/sei/api/client/v2/auth/token"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 func InitClient(cmd *cobra.Command) (*v2.APIClient, error) {
+	vip := viper.GetViper()
 	var err error
-	var env = environment.FromContext(cmd.Context())
+	var env = config.GetGateway(vip)
 	var cli *v2.APIClient
 
-	nip, err := cmd.Flags().GetString(flags.FlagNameNIP)
+	nip, err := config.GetNIP(vip)
 	if err != nil {
 		return nil, err
 	}
@@ -31,10 +31,9 @@ func InitClient(cmd *cobra.Command) (*v2.APIClient, error) {
 
 	cli, err = v2.NewClient(
 		cmd.Context(),
-		config.GetConfig(),
-		env,
+		config.GetGateway(vip),
 		v2.WithAuthValidator(
-			token.NewAuthHandler(config.GetConfig().APIConfig(env), nip),
+			token.NewAuthHandler(config.GetGateway(vip), nip),
 		),
 		v2.WithCertificatesDB(certsDB),
 	)

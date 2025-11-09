@@ -3,13 +3,13 @@ package certificates
 import (
 	"encoding/base64"
 	"ksef/internal/certsdb"
+	"ksef/internal/client/v2/security"
 	"ksef/internal/config"
-	"ksef/internal/environment"
 	"ksef/internal/http"
 	"ksef/internal/logging"
-	"ksef/internal/sei/api/client/v2/security"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var downloadKSeFCertsCommand = &cobra.Command{
@@ -23,14 +23,15 @@ func init() {
 }
 
 func downloadKSeFCerts(cmd *cobra.Command, _ []string) error {
-	env := environment.FromContext(cmd.Context())
-	cfg := config.GetConfig().APIConfig(env)
+	var env = config.GetGateway(viper.GetViper())
+
 	certsDB, err := certsdb.OpenOrCreate(env)
 	if err != nil {
 		return err
 	}
 
-	httpClient := http.NewClient(cfg.Environment.Host)
+	httpClient := http.NewClient(string(config.GetGateway(viper.GetViper())))
+
 	certificates, err := security.DownloadCertificates(cmd.Context(), httpClient)
 	if err != nil {
 		return err

@@ -3,11 +3,12 @@ package registry
 import (
 	"errors"
 	"fmt"
+	"ksef/internal/registry/types"
 )
 
 var ErrPaymentIdNotFound = errors.New("unable to find payment with the specified ID")
 
-func (r *InvoiceRegistry) getInvoiceByRefNo(invoiceId string) (*Invoice, error) {
+func (r *InvoiceRegistry) getInvoiceByRefNo(invoiceId string) (*types.Invoice, error) {
 	var index int
 	var exists bool
 	index, exists = r.seiRefNoIndex[invoiceId]

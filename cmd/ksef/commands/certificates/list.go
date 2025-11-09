@@ -3,10 +3,11 @@ package certificates
 import (
 	"fmt"
 	"ksef/internal/certsdb"
-	"ksef/internal/environment"
+	"ksef/internal/config"
 
 	"github.com/alexeyco/simpletable"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var listCommand = &cobra.Command{
@@ -20,7 +21,7 @@ func init() {
 }
 
 func listCerts(cmd *cobra.Command, _ []string) error {
-	env := environment.FromContext(cmd.Context())
+	env := config.GetGateway(viper.GetViper())
 	certDB, err := certsdb.OpenOrCreate(env)
 	if err != nil {
 		return err

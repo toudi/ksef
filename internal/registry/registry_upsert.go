@@ -1,17 +1,19 @@
 package registry
 
-func (ir *InvoiceRegistry) Update(invoice Invoice) (Invoice, error) {
+import "ksef/internal/registry/types"
+
+func (ir *InvoiceRegistry) Update(invoice types.Invoice) (types.Invoice, error) {
 	index, exists := ir.checksumIndex[invoice.Checksum]
 
 	if !exists {
-		return Invoice{}, ErrDoesNotExist
+		return types.Invoice{}, ErrDoesNotExist
 	}
 
 	ir.Invoices[index] = invoice
 	return invoice, nil
 }
 
-func (ir *InvoiceRegistry) Upsert(invoice Invoice) (Invoice, error) {
+func (ir *InvoiceRegistry) Upsert(invoice types.Invoice) (types.Invoice, error) {
 	index, exists := ir.checksumIndex[invoice.Checksum]
 
 	if !exists {
