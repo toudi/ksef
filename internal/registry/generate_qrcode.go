@@ -4,14 +4,20 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"ksef/internal/certsdb"
-	"ksef/internal/config"
 	"ksef/internal/registry/types"
+	"ksef/internal/runtime"
 	"net/url"
+	"time"
 )
 
 // https://github.com/CIRFMF/ksef-docs/blob/main/kody-qr.md#1-kodi--weryfikacja-i-pobieranie-faktury
-func GenerateInvoiceQRCode(env config.Gateway, invoice types.Invoice) (string, error) {
+func GenerateInvoiceQRCode(env runtime.Gateway, invoice types.Invoice) (string, error) {
 	checksumBytes, err := hex.DecodeString(invoice.Checksum)
+	if err != nil {
+		return "", err
+	}
+	// the date has to be in the DD-MM-YYYY format
+	issueDate, err := time.Parse(time.DateOnly, invoice.IssueDate)
 	if err != nil {
 		return "", err
 	}
@@ -20,7 +26,7 @@ func GenerateInvoiceQRCode(env config.Gateway, invoice types.Invoice) (string, e
 		"client-app",
 		"invoice",
 		invoice.SubjectFrom.TIN,
-		invoice.IssueDate,
+		issueDate.Format("02-01-2006"),
 		base64.URLEncoding.EncodeToString(checksumBytes),
 	)
 	return qrcode, nil
@@ -28,7 +34,7 @@ func GenerateInvoiceQRCode(env config.Gateway, invoice types.Invoice) (string, e
 
 // https://github.com/CIRFMF/ksef-docs/blob/main/kody-qr.md#2-kodii--weryfikacja-certyfikatu
 func GenerateCertificateQRCode(
-	env config.Gateway, invoice types.Invoice,
+	env runtime.Gateway, invoice types.Invoice,
 	ctxIdent string,
 	certificate certsdb.Certificate,
 ) (string, error) {

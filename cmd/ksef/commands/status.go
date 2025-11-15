@@ -1,12 +1,17 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
-	"ksef/cmd/ksef/flags"
+	"ksef/cmd/ksef/commands/client"
+	v2 "ksef/internal/client/v2"
 	"ksef/internal/client/v2/upo"
+	"ksef/internal/logging"
 	registryPkg "ksef/internal/registry"
+	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -25,7 +30,6 @@ var upoDownloaderParams upo.UPODownloaderParams
 
 func init() {
 	flagSet := statusCommand.Flags()
-	flags.AuthMethod(statusCommand)
 	cobra.MarkFlagRequired(flagSet, flagNameRegistry)
 
 	upoDownloaderParams.Format = upo.UPOFormatPDF
@@ -42,6 +46,7 @@ func init() {
 }
 
 func statusRun(cmd *cobra.Command, _ []string) error {
+	vip := viper.GetViper()
 	registry, err := registryPkg.LoadRegistry(registryPath)
 	if err != nil {
 		return fmt.Errorf("unable to load status from file: %v", err)
@@ -54,18 +59,33 @@ func statusRun(cmd *cobra.Command, _ []string) error {
 		)
 	}
 
-	return nil
+	runtime.SetGateway(vip, registry.Environment)
 
-	// cli, err := v2.NewClient(cmd.Context(), config.GetConfig(), registry.Environment, v2.WithRegistry(registry), v2.WithAuthValidator(authValidator))
-	// if err != nil {
-	// 	return fmt.Errorf("błąd inicjalizacji klienta: %v", err)
-	// }
+	if registry.Issuer == "" {
+		return errors.New("nie znaleziono numeru NIP")
+	}
 
-	// defer cli.Logout()
+	if upoDownloaderParams.Path == "" {
+		upoDownloaderParams.Path = registry.Dir
+	}
 
-	// if upoDownloaderParams.Path == "" {
-	// 	upoDownloaderParams.Path = registry.Dir
-	// }
+	var statusErr error
 
-	// return cli.UploadSessionsStatusCheck(cmd.Context(), upoDownloaderParams)
+	defer func() {
+		if statusErr == nil {
+			logging.UploadLogger.Info("sprawdzanie statusu zakończone sukcesem, zapisuję plik rejestru")
+			registry.Save("")
+		} else {
+			logging.UploadLogger.Error("sprawdzanie statusu zakończone niepowodzeniem, nie zapisuję zmian w rejestrze", "err", statusErr)
+		}
+	}()
+
+	runtime.SetNIP(vip, registry.Issuer)
+
+	cli, err := client.InitClient(cmd, v2.WithRegistry(registry))
+	if err != nil {
+		return fmt.Errorf("błąd inicjalizacji klienta: %v", err)
+	}
+
+	return cli.UploadSessionsStatusCheck(cmd.Context(), upoDownloaderParams)
 }

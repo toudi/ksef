@@ -9,11 +9,11 @@ import (
 	"io"
 	"ksef/internal/certsdb"
 	"ksef/internal/client/v2/types/invoices"
-	"ksef/internal/config"
 	"ksef/internal/interfaces"
 	"ksef/internal/invoice"
 	"ksef/internal/logging"
 	"ksef/internal/registry"
+	"ksef/internal/runtime"
 	"ksef/internal/sei/generators"
 	inputprocessors "ksef/internal/sei/input_processors"
 	"ksef/internal/sei/parser"
@@ -27,7 +27,7 @@ var errUnknownSourceExtension = errors.New("unknown file extension")
 
 // SEI is an government acronym for Structured Electronic Invoice
 type SEI struct {
-	env config.Gateway
+	env runtime.Gateway
 	// conversion parameters for the input processor
 	conversionParameters inputprocessors.InputProcessorConfig
 	// xml files will be saved here
@@ -42,7 +42,7 @@ type SEI struct {
 	certificateForOfflineMode *certsdb.Certificate
 }
 
-func SEI_Init(env config.Gateway, outputPath string, conversionParams inputprocessors.InputProcessorConfig) (*SEI, error) {
+func SEI_Init(env runtime.Gateway, outputPath string, conversionParams inputprocessors.InputProcessorConfig) (*SEI, error) {
 	var err error
 
 	var r *registry.InvoiceRegistry

@@ -3,8 +3,8 @@ package commands
 import (
 	"errors"
 	"fmt"
-	"ksef/internal/config"
 	"ksef/internal/logging"
+	"ksef/internal/runtime"
 	"ksef/internal/sei"
 	inputprocessors "ksef/internal/sei/input_processors"
 	"os"
@@ -39,7 +39,7 @@ func init() {
 	flags.StringVarP(&generateArgs.Delimiter, "csv.delimiter", "d", ",", "łańcuch znaków rozdzielający pola (tylko dla CSV)")
 	flags.StringVarP(&generateArgs.EncodingConversionFile, "csv.encoding", "e", "", "użyj pliku z konwersją znaków (tylko dla CSV)")
 	flags.StringVarP(&generateArgs.SheetName, "xlsx.sheet", "s", "", "Nazwa skoroszytu do przetworzenia (tylko dla XLSX)")
-	flags.StringVarP(&generateArgs.GeneratorName, "generator", "g", "fa-3-1", "nazwa generatora")
+	flags.StringVarP(&generateArgs.GeneratorName, "generator", "g", "fa-3_1.0", "nazwa generatora")
 	flags.BoolVar(&generateArgs.Offline, "offline", false, "oznacz faktury jako generowane w trybie offline")
 	flags.BoolP("mkdir", "m", false, "stwórz katalog rejestru, jeśli nie istnieje")
 
@@ -70,7 +70,7 @@ func generateRun(cmd *cobra.Command, args []string) error {
 	conversionParameters.Generator = generateArgs.GeneratorName
 	conversionParameters.OfflineMode = generateArgs.Offline
 
-	sei, err := sei.SEI_Init(config.GetGateway(viper.GetViper()), generateArgs.Output, conversionParameters)
+	sei, err := sei.SEI_Init(runtime.GetGateway(viper.GetViper()), generateArgs.Output, conversionParameters)
 	if err != nil {
 		return err
 	}

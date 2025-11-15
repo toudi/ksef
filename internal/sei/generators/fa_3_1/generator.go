@@ -26,7 +26,7 @@ func GeneratorFactory() interfaces.Generator {
 
 var fa_3_1_hooks = fa.GeneratorHooks{
 	PostProcess: func(root *xml.Node) error {
-		root.SetValue("Faktura.Naglowek.DataWytworzeniaFa", time.Date(2025, 9, 1, 0, 0, 0, 0, time.UTC).Format(time.RFC3339))
+		root.SetValue("Faktura.Naglowek.DataWytworzeniaFa", time.Now().Local().Format(time.RFC3339))
 		return nil
 	},
 }

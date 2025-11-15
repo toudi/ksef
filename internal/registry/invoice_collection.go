@@ -87,13 +87,15 @@ func (r *InvoiceRegistry) InvoiceCollection() (*InvoiceCollection, error) {
 				Filename: fullFileName, Checksum: checksum,
 			})
 
-			_, err = r.Upsert(types.Invoice{
-				Checksum:        checksum,
-				ReferenceNumber: parsedInvoice.InvoiceNumber,
-			})
+			if invoice.Checksum == "" {
+				_, err = r.Upsert(types.Invoice{
+					Checksum:        checksum,
+					ReferenceNumber: parsedInvoice.InvoiceNumber,
+				})
 
-			if err != nil {
-				return nil, fmt.Errorf("cannot upsert invoice in registry: %v", err)
+				if err != nil {
+					return nil, fmt.Errorf("cannot upsert invoice in registry: %v", err)
+				}
 			}
 
 			if collection.Issuer == "" {

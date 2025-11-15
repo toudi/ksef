@@ -6,10 +6,13 @@ import (
 	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/validator"
 	"ksef/internal/client/v2/certificates"
-	"ksef/internal/config"
+	"ksef/internal/http"
 	httpClient "ksef/internal/http"
 	"ksef/internal/logging"
 	registryPkg "ksef/internal/registry"
+	"ksef/internal/runtime"
+
+	"github.com/spf13/viper"
 )
 
 type APIClient struct {
@@ -25,10 +28,10 @@ type APIClient struct {
 
 type InitializerFunc func(c *APIClient)
 
-func NewClient(ctx context.Context, gateway config.Gateway, options ...InitializerFunc) (*APIClient, error) {
+func NewClient(ctx context.Context, vip *viper.Viper, options ...InitializerFunc) (*APIClient, error) {
 	logging.SeiLogger.Info("klient KSeF v2 - start programu")
 
-	httpClient := &httpClient.Client{Base: "https://" + string(gateway)}
+	httpClient := http.NewClient(string(runtime.GetGateway(vip)))
 
 	client := &APIClient{
 		ctx:        ctx,
@@ -41,7 +44,7 @@ func NewClient(ctx context.Context, gateway config.Gateway, options ...Initializ
 
 	if client.authChallengeValidator != nil {
 		var err error
-		if client.tokenManager, err = auth.NewTokenManager(ctx, httpClient, client.authChallengeValidator); err != nil {
+		if client.tokenManager, err = auth.NewTokenManager(ctx, vip, client.authChallengeValidator); err != nil {
 			return nil, err
 		}
 		go client.tokenManager.Run()
@@ -59,7 +62,6 @@ func (c *APIClient) authenticatedHTTPClient() *httpClient.Client {
 }
 
 func (c *APIClient) Close() {
-	c.tokenManager.Logout()
 	c.tokenManager.Stop()
 }
 

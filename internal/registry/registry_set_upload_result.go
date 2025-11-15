@@ -2,6 +2,7 @@ package registry
 
 import (
 	"errors"
+	statusTypes "ksef/internal/client/v2/session/status"
 	"ksef/internal/registry/types"
 )
 
@@ -29,15 +30,16 @@ func (r *InvoiceRegistry) SetUploadResult(
 
 func (r *InvoiceRegistry) MarkFailedInvoices(
 	uploadSessionRefNo string,
-	failedInvoices []int,
+	failedInvoices []statusTypes.FailedInvoiceDetails,
 ) error {
 	sessionUploadStatus, exists := r.UploadSessions[uploadSessionRefNo]
 	if !exists {
 		return ErrUnknownUploadSessionId
 	}
 
-	for _, uploadResultIndex := range failedInvoices {
-		sessionUploadStatus.Invoices[uploadResultIndex].Failed = true
+	for _, uploadResult := range failedInvoices {
+		sessionUploadStatus.Invoices[uploadResult.OrdinalNumber].Failed = true
+		sessionUploadStatus.Invoices[uploadResult.OrdinalNumber].Errors = uploadResult.Details
 	}
 
 	return nil

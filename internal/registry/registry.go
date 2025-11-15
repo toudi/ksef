@@ -3,8 +3,8 @@ package registry
 import (
 	"errors"
 	"fmt"
-	"ksef/internal/config"
 	"ksef/internal/registry/types"
+	"ksef/internal/runtime"
 	"os"
 	"path"
 
@@ -27,7 +27,7 @@ type PaymentId struct {
 
 type InvoiceRegistry struct {
 	Sync           types.SyncConfig                      `yaml:"sync,omitempty"`
-	Environment    config.Gateway                        `yaml:"environment,omitempty"`
+	Environment    runtime.Gateway                       `yaml:"environment,omitempty"`
 	Invoices       []types.Invoice                       `yaml:"invoices,omitempty"`
 	Issuer         string                                `yaml:"issuer,omitempty"`
 	seiRefNoIndex  map[string]int                        `yaml:"-"`

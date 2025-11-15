@@ -7,7 +7,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"ksef/internal/config"
+	"ksef/internal/runtime"
 	"os"
 	"path"
 	"path/filepath"
@@ -19,10 +19,10 @@ import (
 )
 
 type CertificateHash struct {
-	Environment config.Gateway `yaml:"environment"`
-	Usage       []Usage        `yaml:"usage"`
-	ValidFrom   time.Time      `yaml:"valid-from,omitempty"`
-	ValidTo     time.Time      `yaml:"valid-to,omitempty"`
+	Environment runtime.Gateway `yaml:"environment"`
+	Usage       []Usage         `yaml:"usage"`
+	ValidFrom   time.Time       `yaml:"valid-from,omitempty"`
+	ValidTo     time.Time       `yaml:"valid-to,omitempty"`
 }
 
 func (ch CertificateHash) UsageAsString() string {

@@ -2,23 +2,22 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"ksef/internal/http"
 	baseHTTP "net/http"
-)
-
-var (
-	errNoTokens = errors.New("no tokens")
 )
 
 const (
 	endpointLogout = "/api/v2/auth/sessions/%s"
 )
 
-func (t *TokenManager) Logout() error {
+func (t *TokenManager) Logout(sessionRefNo string) error {
 	if t.sessionTokens == nil {
 		return errNoTokens
+	}
+
+	if sessionRefNo == "" {
+		sessionRefNo = "current"
 	}
 
 	_, err := t.httpClient.Request(
@@ -28,7 +27,8 @@ func (t *TokenManager) Logout() error {
 			Method:         baseHTTP.MethodDelete,
 			ExpectedStatus: baseHTTP.StatusNoContent,
 		},
-		fmt.Sprintf(endpointLogout, t.validationReference.ReferenceNumber),
+
+		fmt.Sprintf(endpointLogout, sessionRefNo),
 	)
 
 	return err

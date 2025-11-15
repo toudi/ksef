@@ -2,7 +2,7 @@ package challenge
 
 import (
 	"encoding/xml"
-	"ksef/internal/config"
+	"ksef/internal/runtime"
 	"os"
 
 	"github.com/spf13/viper"
@@ -22,6 +22,6 @@ func GetNIPFromChallengeFile(challengeFile string) (challengeBytes []byte, nip s
 	if err = xml.Unmarshal(challengeBytes, &challenge); err != nil {
 		return nil, "", err
 	}
-	config.SetNIP(viper.GetViper(), challenge.NIP)
+	runtime.SetNIP(viper.GetViper(), challenge.NIP)
 	return challengeBytes, challenge.NIP, nil
 }

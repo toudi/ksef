@@ -7,12 +7,12 @@ import (
 	"ksef/internal/certsdb"
 	"ksef/internal/client/v2/auth/validator"
 	"ksef/internal/client/v2/auth/xades"
-	"ksef/internal/config"
 	"ksef/internal/http"
 	"ksef/internal/logging"
+	"ksef/internal/runtime"
 	"os"
 
-	"github.com/zalando/go-keyring"
+	"github.com/spf13/viper"
 )
 
 type mode uint8
@@ -24,9 +24,8 @@ const (
 )
 
 type TokenHandler struct {
-	gateway             config.Gateway
+	vip                 *viper.Viper
 	httpClient          *http.Client
-	nip                 string
 	eventChannel        chan validator.AuthEvent
 	certsDB             *certsdb.CertificatesDB
 	mode                mode
@@ -34,12 +33,11 @@ type TokenHandler struct {
 	signedChallengeFile string
 }
 
-func NewAuthHandler(gateway config.Gateway, nip string, initializers ...initializerFunc) validator.AuthChallengeValidator {
+func NewAuthHandler(vip *viper.Viper, initializers ...initializerFunc) validator.AuthChallengeValidator {
 	handler := &TokenHandler{
-		gateway:      gateway,
 		eventChannel: make(chan validator.AuthEvent),
-		nip:          nip,
 		mode:         modeRegular,
+		vip:          vip,
 	}
 
 	for _, initializer := range initializers {
@@ -58,33 +56,14 @@ func (e *TokenHandler) sendAuthEvent(event validator.AuthEvent) {
 }
 
 func (e *TokenHandler) initialize(ctx context.Context, errChan chan error) {
+	if e.mode == modeRegular {
+		errChan <- nil
+		return
+	}
 	if e.mode == modeDumpChallenge {
 		go e.sendAuthEvent(validator.AuthEvent{
 			State: validator.StateInitialized,
 		})
-		errChan <- nil
-		return
-	}
-	if e.mode == modeRegular {
-		sessionTokens, err := keyring.Get(string(e.gateway)+"-sessionTokens", e.nip)
-		if err == nil {
-			if sessionTokens != "" {
-				go e.sendAuthEvent(validator.AuthEvent{
-					State:         validator.StateTokensRestored,
-					SessionTokens: sessionTokens,
-				})
-				errChan <- nil
-				return
-			}
-			// if token retrieval would have been successful the function would
-			// have already returned. let's proceed with regular work - obtaining
-			// challenge
-			go e.sendAuthEvent(validator.AuthEvent{
-				State: validator.StateInitialized,
-			})
-		} else {
-			logging.AuthLogger.Warn("nie udało się odczytać tokenów sesyjnych")
-		}
 		errChan <- nil
 		return
 	}
@@ -133,7 +112,12 @@ func (e *TokenHandler) ValidateChallenge(ctx context.Context, challenge validato
 		defer sourceDocument.(*os.File).Close()
 	}
 
-	if err = dumpChallengeToWriter(challenge, e.nip, sourceDocument); err != nil {
+	nip, err := runtime.GetNIP(e.vip)
+	if err != nil {
+		return err
+	}
+
+	if err = dumpChallengeToWriter(challenge, nip, sourceDocument); err != nil {
 		logging.AuthLogger.Error("nie udało się zapisać wyzwania do bufora", "err", err)
 		return err
 	}
@@ -146,7 +130,7 @@ func (e *TokenHandler) ValidateChallenge(ctx context.Context, challenge validato
 		return nil
 	}
 	// great. now we can sign it using the certificate
-	certificate, err := e.certsDB.GetByUsage(certsdb.UsageAuthentication, e.nip)
+	certificate, err := e.certsDB.GetByUsage(certsdb.UsageAuthentication, nip)
 	if err != nil {
 		return err
 	}

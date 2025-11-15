@@ -7,7 +7,7 @@ import (
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/client/v2/auth/token"
 	"ksef/internal/client/v2/auth/validator"
-	"ksef/internal/config"
+	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -36,7 +36,7 @@ func authSessionDebug(cmd *cobra.Command, _ []string) error {
 	var authValidator validator.AuthChallengeValidator
 	vip := viper.GetViper()
 	var nip string
-	var gateway = config.GetGateway(vip)
+	var gateway = runtime.GetGateway(vip)
 	var err error
 
 	// there are couple of modes here:
@@ -63,9 +63,9 @@ func authSessionDebug(cmd *cobra.Command, _ []string) error {
 		initializerFuncs = append(initializerFuncs, token.WithCertsDB(certsDB))
 	}
 
-	authValidator = token.NewAuthHandler(gateway, nip, initializerFuncs...)
+	authValidator = token.NewAuthHandler(vip, initializerFuncs...)
 
-	cli, err := v2.NewClient(cmd.Context(), gateway, v2.WithAuthValidator(authValidator))
+	cli, err := v2.NewClient(cmd.Context(), vip, v2.WithAuthValidator(authValidator))
 	if err != nil {
 		return err
 	}

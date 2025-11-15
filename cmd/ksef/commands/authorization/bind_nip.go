@@ -4,7 +4,6 @@ import (
 	"errors"
 	"ksef/cmd/ksef/flags"
 	v2 "ksef/internal/client/v2"
-	"ksef/internal/config"
 	"ksef/internal/environment"
 
 	"github.com/spf13/cobra"
@@ -44,7 +43,7 @@ func bindNipRun(cmd *cobra.Command, _ []string) error {
 		return errNipIsRequired
 	}
 
-	cli, err := v2.NewClient(cmd.Context(), config.GetGateway(viper.GetViper()))
+	cli, err := v2.NewClient(cmd.Context(), viper.GetViper())
 	if err != nil {
 		return err
 	}

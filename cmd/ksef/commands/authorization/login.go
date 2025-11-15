@@ -4,7 +4,7 @@ import (
 	"ksef/cmd/ksef/commands/authorization/challenge"
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/client/v2/auth/token"
-	"ksef/internal/config"
+	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -25,21 +25,20 @@ func init() {
 
 func login(cmd *cobra.Command, args []string) error {
 	var signedChallengeFile = args[0]
+	vip := viper.GetViper()
 
 	_, nip, err := challenge.GetNIPFromChallengeFile(signedChallengeFile)
 	if err != nil {
 		return err
 	}
-
-	var gateway = config.GetGateway(viper.GetViper())
+	runtime.SetNIP(vip, nip)
 
 	var authValidator = token.NewAuthHandler(
-		gateway,
-		nip,
+		vip,
 		token.WithSignedChallengeFile(signedChallengeFile),
 	)
 
-	cli, err := v2.NewClient(cmd.Context(), gateway, v2.WithAuthValidator(authValidator))
+	cli, err := v2.NewClient(cmd.Context(), vip, v2.WithAuthValidator(authValidator))
 	if err != nil {
 		return err
 	}

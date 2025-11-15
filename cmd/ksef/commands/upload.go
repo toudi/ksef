@@ -3,10 +3,11 @@ package commands
 import (
 	"fmt"
 	"ksef/cmd/ksef/commands/client"
-	"ksef/cmd/ksef/flags"
+	v2 "ksef/internal/client/v2"
 	"ksef/internal/client/v2/session/interactive"
-	"ksef/internal/config"
+	"ksef/internal/logging"
 	registryPkg "ksef/internal/registry"
+	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -27,7 +28,6 @@ type uploadArgsType struct {
 var uploadArgs = &uploadArgsType{}
 
 func init() {
-	flags.AuthMethod(uploadCommand)
 	var flags = uploadCommand.Flags()
 
 	flags.BoolVarP(&uploadArgs.interactive, "interactive", "i", false, "użyj sesji interaktywnej")
@@ -41,16 +41,28 @@ func init() {
 func uploadRun(cmd *cobra.Command, _ []string) error {
 	var ctx = cmd.Context()
 	var vip = viper.GetViper()
+	var uploadErr error
 
-	registry, err := registryPkg.OpenOrCreate(uploadArgs.path)
+	registry, err := registryPkg.LoadRegistry(uploadArgs.path)
 	if err != nil {
 		return err
 	}
 	if registry.Environment == "" {
-		registry.Environment = config.GetGateway(vip)
+		registry.Environment = runtime.GetGateway(vip)
+	} else {
+		runtime.SetGateway(vip, registry.Environment)
 	}
 
-	defer registry.Save("")
+	logging.UploadLogger.Info("wysyłka na środowisko", "gateway", runtime.GetGateway(vip))
+
+	defer func() {
+		if uploadErr == nil {
+			logging.UploadLogger.Info("wysyłka zakończona sukcesem, zapisuję plik rejestru")
+			registry.Save("")
+		} else {
+			logging.UploadLogger.Error("wysyłka zakończona niepowodzeniem, nie zapisuję zmian w rejestrze", "err", uploadErr)
+		}
+	}()
 
 	// load invoice collection to retrieve the issuer
 	collection, err := registry.InvoiceCollection()
@@ -62,20 +74,26 @@ func uploadRun(cmd *cobra.Command, _ []string) error {
 		registry.Issuer = collection.Issuer
 	}
 
-	cli, err := client.InitClient(cmd)
+	runtime.SetNIP(vip, registry.Issuer)
+
+	cli, err := client.InitClient(cmd, v2.WithRegistry(registry))
+	uploadErr = err
+
 	if err != nil {
 		return fmt.Errorf("błąd inicjalizacji klienta: %v", err)
 	}
 
-	defer cli.Logout()
+	// defer cli.Logout()
 
 	if uploadArgs.interactive {
 		interactiveSession, err := cli.InteractiveSession()
+		uploadErr = err
 		if err != nil {
 			return err
 		}
 
 		err = interactiveSession.UploadInvoices(ctx, uploadArgs.interactiveUploadParams)
+		uploadErr = err
 		if err == interactive.ErrProbablyUsedSend {
 			fmt.Printf(
 				"Wygląda na to, że poprzednio użyta została komenda 'upload' na tym rejestrze.\nJeśli na pewno chcesz ponowić wysyłkę, uzyj flagi '-f'\n",
@@ -86,9 +104,11 @@ func uploadRun(cmd *cobra.Command, _ []string) error {
 	}
 
 	batchSession, err := cli.BatchSession()
+	uploadErr = err
 	if err != nil {
 		return err
 	}
 
-	return batchSession.UploadInvoices(ctx)
+	uploadErr = batchSession.UploadInvoices(ctx)
+	return uploadErr
 }

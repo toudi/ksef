@@ -4,9 +4,9 @@ import (
 	"encoding/base64"
 	"ksef/internal/certsdb"
 	"ksef/internal/client/v2/security"
-	"ksef/internal/config"
 	"ksef/internal/http"
 	"ksef/internal/logging"
+	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -23,14 +23,14 @@ func init() {
 }
 
 func downloadKSeFCerts(cmd *cobra.Command, _ []string) error {
-	var env = config.GetGateway(viper.GetViper())
+	var env = runtime.GetGateway(viper.GetViper())
 
 	certsDB, err := certsdb.OpenOrCreate(env)
 	if err != nil {
 		return err
 	}
 
-	httpClient := http.NewClient(string(config.GetGateway(viper.GetViper())))
+	httpClient := http.NewClient(string(runtime.GetGateway(viper.GetViper())))
 
 	certificates, err := security.DownloadCertificates(cmd.Context(), httpClient)
 	if err != nil {

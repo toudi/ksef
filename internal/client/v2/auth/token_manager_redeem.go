@@ -2,12 +2,9 @@ package auth
 
 import (
 	"context"
-	"ksef/internal/config"
 	"ksef/internal/http"
 	"ksef/internal/logging"
 	baseHttp "net/http"
-
-	"github.com/spf13/viper"
 )
 
 const (
@@ -32,14 +29,8 @@ func (t *TokenManager) redeemTokens(ctx context.Context) error {
 	t.updateAuthorizationToken(
 		tokens.AuthorizationToken.Token,
 		func() {
-			vip := viper.GetViper()
-
 			t.sessionTokens = &tokens
-			nip, err := config.GetNIP(vip)
-			if err != nil {
-				logging.AuthLogger.Error("unable to validate NIP", "err", err)
-			}
-			if err := t.PersistTokens(config.GetGateway(vip), nip); err != nil {
+			if err := t.persistTokens(); err != nil {
 				logging.AuthLogger.Error("unable to persist tokens", "err", err)
 			}
 		},

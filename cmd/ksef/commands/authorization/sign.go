@@ -5,7 +5,7 @@ import (
 	"ksef/cmd/ksef/commands/authorization/challenge"
 	"ksef/internal/certsdb"
 	"ksef/internal/client/v2/auth/xades"
-	"ksef/internal/config"
+	"ksef/internal/runtime"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -30,7 +30,7 @@ func init() {
 }
 
 func signChallengeFile(cmd *cobra.Command, _ []string) error {
-	certsDB, err := certsdb.OpenOrCreate(config.GetGateway(viper.GetViper()))
+	certsDB, err := certsdb.OpenOrCreate(runtime.GetGateway(viper.GetViper()))
 	if err != nil {
 		return err
 	}

@@ -1,4 +1,4 @@
-package config
+package runtime
 
 import (
 	"ksef/internal/utils"

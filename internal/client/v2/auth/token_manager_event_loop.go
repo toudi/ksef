@@ -1,9 +1,7 @@
 package auth
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"ksef/internal/client/v2/auth/validator"
 	"ksef/internal/logging"
 	"log/slog"
@@ -42,6 +40,7 @@ func (t *TokenManager) Run() {
 				break
 			}
 			if now.After(t.sessionTokens.AuthorizationToken.ExpiresAt) {
+				logger.Debug("need to refresh authorization token")
 				// but only if we're not past refresh token expiration time
 				if now.Before(t.sessionTokens.RefreshToken.ExpiresAt) {
 					newToken, err := t.refreshAccessToken(ctx, t.sessionTokens.RefreshToken.Token)
@@ -65,13 +64,6 @@ func (t *TokenManager) Run() {
 				t.validationReference = validatorEvent.ValidationReference
 			}
 			if validatorEvent.State == validator.StateTokensRestored {
-				var buffer bytes.Buffer
-				if _, err := buffer.WriteString(validatorEvent.SessionTokens); err != nil {
-					logger.Error("unable to write tokens to buffer")
-				}
-				if err := json.NewDecoder(&buffer).Decode(&t.sessionTokens); err != nil {
-					logger.Error("unable to decode tokens")
-				}
 			}
 			if validatorEvent.State == validator.StateExit {
 				// at the moment it's used only by the "fake" validator of type xadesInit

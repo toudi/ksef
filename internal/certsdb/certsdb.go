@@ -2,8 +2,8 @@ package certsdb
 
 import (
 	"errors"
-	"ksef/internal/config"
 	"ksef/internal/logging"
+	"ksef/internal/runtime"
 	"os"
 	"path"
 	"slices"
@@ -45,7 +45,7 @@ type CertificatesDB struct {
 	// map between certificate hash and it's position in the array
 	index map[string]int
 	// used during opening so that all of the certs inserted inherit this value
-	env config.Gateway
+	env runtime.Gateway
 }
 
 func (cdb *CertificatesDB) Certs() []*Certificate {
@@ -127,7 +127,7 @@ func (cdb *CertificatesDB) Save() error {
 	return encoder.Encode(cdb.certs)
 }
 
-func OpenOrCreate(environment config.Gateway) (*CertificatesDB, error) {
+func OpenOrCreate(environment runtime.Gateway) (*CertificatesDB, error) {
 	var certificatesDB = CertificatesDB{
 		index: make(map[string]int),
 		env:   environment,

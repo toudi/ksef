@@ -5,7 +5,6 @@ import (
 	"ksef/cmd/ksef/flags"
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/client/v2/auth/token"
-	"ksef/internal/config"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -30,21 +29,16 @@ func init() {
 
 func dumpAuthChallenge(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
-	nip, err := config.GetNIP(vip)
-	if err != nil {
-		return err
-	}
 	output, err := cmd.Flags().GetString(flagOutput)
 	if output == "" || err != nil {
 		return fmt.Errorf("nie podano pliku wyjścia")
 	}
 
 	authValidator := token.NewAuthHandler(
-		config.GetGateway(vip),
-		nip,
+		vip,
 		token.WithDumpChallenge(output),
 	)
-	cli, err := v2.NewClient(cmd.Context(), config.GetGateway(vip), v2.WithAuthValidator(authValidator))
+	cli, err := v2.NewClient(cmd.Context(), vip, v2.WithAuthValidator(authValidator))
 	if err != nil {
 		return err
 	}

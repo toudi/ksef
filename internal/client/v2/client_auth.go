@@ -37,10 +37,6 @@ func (c *APIClient) SetSessionTokens(tokens *auth.SessionTokens) {
 }
 
 func (c *APIClient) Logout() error {
-	if err := c.tokenManager.Logout(); err != nil {
-		return err
-	}
-
 	c.tokenManager.Stop()
 	return nil
 }

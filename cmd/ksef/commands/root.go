@@ -5,8 +5,8 @@ import (
 	"ksef/cmd/ksef/commands/authorization"
 	"ksef/cmd/ksef/commands/certificates"
 	"ksef/cmd/ksef/commands/download"
-	"ksef/internal/config"
 	"ksef/internal/logging"
+	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -29,7 +29,7 @@ var (
 )
 
 func init() {
-	config.SetGateway(viper.GetViper(), config.ProdGateway)
+	runtime.SetGateway(viper.GetViper(), runtime.ProdGateway)
 	RootCommand.PersistentFlags().StringVarP(&logOutput, "log", "l", "-", "wyjście logowania (wartość - oznacza wyjście standardowe)")
 	RootCommand.PersistentFlags().StringVarP(&configFile, "config", "c", "config.yaml", "lokalizacja pliku konfiguracyjnego")
 	RootCommand.PersistentFlags().BoolFuncP("verbose", "v", "tryb verbose", func(s string) error {
@@ -37,11 +37,11 @@ func init() {
 		return nil
 	})
 	RootCommand.PersistentFlags().BoolFuncP(flagTestGateway, "t", "Użyj bramki testowej", func(s string) error {
-		config.SetGateway(viper.GetViper(), config.TestGateway)
+		runtime.SetGateway(viper.GetViper(), runtime.TestGateway)
 		return nil
 	})
-	RootCommand.PersistentFlags().BoolFuncP(flagDemoGateway, "d", "Użyj bramki przedprodukcyjnej (demo)", func(s string) error {
-		config.SetGateway(viper.GetViper(), config.DemoGateway)
+	RootCommand.PersistentFlags().BoolFuncP(flagDemoGateway, "", "Użyj bramki przedprodukcyjnej (demo)", func(s string) error {
+		runtime.SetGateway(viper.GetViper(), runtime.DemoGateway)
 		return nil
 	})
 	RootCommand.PersistentFlags().SortFlags = false
@@ -80,7 +80,7 @@ func setContext(cmd *cobra.Command, _ []string) error {
 	}
 
 	logging.SeiLogger.Info("start programu")
-	logging.SeiLogger.Info("wybrane środowisko", "env", config.GetGateway(viper.GetViper()))
+	logging.SeiLogger.Info("wybrane środowisko", "env", runtime.GetGateway(viper.GetViper()))
 
 	return nil
 }

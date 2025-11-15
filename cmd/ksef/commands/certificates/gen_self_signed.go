@@ -6,8 +6,8 @@ import (
 	"errors"
 	"ksef/cmd/ksef/flags"
 	"ksef/internal/certsdb"
-	"ksef/internal/config"
 	"ksef/internal/environment"
+	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -43,7 +43,7 @@ func validateParams(cmd *cobra.Command, _ []string) error {
 }
 
 func generateSelfSignedCert(cmd *cobra.Command, _ []string) error {
-	var env = config.GetGateway(viper.GetViper())
+	var env = runtime.GetGateway(viper.GetViper())
 	certsDB, err := certsdb.OpenOrCreate(env)
 	if err != nil {
 		return err
@@ -74,7 +74,7 @@ func generateSelfSignedCert(cmd *cobra.Command, _ []string) error {
 		}...)
 	} else {
 		// we're generating a certificate for a company, therefore NIP has to be set
-		nip, err := config.GetNIP(viper.GetViper())
+		nip, err := runtime.GetNIP(viper.GetViper())
 		if err != nil {
 			return err
 		}

@@ -5,8 +5,11 @@ import (
 	"errors"
 	"ksef/internal/client/v2/auth/validator"
 	"ksef/internal/http"
+	"ksef/internal/runtime"
 	"sync"
 	"time"
+
+	"github.com/spf13/viper"
 )
 
 const (
@@ -41,21 +44,32 @@ type TokenManager struct {
 	httpClient          *http.Client
 	validationReference *validator.ValidationReference
 	done                chan struct{}
+	vip                 *viper.Viper
 }
 
-func NewTokenManager(ctx context.Context, httpClient *http.Client, challengeValidator validator.AuthChallengeValidator) (*TokenManager, error) {
+func NewTokenManager(ctx context.Context, vip *viper.Viper, challengeValidator validator.AuthChallengeValidator) (*TokenManager, error) {
+	gateway := runtime.GetGateway(vip)
+	httpClient := http.NewClient(string(gateway))
+
 	if challengeValidator != nil {
 		if err := challengeValidator.Initialize(ctx, httpClient); err != nil {
 			return nil, err
 		}
 	}
 
-	return &TokenManager{
+	tm := &TokenManager{
 		updateChannel:      make(chan TokenUpdate),
 		httpClient:         httpClient,
 		challengeValidator: challengeValidator,
 		done:               make(chan struct{}),
-	}, nil
+		vip:                vip,
+	}
+
+	if err := tm.restoreTokens(ctx); err != nil {
+		return nil, err
+	}
+
+	return tm, nil
 }
 
 type AuthenticationStatus struct {
