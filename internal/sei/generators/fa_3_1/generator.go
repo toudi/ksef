@@ -18,9 +18,10 @@ func GeneratorFactory() interfaces.Generator {
 			"Faktura.Naglowek.KodFormularza#wersjaSchemy": "1-0E",
 			"Faktura.Naglowek.WariantFormularza":          "3",
 			"Faktura.Naglowek.SystemInfo":                 "WSI Pegasus",
+			"Faktura.Podmiot2.JST":                        "2",
+			"Faktura.Podmiot2.GV":                         "2",
 		}),
 		fa.WithElementOrdering(FA_3_1ChildrenOrder),
-		fa.WithHooks(fa_3_1_hooks),
 	)
 }
 

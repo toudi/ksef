@@ -11,6 +11,10 @@ import (
 
 const (
 	invoiceHeaderSection = "faktura.fa"
+	invoiceMetaSection   = "meta"
+	issuerDataSection    = "faktura.podmiot1.daneidentyfikacyjne"
+	recipientDataSection = "faktura.podmiot2.daneidentyfikacyjne"
+	ksefSection          = "ksef"
 )
 
 func (fg *FAGenerator) LineHandler(
@@ -20,6 +24,24 @@ func (fg *FAGenerator) LineHandler(
 	invoiceReady func() error,
 ) error {
 	var err error
+
+	if strings.ToLower(section) == invoiceMetaSection {
+		inv.Meta = data
+		return nil
+	}
+
+	if strings.ToLower(section) == ksefSection {
+		inv.KSeFFlags.Load(data)
+		return nil
+	}
+
+	if strings.HasPrefix(strings.ToLower(section), recipientDataSection) {
+		inv.RecipientName = data["Nazwa"]
+	}
+
+	if strings.HasPrefix(strings.ToLower(section), issuerDataSection) {
+		inv.IssuerNIP = data["NIP"]
+	}
 
 	if strings.ToLower(section) == invoiceHeaderSection {
 		inv.Number = data["P_2"]
@@ -57,6 +79,9 @@ func (fg *FAGenerator) LineHandler(
 				}
 				item.UnitPrice.IsGross = true
 			case mnemonics.VatRate.Name, mnemonics.VatRate.Mnemonic:
+				if value == "np" {
+					value = "np II"
+				}
 				item.UnitPrice.Vat.Description = value
 				if vatRate, err := strconv.ParseInt(value, 10, 32); err == nil {
 					item.UnitPrice.Vat.Rate = int(vatRate)

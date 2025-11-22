@@ -17,6 +17,7 @@ func (r *InvoiceRegistry) AddInvoice(
 	certificate *certsdb.Certificate,
 ) error {
 	var regInvoice = types.Invoice{
+		Metadata:            invoice.Metadata,
 		ReferenceNumber:     invoice.InvoiceNumber,
 		KSeFReferenceNumber: invoice.KSeFNumber,
 		InvoiceType:         invoice.InvoiceType,

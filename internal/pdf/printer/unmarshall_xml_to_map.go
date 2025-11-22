@@ -61,8 +61,8 @@ func (x *Invoice) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) err
 					elemSlice = append(elemSlice, newMap)
 				} else {
 					elemSlice = []any{newMap}
-					path[len(path)-1][elem.Name.Local] = elemSlice
 				}
+				path[len(path)-1][elem.Name.Local] = elemSlice
 			} else {
 				path[len(path)-1][elem.Name.Local] = newMap
 			}

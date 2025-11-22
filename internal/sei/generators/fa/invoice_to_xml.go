@@ -24,7 +24,11 @@ func (fg *FAGenerator) InvoiceToXMLTree(invoice *invoice.Invoice) (*xml.Node, er
 	if invoice.Number != "" {
 		root.SetValue("Faktura.Fa.P_2", invoice.Number)
 	}
-	root.SetValue("Faktura.Naglowek.DataWytworzeniaFa", fg.runTimestamp.Format(time.RFC3339))
+	var generationTime = invoice.GenerationTime
+	if generationTime.IsZero() {
+		generationTime = fg.runTimestamp
+	}
+	root.SetValue("Faktura.Naglowek.DataWytworzeniaFa", generationTime.Format(time.RFC3339))
 
 	faNode, _ := root.LocateNode("Faktura.Fa")
 

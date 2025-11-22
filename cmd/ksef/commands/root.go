@@ -5,6 +5,7 @@ import (
 	"ksef/cmd/ksef/commands/authorization"
 	"ksef/cmd/ksef/commands/certificates"
 	"ksef/cmd/ksef/commands/download"
+	"ksef/internal/config"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
 
@@ -44,6 +45,7 @@ func init() {
 		runtime.SetGateway(viper.GetViper(), runtime.DemoGateway)
 		return nil
 	})
+	config.DataDirFlag(RootCommand)
 	RootCommand.PersistentFlags().SortFlags = false
 
 	RootCommand.AddCommand(authorization.AuthCommand)

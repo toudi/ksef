@@ -47,3 +47,8 @@ func Sha256Base64(input []byte) (string, error) {
 	}
 	return base64Encoder.EncodeToString(hash.Sum(nil)), nil
 }
+
+func Sha256Hex(input []byte) string {
+	hash := sha256.Sum256(input)
+	return hex.EncodeToString(hash[:])
+}

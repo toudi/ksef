@@ -13,6 +13,7 @@ type InvoiceMetadata struct {
 	Buyer         InvoiceSubjectMetadata `json:"buyer"`
 	InvoiceHash   string                 `json:"invoiceHash"`
 	Offline       bool
+	Metadata      map[string]string
 }
 
 type InvoiceMetadataResponse struct {

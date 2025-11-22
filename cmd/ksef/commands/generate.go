@@ -70,7 +70,11 @@ func generateRun(cmd *cobra.Command, args []string) error {
 	conversionParameters.Generator = generateArgs.GeneratorName
 	conversionParameters.OfflineMode = generateArgs.Offline
 
-	sei, err := sei.SEI_Init(runtime.GetGateway(viper.GetViper()), generateArgs.Output, conversionParameters)
+	sei, err := sei.SEI_Init(
+		runtime.GetGateway(viper.GetViper()),
+		conversionParameters,
+		sei.WithInvoiceReadyFunc(func(i *sei.ParsedInvoice) error { return nil }),
+	)
 	if err != nil {
 		return err
 	}

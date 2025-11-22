@@ -3,6 +3,7 @@ package registry
 import (
 	"errors"
 	"fmt"
+	"ksef/internal/logging"
 	"ksef/internal/registry/types"
 	"ksef/internal/runtime"
 	"os"
@@ -50,7 +51,18 @@ func NewRegistry() *InvoiceRegistry {
 	return _registry
 }
 
+func NewRegistryInDir(dirName string) *InvoiceRegistry {
+	registry := NewRegistry()
+	registry.Dir = dirName
+	registry.sourcePath = path.Join(dirName, registryName)
+	return registry
+}
+
 func (r *InvoiceRegistry) Save(fileName string) error {
+	if len(r.Invoices) == 0 {
+		logging.SeiLogger.Debug("rejestr faktur jest pusty - pomijam zapis pliku")
+		return nil
+	}
 	if fileName == "" {
 		fileName = r.sourcePath
 	}

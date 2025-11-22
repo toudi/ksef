@@ -3,6 +3,7 @@ package registry
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"ksef/internal/certsdb"
 	"ksef/internal/registry/types"
 	"ksef/internal/runtime"
@@ -14,12 +15,12 @@ import (
 func GenerateInvoiceQRCode(env runtime.Gateway, invoice types.Invoice) (string, error) {
 	checksumBytes, err := hex.DecodeString(invoice.Checksum)
 	if err != nil {
-		return "", err
+		return "", errors.Join(errors.New("error converting checksum from hex to bytes"), err)
 	}
 	// the date has to be in the DD-MM-YYYY format
 	issueDate, err := time.Parse(time.DateOnly, invoice.IssueDate)
 	if err != nil {
-		return "", err
+		return "", errors.Join(errors.New("unable to parse issue date"), err)
 	}
 	qrcode, _ := url.JoinPath(
 		"https://"+string(env),
