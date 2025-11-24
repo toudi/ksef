@@ -43,7 +43,14 @@ func (kf *KSeFFlags) Load(data map[string]string) {
 	}
 }
 
+type CorrectionInfo struct {
+	OriginalIssueDate time.Time
+	RefNo             string
+	KSeFRefNo         string
+}
 type Invoice struct {
+	Type             string
+	Correction       *CorrectionInfo
 	IssuerNIP        string
 	RecipientName    string
 	GenerationTime   time.Time

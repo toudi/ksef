@@ -76,11 +76,18 @@ func (f *FieldToVATRatesMapping) Accumulate(item *InvoiceItem) {
 		}
 	}
 
-	f.Totals[reverseMapping.Net] += float64(item.Amount().Net)
+	amount := item.Amount()
+	if item.Before {
+		amount.Net *= -1
+		amount.Gross *= -1
+		amount.VAT *= -1
+	}
+
+	f.Totals[reverseMapping.Net] += float64(amount.Net)
 
 	// check if we don't want to ignore the total
 	if reverseMapping.VAT != IgnoreRate {
-		f.Totals[reverseMapping.VAT] += float64(item.Amount().VAT)
+		f.Totals[reverseMapping.VAT] += float64(amount.VAT)
 	}
 }
 

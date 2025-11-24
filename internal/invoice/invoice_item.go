@@ -6,6 +6,8 @@ import (
 )
 
 type InvoiceItem struct {
+	RowNo       int
+	Before      bool
 	Description string
 	Unit        string
 	Quantity    money.MonetaryValue

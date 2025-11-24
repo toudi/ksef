@@ -32,9 +32,28 @@ func (fg *FAGenerator) InvoiceToXMLTree(invoice *invoice.Invoice) (*xml.Node, er
 
 	faNode, _ := root.LocateNode("Faktura.Fa")
 
+	if invoice.Correction != nil {
+		correctionNode, _ := faNode.CreateChild("DaneFaKorygowanej", false)
+		correctionNode.SetValuesFromMap(
+			map[string]string{
+				"NrFaKorygowanej":       invoice.Correction.RefNo,
+				"DataWystFaKorygowanej": invoice.Correction.OriginalIssueDate.Format(time.DateOnly),
+				"NrKSeF":                "1",
+				"NrKSeFFaKorygowanej":   invoice.Correction.KSeFRefNo,
+			},
+		)
+	}
+
 	for i, item := range invoice.Items {
 		faChildNode, _ := faNode.CreateChild("FaWiersz", true)
-		faChildNode.SetValue("NrWierszaFa", fmt.Sprintf("%d", i+1))
+		var rowNo = i + 1
+		if item.RowNo > 0 {
+			rowNo = item.RowNo
+		}
+		faChildNode.SetValue("NrWierszaFa", fmt.Sprintf("%d", rowNo))
+		if item.Before {
+			faChildNode.SetValue("StanPrzed", "1")
+		}
 		faChildNode.SetValue("P_7", item.Description)
 		if item.Unit != "" {
 			faChildNode.SetValue("P_8A", item.Unit)
@@ -59,6 +78,10 @@ func (fg *FAGenerator) InvoiceToXMLTree(invoice *invoice.Invoice) (*xml.Node, er
 	faNode.SetValue("P_15", money.RenderAmountFromCurrencyUnits(invoice.Total.Gross, 2))
 	if err := root.ApplyOrdering(fg.elementOrdering); err != nil {
 		return nil, fmt.Errorf("unable to apply schema order: %v", err)
+	}
+
+	if invoice.Type != "" {
+		faNode.SetValue("RodzajFaktury", invoice.Type)
 	}
 
 	fieldToVatRatesMapping.Zero()

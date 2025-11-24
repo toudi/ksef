@@ -1,36 +1,37 @@
 package utils
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
 
 type testCase struct {
-	nip            string
-	expectedResult bool
+	nip string
+	err error
 }
 
 func TestNIPLengthValidator(t *testing.T) {
 	for _, test := range []testCase{
-		{nip: "1111111111", expectedResult: true},
-		{nip: "111-111-11-11", expectedResult: true},
-		{nip: "111 111 11 11", expectedResult: true},
-		{nip: "2222222222", expectedResult: true},
-		{nip: "00000000000", expectedResult: false},
-		{nip: "000000000a", expectedResult: false},
+		{nip: "1111111111"},
+		{nip: "111-111-11-11"},
+		{nip: "111 111 11 11"},
+		{nip: "2222222222"},
+		{nip: "00000000000"},
+		{nip: "000000000a", err: errNotADigit},
 	} {
-		if NIPLengthValidator(test.nip) != test.expectedResult {
-			t.Fatalf("unexpected result when calling NIPLengthValidator(%s): %v != %v", test.nip, !test.expectedResult, test.expectedResult)
-		}
+		err := NIPLengthValidator(test.nip)
+		require.Equal(t, test.err, err)
 	}
 }
 
 func TestNIPValidator(t *testing.T) {
 	for _, test := range []testCase{
-		{nip: "1234567901", expectedResult: false},
-		{nip: "1234563218", expectedResult: true},
-		{nip: "123-456-32-18", expectedResult: true},
+		{nip: "1234567901", err: errInvalidModulo},
+		{nip: "1234563218"},
+		{nip: "123-456-32-18"},
 	} {
-		if NIPValidator(test.nip) != test.expectedResult {
-			t.Fatalf("unexpected result when calling NIPValidator(%s): %v != %v", test.nip, !test.expectedResult, test.expectedResult)
-		}
+		err := NIPValidator(test.nip)
+		require.Equal(t, test.err, err)
 	}
-
 }

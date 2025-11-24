@@ -73,7 +73,5 @@ func (u *Uploader) handleNewInvoice(i *sei.ParsedInvoice, checksum string) error
 		return errors.Join(errors.New("error copying to dest file"), err)
 	}
 
-	u.invoiceDB.Add(i.Invoice, checksum)
-
-	return nil
+	return u.invoiceDB.Add(i.Invoice, checksum)
 }

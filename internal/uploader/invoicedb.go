@@ -4,23 +4,13 @@ import (
 	"io"
 	"os"
 	"path"
-	"time"
 
-	"go.yaml.in/yaml/v3"
+	"github.com/goccy/go-yaml"
 )
 
 const (
 	dbname = "invoices.yaml"
 )
-
-type Invoice struct {
-	RefNo          string    `yaml:"ref-no"`
-	KSeFRefNo      string    `yaml:"ksef-ref-no"`
-	Contents       string    `yaml:"contents"`
-	Checksum       string    `yaml:"checksum"`
-	GenerationTime time.Time `yaml:"generation-time"`
-	Corrections    []Invoice `yaml:"corrections,omitempty"`
-}
 
 type InvoiceDB struct {
 	Invoices            []Invoice

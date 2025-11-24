@@ -6,6 +6,8 @@ require (
 	github.com/alexeyco/simpletable v1.0.0
 	github.com/artemkunich/goxades v0.2.1
 	github.com/beevik/etree v1.5.0
+	github.com/fxamacker/cbor/v2 v2.9.0
+	github.com/goccy/go-yaml v1.18.0
 	github.com/google/uuid v1.6.0
 	github.com/jaevor/go-nanoid v1.4.0
 	github.com/mozillazg/go-slugify v0.2.0
@@ -44,6 +46,7 @@ require (
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
+	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xuri/efp v0.0.0-20230802181842-ad255f2331ca // indirect
 	github.com/xuri/nfp v0.0.0-20230819163627-dc951e3ffe1a // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
