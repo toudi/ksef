@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"ksef/internal/config"
 	"ksef/internal/runtime"
 	"ksef/internal/sei"
 	inputprocessors "ksef/internal/sei/input_processors"
@@ -25,6 +26,7 @@ func init() {
 	flags.StringVarP(&conversionParameters.CSV.EncodingConversionFile, "csv.encoding", "e", "", "użyj pliku z konwersją znaków (tylko dla CSV)")
 	flags.StringVarP(&conversionParameters.XLSX.SheetName, "xlsx.sheet", "s", "", "Nazwa skoroszytu do przetworzenia (tylko dla XLSX)")
 	flags.StringVarP(&conversionParameters.Generator, "generator", "g", "fa-3_1.0", "nazwa generatora")
+	config.CorrectionsFlags(flags)
 
 	RootCommand.AddCommand(statefulUpload)
 }

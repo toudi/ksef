@@ -43,7 +43,7 @@ func (u *Uploader) InvoiceReady(i *sei.ParsedInvoice) error {
 	u.prefixDir = prefix
 	// check if we have opened annual invoices db to check for corrections
 	if u.invoiceDB == nil {
-		if u.invoiceDB, err = InvoiceDB_OpenOrCreate(prefix); err != nil {
+		if u.invoiceDB, err = InvoiceDB_OpenOrCreate(u.vip, prefix); err != nil {
 			return errors.Join(err, errors.New("invoicedb::open-or-create"))
 		}
 	}
@@ -84,6 +84,11 @@ func (u *Uploader) InvoiceReady(i *sei.ParsedInvoice) error {
 	// is this a new invoice ?
 	if _invoice == nil {
 		return u.handleNewInvoice(i, checksum)
+	}
+
+	// the invoice wasn't sent yet. no problem - just override it
+	if _invoice.KSeFRefNo == "" {
+		return u.handleOverride(i)
 	}
 
 	// if not, it must be a correction

@@ -16,6 +16,7 @@ func TestOutputFilename(t *testing.T) {
 
 	var registry = &InvoiceRegistry{
 		sourcePath: "/tmp/test.yaml",
+		Dir:        "/tmp",
 	}
 
 	for _, test := range []testCase{

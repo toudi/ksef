@@ -7,6 +7,7 @@ import (
 	"ksef/internal/utils"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 type UPODownloadFormat string
@@ -25,6 +26,7 @@ type UPODownloaderParams struct {
 	Path   string
 	Mkdir  bool
 	Format UPODownloadFormat
+	Wait   time.Duration
 }
 
 // prawdopodobny adres:

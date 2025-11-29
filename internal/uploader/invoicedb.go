@@ -6,6 +6,7 @@ import (
 	"path"
 
 	"github.com/goccy/go-yaml"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -13,14 +14,16 @@ const (
 )
 
 type InvoiceDB struct {
-	Invoices            []Invoice
+	Invoices            []*Invoice
 	filename            string
 	invoiceByRefNoIndex map[string]int
+	vip                 *viper.Viper
 }
 
-func InvoiceDB_OpenOrCreate(dir string) (*InvoiceDB, error) {
+func InvoiceDB_OpenOrCreate(vip *viper.Viper, dir string) (*InvoiceDB, error) {
 	var db = &InvoiceDB{
 		invoiceByRefNoIndex: make(map[string]int),
+		vip:                 vip,
 	}
 	var filename = path.Join(dir, dbname)
 	dbFile, err := os.Open(filename)

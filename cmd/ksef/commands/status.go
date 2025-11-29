@@ -9,6 +9,7 @@ import (
 	"ksef/internal/logging"
 	registryPkg "ksef/internal/registry"
 	"ksef/internal/runtime"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -41,6 +42,8 @@ func init() {
 		upoDownloaderParams.Format = upo.UPOFormatXML
 		return nil
 	})
+	flagSet.DurationP("wait", "w", time.Duration(0), "czekaj na przetworzenie sesji (tryb synchroniczny)")
+	flagSet.Lookup("wait").NoOptDefVal = "5m"
 
 	flagSet.SortFlags = false
 }
@@ -57,6 +60,10 @@ func statusRun(cmd *cobra.Command, _ []string) error {
 			"file deserialized correctly, but either environment or referenceNo are empty: %+v",
 			registry,
 		)
+	}
+
+	if parsedDur, _ := cmd.Flags().GetDuration("wait"); parsedDur > 0 {
+		upoDownloaderParams.Wait = parsedDur
 	}
 
 	runtime.SetGateway(vip, registry.Environment)

@@ -13,6 +13,7 @@ import (
 
 var (
 	errEmptySessionTokens = errors.New("session tokens are empty")
+	errCannotUseToken     = errors.New("token cannot be used")
 )
 
 func keyringKey(gw runtime.Gateway) string {
@@ -62,13 +63,13 @@ func (tm *TokenManager) restoreTokens(ctx context.Context) error {
 	}
 	gateway := runtime.GetGateway(tm.vip)
 	tokens, err := keyring.Get(keyringKey(gateway), nip)
-	if err != nil {
+	if err != nil && err != keyring.ErrNotFound {
 		logger.Error("błąd odczytu tokenów", "err", err)
 		return err
 	}
 	if tokens == "" {
 		logger.Debug("brak zapisanych tokenów")
-		return nil
+		return errCannotUseToken
 	}
 	var buffer bytes.Buffer
 	if _, err := buffer.WriteString(tokens); err != nil {
@@ -85,12 +86,14 @@ func (tm *TokenManager) restoreTokens(ctx context.Context) error {
 		tm.sessionTokens = &sessionTokens
 		if err = tm.persistTokens(); err != nil {
 			logger.Error("błąd zapisu odświeżonych tokenów", "err", err)
+			return err
 		}
-	} else {
-		logger.Debug("tokeny nie mogą być użyte ponownie - usuwam z pęku kluczy")
-		if err = tm.clearSessionTokens(); err != nil {
-			logger.Error("błąd czyszczenia tokenów", "err", err)
-		}
+		return nil
 	}
-	return nil
+	logger.Debug("tokeny nie mogą być użyte ponownie - usuwam z pęku kluczy")
+	if err = tm.clearSessionTokens(); err != nil {
+		logger.Error("błąd czyszczenia tokenów", "err", err)
+		return err
+	}
+	return errCannotUseToken
 }

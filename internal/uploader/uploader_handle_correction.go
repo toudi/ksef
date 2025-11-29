@@ -1,7 +1,6 @@
 package uploader
 
 import (
-	"bytes"
 	"errors"
 	"ksef/internal/invoice"
 	"ksef/internal/logging"
@@ -27,13 +26,13 @@ func (u *Uploader) handleCorrection(i *sei.ParsedInvoice, originalInvoiceData *I
 
 	var correctionInvoice = &invoice.Invoice{}
 	*correctionInvoice = *originalInvoice
+	correctionInvoice.Clear()
 	correctionInvoice.Type = invoiceTypeCorrection
 	correctionInvoice.Correction = &invoice.CorrectionInfo{
 		OriginalIssueDate: originalInvoice.Issued,
 		KSeFRefNo:         originalInvoiceData.KSeFRefNo,
 		RefNo:             originalInvoiceData.RefNo,
 	}
-	correctionInvoice.Clear()
 	correctionInvoice.Attributes = originalInvoice.Attributes
 
 	for itemNo, itemData := range currentInvoice.Items {
@@ -58,11 +57,12 @@ func (u *Uploader) handleCorrection(i *sei.ParsedInvoice, originalInvoiceData *I
 	}
 
 	correctionInvoice.Issued = time.Now().Local()
-	correctionInvoice.Number = "KOR/1/2025"
+	correctionInvoice.Number = u.invoiceDB.getCorrectionNumber(correctionInvoice.Issued)
 	i.Invoice = correctionInvoice
 
-	var tmpBuffer bytes.Buffer
-	i.ToXML(time.Time{}, &tmpBuffer)
+	if err = i.ToXML(time.Time{}, &u.contentBuffer); err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -22,6 +22,11 @@ func (t *TokenManager) Run() {
 	ctx := context.Background()
 	logger := logging.AuthLogger.With("auth", "token manager")
 
+	if t.obtainNewChallenge {
+		t.obtainNewChallenge = false
+		go t.beginAuth(ctx, logger)
+	}
+
 	for !t.finished {
 		select {
 		case now := <-ticker.C:

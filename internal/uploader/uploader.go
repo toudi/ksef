@@ -22,6 +22,7 @@ type Uploader struct {
 	contentBuffer bytes.Buffer
 	offlineCert   *certsdb.Certificate
 	certsDB       *certsdb.CertificatesDB
+	vip           *viper.Viper
 }
 
 func New(vip *viper.Viper) (*Uploader, error) {
@@ -37,6 +38,7 @@ func New(vip *viper.Viper) (*Uploader, error) {
 	return &Uploader{
 		dataDir: dataDir,
 		certsDB: certsDB,
+		vip:     vip,
 	}, nil
 }
 

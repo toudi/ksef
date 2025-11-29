@@ -5,9 +5,11 @@ import (
 	"ksef/cmd/ksef/commands/client"
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/client/v2/session/interactive"
+	"ksef/internal/client/v2/upo"
 	"ksef/internal/logging"
 	registryPkg "ksef/internal/registry"
 	"ksef/internal/runtime"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -32,6 +34,8 @@ func init() {
 
 	flags.BoolVarP(&uploadArgs.interactive, "interactive", "i", false, "użyj sesji interaktywnej")
 	flags.StringVarP(&uploadArgs.path, "path", "p", "", "ścieżka do katalogu z wygenerowanymi fakturami")
+	flags.DurationP("wait", "w", time.Duration(0), "czekaj na przetworzenie sesji (tryb synchroniczny)")
+	flags.Lookup("wait").NoOptDefVal = "5m"
 	flags.BoolVarP(&uploadArgs.interactiveUploadParams.ForceUpload, "force", "f", false, "potwierdź wysyłkę faktur pomimo istniejących sum kontrolnych")
 
 	_ = cobra.MarkFlagRequired(flags, "path")
@@ -42,6 +46,10 @@ func uploadRun(cmd *cobra.Command, _ []string) error {
 	var ctx = cmd.Context()
 	var vip = viper.GetViper()
 	var uploadErr error
+
+	if parsedDur, _ := cmd.Flags().GetDuration("wait"); parsedDur > 0 {
+		uploadArgs.interactiveUploadParams.Wait = parsedDur
+	}
 
 	registry, err := registryPkg.LoadRegistry(uploadArgs.path)
 	if err != nil {
@@ -100,7 +108,23 @@ func uploadRun(cmd *cobra.Command, _ []string) error {
 			)
 			return nil
 		}
-		return err
+
+		if err != nil {
+			return err
+		}
+
+		// let's check if user requested for the upload to be synchronous (i.e. checking for success)
+		if uploadArgs.interactiveUploadParams.Wait > 0 {
+			statusCheckErr := cli.UploadSessionsStatusCheck(cmd.Context(), upo.UPODownloaderParams{
+				Path: uploadArgs.path,
+				Wait: uploadArgs.interactiveUploadParams.Wait,
+			})
+			if statusCheckErr != nil {
+				return statusCheckErr
+			}
+		}
+
+		return nil
 	}
 
 	batchSession, err := cli.BatchSession()

@@ -45,6 +45,7 @@ type TokenManager struct {
 	validationReference *validator.ValidationReference
 	done                chan struct{}
 	vip                 *viper.Viper
+	obtainNewChallenge  bool
 }
 
 func NewTokenManager(ctx context.Context, vip *viper.Viper, challengeValidator validator.AuthChallengeValidator) (*TokenManager, error) {
@@ -66,7 +67,11 @@ func NewTokenManager(ctx context.Context, vip *viper.Viper, challengeValidator v
 	}
 
 	if err := tm.restoreTokens(ctx); err != nil {
-		return nil, err
+		if err != errCannotUseToken {
+			return nil, err
+		} else {
+			tm.obtainNewChallenge = true
+		}
 	}
 
 	return tm, nil

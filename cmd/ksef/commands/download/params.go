@@ -62,6 +62,17 @@ func getDownloadParams(flagSet *pflag.FlagSet) (params invoices.DownloadParams, 
 		return params, err
 	}
 	params.SubjectTypes = subjectTypes
+	if params.PageSize, err = flagSet.GetInt(flagPageSize); err != nil {
+		return params, err
+	}
+	if dateRangeType, err := flagSet.GetString(flagDateType); err != nil {
+		return params, err
+	} else {
+		params.DateType = invoices.DateRangeType(dateRangeType)
+	}
+	if params.Incremental {
+		params.DateType = invoices.DateTypeStorage
+	}
 	startDate, err := flagSet.GetString(flagStartDate)
 	if err != nil {
 		return params, err

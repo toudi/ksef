@@ -98,8 +98,10 @@ func processRecurse(section string, data interface{}, parser *parser.Parser) err
 				sectionDataValues[fieldIndex] = strconv.Itoa(scalarValueInt)
 			} else if scalarValueFloat, is_a_float := scalarValue.(float64); is_a_float {
 				sectionDataValues[fieldIndex] = strconv.FormatFloat(scalarValueFloat, 'f', -1, 64)
+			} else if scalarValueBool, is_a_bool := scalarValue.(bool); is_a_bool {
+				sectionDataValues[fieldIndex] = strconv.FormatBool(scalarValueBool)
 			} else {
-				return fmt.Errorf("uhandled value type: %v", scalarValue)
+				return fmt.Errorf("uhandled value type: %v in %+v", scalarValue, sectionData)
 			}
 			fieldIndex += 1
 		}
