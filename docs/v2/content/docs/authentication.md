@@ -55,7 +55,7 @@ Przy pierwszym uruchomieniu programu zastosuj poniższy scenariusz.
 1. Użyj modułu certyfikatów aby wygenerować żądanie wydania certyfikatu
 
    ```
-   ./ksef certs -n 1111111111 -a -o
+   ./ksef certs prepare-csr -n 1111111111 -a -o
    ```
 
    {{< callout type="info" >}}
@@ -69,7 +69,7 @@ Przy pierwszym uruchomieniu programu zastosuj poniższy scenariusz.
 1. Użyj metody synchronizacyjnej aby pobrać certyfikaty z KSeF
 
    ```
-   ./ksef certs -n 1111111111 sync-csr
+   ./ksef certs sync-csr -n 1111111111
    ```
 
    {{< callout type="important" >}}
