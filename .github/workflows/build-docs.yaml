@@ -6,31 +6,31 @@ on:
       - master
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "*"
-          cache: "npm"
-          cache-dependency-path: "./docs/package-lock.json"
-      - name: install docs dependencies
-        run: npm ci
-        working-directory: ./docs
-      - name: build docs
-        run: npm run docs:build
-        working-directory: ./docs
-      - name: rsync deployments
-        uses: burnett01/rsync-deployments@6.0.0
-        with:
-          switches: -avzr --delete
-          path: docs/.vitepress/dist/
-          remote_path: ${{ secrets.DOCS_REMOTE_PATH }}
-          remote_host: ksef.po-godzinach.info
-          remote_user: ${{ secrets.DOCS_REMOTE_USER }}
-          remote_port: ${{ secrets.DOCS_REMOTE_PORT }}
-          remote_key: ${{ secrets.DOCS_DEPLOYMENT_KEY }}
+  # deploy:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: "*"
+  #         cache: "npm"
+  #         cache-dependency-path: "./docs/package-lock.json"
+  #     - name: install docs dependencies
+  #       run: npm ci
+  #       working-directory: ./docs
+  #     - name: build docs
+  #       run: npm run docs:build
+  #       working-directory: ./docs
+  #     - name: rsync deployments
+  #       uses: burnett01/rsync-deployments@6.0.0
+  #       with:
+  #         switches: -avzr --delete
+  #         path: docs/.vitepress/dist/
+  #         remote_path: ${{ secrets.DOCS_REMOTE_PATH }}
+  #         remote_host: ksef.po-godzinach.info
+  #         remote_user: ${{ secrets.DOCS_REMOTE_USER }}
+  #         remote_port: ${{ secrets.DOCS_REMOTE_PORT }}
+  #         remote_key: ${{ secrets.DOCS_DEPLOYMENT_KEY }}
   build-docs-v2:
     runs-on: ubuntu-22.04
     steps:
