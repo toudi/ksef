@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"ksef/cmd/ksef/flags"
 	v2 "ksef/internal/client/v2"
+	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/token"
 
 	"github.com/spf13/cobra"
@@ -29,6 +30,8 @@ func init() {
 
 func dumpAuthChallenge(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
+	vip.Set(auth.FlagDoNotRestoreTokens, "true")
+
 	output, err := cmd.Flags().GetString(flagOutput)
 	if output == "" || err != nil {
 		return fmt.Errorf("nie podano pliku wyjścia")

@@ -1,0 +1,38 @@
+baseURL: https://example.org/
+languageCode: pl-pl
+title: KSeF - aplikacja kliencka
+
+module:
+  imports:
+    - path: github.com/imfing/hextra
+
+params:
+  page:
+    width: full
+
+markup:
+  # highlight:
+  #   noClasses: false
+  goldmark:
+    renderer:
+      unsafe: true
+
+menu:
+  main:
+    - identifier: instalacja
+      name: instalacja
+      pageRef: /install
+      weight: 1
+    - identifier: documentation
+      name: Dokumentacja
+      pageRef: /docs
+      weight: 2
+    - name: Search
+      weight: 3
+      params:
+        type: search
+    - name: GitHub
+      weight: 4
+      url: "https://github.com/toudi/ksef"
+      params:
+        icon: github

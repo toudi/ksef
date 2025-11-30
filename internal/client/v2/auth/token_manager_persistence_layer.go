@@ -33,6 +33,7 @@ func (tm *TokenManager) persistTokens() error {
 	}
 	nip, err := runtime.GetNIP(tm.vip)
 	if err != nil {
+		logging.AuthLogger.Error("nieprawidłowy numer NIP", "err", err)
 		return err
 	}
 	err = keyring.Set(keyringKey(runtime.GetGateway(tm.vip)), nip, buffer.String())

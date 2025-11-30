@@ -12,7 +12,7 @@ var (
 )
 
 func (c *APIClient) WaitForTokenManagerLoop() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	select {

@@ -6,7 +6,6 @@ import (
 	"errors"
 	"ksef/cmd/ksef/flags"
 	"ksef/internal/certsdb"
-	"ksef/internal/environment"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
@@ -33,9 +32,9 @@ func init() {
 }
 
 func validateParams(cmd *cobra.Command, _ []string) error {
-	env := environment.FromContext(cmd.Context())
+	env := runtime.GetGateway(viper.GetViper())
 
-	if env != environment.Test {
+	if env != runtime.TestGateway {
 		return errTestGatewayNotSelected
 	}
 

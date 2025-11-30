@@ -18,6 +18,7 @@ var syncEnrollmentsCommand = &cobra.Command{
 func init() {
 	flags.NIP(syncEnrollmentsCommand.Flags())
 	syncEnrollmentsCommand.Flags().SortFlags = false
+	syncEnrollmentsCommand.MarkFlagRequired(flags.FlagNameNIP)
 	CertificatesCommand.AddCommand(syncEnrollmentsCommand)
 }
 

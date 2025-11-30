@@ -5,6 +5,7 @@ import (
 	"errors"
 	"ksef/internal/client/v2/auth/validator"
 	"ksef/internal/http"
+	"ksef/internal/logging"
 	"ksef/internal/runtime"
 	"sync"
 	"time"
@@ -13,7 +14,9 @@ import (
 )
 
 const (
-	endpointAuthTokenRefresh = "/api/v2/auth/token/refresh"
+	endpointAuthTokenRefresh     = "/api/v2/auth/token/refresh"
+	FlagDoNotRestoreTokens       = "no-restore-tokens"
+	FlagExitAfterPersistingToken = "exit-after-persisting-token"
 )
 
 var (
@@ -66,11 +69,13 @@ func NewTokenManager(ctx context.Context, vip *viper.Viper, challengeValidator v
 		vip:                vip,
 	}
 
-	if err := tm.restoreTokens(ctx); err != nil {
-		if err != errCannotUseToken {
-			return nil, err
-		} else {
-			tm.obtainNewChallenge = true
+	if !vip.GetBool(FlagDoNotRestoreTokens) {
+		if err := tm.restoreTokens(ctx); err != nil {
+			if err != errCannotUseToken {
+				return nil, err
+			} else {
+				tm.obtainNewChallenge = true
+			}
 		}
 	}
 
@@ -123,6 +128,7 @@ func (t *TokenManager) readToken(tokenChan chan string) {
 }
 
 func (t *TokenManager) updateAuthorizationToken(authToken string, commit func()) {
+	logging.AuthLogger.Debug("updateAuthorizationToken()")
 	// first send an update to update channel as it doesn't require acquiring a lock
 	// which means that the above GetAuthorizationToken function cal capture it
 	// in the select loop
@@ -136,5 +142,7 @@ func (t *TokenManager) updateAuthorizationToken(authToken string, commit func())
 	defer t.mutex.Unlock()
 
 	// callback that has a guarantee of being executed withing mutex lock
+	logging.AuthLogger.Debug("updateAuthorizationToken() - call commit function")
 	commit()
+	logging.AuthLogger.Debug("updateAuthorizationToken() - finish")
 }

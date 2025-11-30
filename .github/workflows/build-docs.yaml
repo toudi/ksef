@@ -31,3 +31,26 @@ jobs:
           remote_user: ${{ secrets.DOCS_REMOTE_USER }}
           remote_port: ${{ secrets.DOCS_REMOTE_PORT }}
           remote_key: ${{ secrets.DOCS_DEPLOYMENT_KEY }}
+  build-docs-v2:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Hugo
+        uses: peaceiris/actions-hugo@v3
+        with:
+          hugo-version: "0.119.0"
+      - name: Build
+        run: hugo --minify
+        working-directory: ./docs/v2
+      - name: rsync deployments
+        uses: burnett01/rsync-deployments@6.0.0
+        with:
+          switches: -avzr --delete
+          path: docs/v2/public/
+          remote_path: ${{ secrets.DOCS_REMOTE_PATH }}/v2
+          remote_host: ksef.po-godzinach.info
+          remote_user: ${{ secrets.DOCS_REMOTE_USER }}
+          remote_port: ${{ secrets.DOCS_REMOTE_PORT }}
+          remote_key: ${{ secrets.DOCS_DEPLOYMENT_KEY }}

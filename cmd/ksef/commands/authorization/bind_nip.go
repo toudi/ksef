@@ -5,6 +5,7 @@ import (
 	"ksef/cmd/ksef/flags"
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/environment"
+	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -30,12 +31,16 @@ func init() {
 	bindNipCommand.Flags().StringVarP(&bindNipArgs.pesel, "pesel", "p", "", "numer PESEL osoby upoważnionej")
 	flags.NIP(bindNipCommand.Flags())
 
+	bindNipCommand.MarkFlagRequired("pesel")
+	bindNipCommand.MarkFlagRequired("nip")
+
 	AuthCommand.AddCommand(bindNipCommand)
 }
 
 func bindNipRun(cmd *cobra.Command, _ []string) error {
-	env := environment.FromContext(cmd.Context())
-	if env != environment.Test {
+	vip := viper.GetViper()
+	env := runtime.GetGateway(vip)
+	if env != runtime.Gateway(environment.Test) {
 		return errTestModeNotSelected
 	}
 	nip, err := cmd.Flags().GetString("nip")

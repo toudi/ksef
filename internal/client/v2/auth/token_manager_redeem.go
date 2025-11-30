@@ -36,5 +36,9 @@ func (t *TokenManager) redeemTokens(ctx context.Context) error {
 		},
 	)
 
+	if t.vip.GetBool(FlagExitAfterPersistingToken) {
+		t.finished = true
+	}
+
 	return nil
 }
