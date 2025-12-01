@@ -89,6 +89,8 @@ func (t *TokenManager) beginAuth(ctx context.Context, logger *slog.Logger) {
 	authChallenge, err := t.getAuthChallenge(ctx)
 	if err != nil {
 		logger.Error("unable to obtain auth challenge", "err", err)
+		t.finished = true
+		return
 	}
 	if err := t.challengeValidator.ValidateChallenge(ctx, *authChallenge); err != nil {
 		logger.Error("unable to validate challenge", "err", err)
