@@ -8,6 +8,7 @@ import (
 	"ksef/internal/config"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -71,7 +72,7 @@ func setContext(cmd *cobra.Command, _ []string) error {
 
 	if configFile != "" {
 		viper.SetConfigFile(configFile)
-		if err = viper.ReadInConfig(); err != nil {
+		if err = viper.ReadInConfig(); err != nil && !os.IsNotExist(err) {
 			return err
 		}
 	}
