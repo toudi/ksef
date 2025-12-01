@@ -1,4 +1,4 @@
-package latex
+package printer
 
 import (
 	"encoding/xml"

@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"ksef/internal/config/pdf/latex"
+	"ksef/internal/config/pdf/typst"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -11,6 +12,7 @@ import (
 
 const (
 	printerEngineLatex     = "latex"
+	printerEngineTypst     = "typst"
 	printerEnginePuppeteer = "puppeteer"
 	printerEngineGotenberg = "gotenberg"
 
@@ -23,6 +25,7 @@ var (
 
 type pdfPrinterConfig struct {
 	LatexConfig *latex.LatexPrinterConfig
+	TypstConfig *typst.TypstPrinterConfig
 }
 
 func PDFPrinterConfig(vip *viper.Viper) (config pdfPrinterConfig, err error) {
@@ -36,6 +39,13 @@ func PDFPrinterConfig(vip *viper.Viper) (config pdfPrinterConfig, err error) {
 			break
 		}
 		config.LatexConfig = latexConfig
+	case printerEngineTypst:
+		var typstConfig *typst.TypstPrinterConfig
+		typstConfig, err = typst.PrinterConfig(vip)
+		if err != nil {
+			break
+		}
+		config.TypstConfig = typstConfig
 	default:
 		err = errInvalidEngine
 	}

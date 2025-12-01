@@ -1,6 +1,8 @@
 package latex
 
 import (
+	"ksef/internal/config/pdf/abstract"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -26,7 +28,7 @@ type LatexPrinterConfig struct {
 	Workdir   string
 	Docker    bool
 	Podman    bool
-	Templates latexTemplates
+	Templates abstract.Templates
 }
 
 func PrinterConfigFlags(cmd *cobra.Command, flags *pflag.FlagSet) {

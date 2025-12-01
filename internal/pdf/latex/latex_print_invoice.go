@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/xml"
+	"ksef/internal/config/pdf/abstract"
 	"ksef/internal/config/pdf/latex"
 	"ksef/internal/pdf/printer"
 	"ksef/internal/registry/types"
@@ -22,8 +23,8 @@ type LatexTemplateVars struct {
 	Invoice  *printer.Invoice
 	Registry types.Invoice
 	Qrcodes  types.InvoiceQRCodes
-	Header   latex.HeaderFooterSettings
-	Footer   latex.HeaderFooterSettings
+	Header   abstract.HeaderFooterSettings
+	Footer   abstract.HeaderFooterSettings
 }
 
 func (lp *LatexPrinter) Print(contentBase64 string, meta types.Invoice, output string) error {

@@ -5,6 +5,7 @@ import (
 	"ksef/internal/config"
 	"ksef/internal/pdf/latex"
 	"ksef/internal/pdf/printer"
+	"ksef/internal/pdf/typst"
 
 	"github.com/spf13/viper"
 )
@@ -19,6 +20,10 @@ func GetLocalPrintingEngine() (printer.PDFPrinter, error) {
 
 	if cfg.LatexConfig != nil {
 		return latex.NewLatexPrinter(cfg.LatexConfig), nil
+	}
+
+	if cfg.TypstConfig != nil {
+		return typst.NewTypstPrinter(cfg.TypstConfig), nil
 	}
 
 	// engine := cfg.PDFRenderer["engine"]

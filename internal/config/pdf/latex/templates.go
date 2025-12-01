@@ -3,6 +3,7 @@ package latex
 import (
 	"errors"
 	"fmt"
+	"ksef/internal/config/pdf/abstract"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -11,30 +12,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var (
-	errNoTemplatesDefined = errors.New("nie zdefiniowano żadnych szablonów renderujących")
-)
-
-type HeaderFooterSettings struct {
-	Left   string
-	Center string
-	Right  string
-}
-
-type templatesCollection struct {
-	Enabled  bool
-	SrcPath  string
-	Header   HeaderFooterSettings
-	Footer   HeaderFooterSettings
-	Template *template.Template
-}
-
-type latexTemplates struct {
-	Invoice templatesCollection
-	UPO     templatesCollection
-}
-
-func parseTemplates(vip *viper.Viper) (templates latexTemplates, err error) {
+func parseTemplates(vip *viper.Viper) (templates abstract.Templates, err error) {
 	invoiceTemplatesPath := vip.GetString(cfgKeyLatexInvoiceTemplates)
 	upoTemplatesPath := vip.GetString(cfgKeyLatexUpoTemplates)
 
@@ -59,7 +37,7 @@ func parseTemplates(vip *viper.Viper) (templates latexTemplates, err error) {
 	}
 
 	if err == nil && !isValid {
-		err = errNoTemplatesDefined
+		err = abstract.ErrNoTemplatesDefined
 	}
 
 	return templates, err
@@ -107,8 +85,8 @@ var funcs = template.FuncMap{
 	},
 }
 
-func readTemplatesFromDirectory(dirname string) (templatesCollection, error) {
-	var templates = templatesCollection{
+func readTemplatesFromDirectory(dirname string) (abstract.TemplatesCollection, error) {
+	var templates = abstract.TemplatesCollection{
 		Enabled: true,
 		SrcPath: dirname,
 	}
