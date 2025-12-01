@@ -8,6 +8,14 @@ const (
 	cfgKeyLogging = "logging"
 )
 
+var defaultLogging = map[string]string{
+	"*": "info",
+}
+
 func LoggingConfig(vip *viper.Viper) map[string]string {
-	return vip.GetStringMapString(cfgKeyLogging)
+	loggingConfig := vip.GetStringMapString(cfgKeyLogging)
+	if len(loggingConfig) > 0 {
+		return loggingConfig
+	}
+	return defaultLogging
 }
