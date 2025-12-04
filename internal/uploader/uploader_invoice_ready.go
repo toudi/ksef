@@ -17,8 +17,9 @@ const (
 )
 
 var (
-	errUnableToRenderXML = errors.New("unable to render XML to temporary buffer")
-	errUnableToHash      = errors.New("unable to hash temporary invoice")
+	errUnableToRenderXML   = errors.New("unable to render XML to temporary buffer")
+	errUnableToHash        = errors.New("unable to hash temporary invoice")
+	ErrAutoCorrectDisabled = errors.New("auto-correct is disabled")
 )
 
 func (u *Uploader) InvoiceReady(i *sei.ParsedInvoice) error {
@@ -81,17 +82,16 @@ func (u *Uploader) InvoiceReady(i *sei.ParsedInvoice) error {
 		return nil
 	}
 
-	// is this a new invoice ?
-	if _invoice == nil {
+	// is this a new invoice ? or..
+	// the invoice wasn't sent yet. no problem - just override it
+	if _invoice == nil || _invoice.KSeFRefNo == "" {
 		return u.handleNewInvoice(i, checksum)
 	}
 
-	// the invoice wasn't sent yet. no problem - just override it
-	if _invoice.KSeFRefNo == "" {
-		return u.handleOverride(i)
-	}
-
 	// if not, it must be a correction
+	if !u.autoCorrect {
+		return ErrAutoCorrectDisabled
+	}
 	return u.handleCorrection(i, _invoice)
 
 	// // now we can deal with the invoice

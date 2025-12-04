@@ -23,9 +23,12 @@ type Uploader struct {
 	offlineCert   *certsdb.Certificate
 	certsDB       *certsdb.CertificatesDB
 	vip           *viper.Viper
+	// initialization options
+	confirm     bool
+	autoCorrect bool
 }
 
-func New(vip *viper.Viper) (*Uploader, error) {
+func New(vip *viper.Viper, initializers ...func(*Uploader)) (*Uploader, error) {
 	dataDir := config.DataDir(vip)
 	if err := os.MkdirAll(dataDir, 0775); err != nil {
 		return nil, err
@@ -35,11 +38,17 @@ func New(vip *viper.Viper) (*Uploader, error) {
 		return nil, err
 	}
 
-	return &Uploader{
+	upl := &Uploader{
 		dataDir: dataDir,
 		certsDB: certsDB,
 		vip:     vip,
-	}, nil
+	}
+
+	for _, initializer := range initializers {
+		initializer(upl)
+	}
+
+	return upl, nil
 }
 
 func (u *Uploader) SetGenerator(g *sei.SEI) {
@@ -65,4 +74,16 @@ func (u *Uploader) Close() error {
 		return errors.Join(errors.New("error saving invoiceDB"), err)
 	}
 	return u.registry.Save("")
+}
+
+func WithConfirm(confirm bool) func(u *Uploader) {
+	return func(u *Uploader) {
+		u.confirm = confirm
+	}
+}
+
+func WithAutoCorrect(autoCorrect bool) func(u *Uploader) {
+	return func(u *Uploader) {
+		u.autoCorrect = autoCorrect
+	}
 }

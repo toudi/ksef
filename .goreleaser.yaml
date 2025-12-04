@@ -4,7 +4,7 @@ before:
   hooks:
     # You may remove this if you don't use go modules.
     - go mod tidy
-    - sh -c "cd docs && npm ci && npm run export-pdf"
+    # - sh -c "cd docs && npm ci && npm run export-pdf"
 
 builds:
   - env:
@@ -22,8 +22,8 @@ builds:
         goarch: arm64
 
 release:
-  extra_files:
-    - glob: ./docs/ksef-dokumentacja-uzytkownika.pdf
+  #extra_files:
+  #  - glob: ./docs/ksef-dokumentacja-uzytkownika.pdf
 
   footer: |
     # :open_file_folder: Files Checksum
@@ -48,8 +48,8 @@ archives:
       - przykladowe-pliki-wejsciowe
       - klucze
       - examples
-      - src: docs/ksef-dokumentacja-uzytkownika.pdf
-        dst: ksef-dokumentacja-uzytkownika.pdf
+      #- src: docs/ksef-dokumentacja-uzytkownika.pdf
+      #  dst: ksef-dokumentacja-uzytkownika.pdf
 
 changelog:
   sort: asc

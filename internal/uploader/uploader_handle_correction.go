@@ -15,6 +15,7 @@ const (
 var (
 	errRetrievingContents = errors.New("unable to extract original invoice contents")
 	errAddingItem         = errors.New("unable to add item")
+	ErrRecipientChanged   = errors.New("different recipient")
 )
 
 func (u *Uploader) handleCorrection(i *sei.ParsedInvoice, originalInvoiceData *Invoice) error {

@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"errors"
 	"ksef/internal/config"
 	"ksef/internal/runtime"
 	"ksef/internal/sei"
@@ -18,6 +19,11 @@ var statefulUpload = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 }
 
+const (
+	flagConfirm     = "confirm"
+	flagAutoCorrect = "auto-correct"
+)
+
 var conversionParameters inputprocessors.InputProcessorConfig
 
 func init() {
@@ -26,6 +32,8 @@ func init() {
 	flags.StringVarP(&conversionParameters.CSV.EncodingConversionFile, "csv.encoding", "e", "", "użyj pliku z konwersją znaków (tylko dla CSV)")
 	flags.StringVarP(&conversionParameters.XLSX.SheetName, "xlsx.sheet", "s", "", "Nazwa skoroszytu do przetworzenia (tylko dla XLSX)")
 	flags.StringVarP(&conversionParameters.Generator, "generator", "g", "fa-3_1.0", "nazwa generatora")
+	flags.Bool(flagConfirm, false, "wysyłaj automatycznie po skończonej generacji")
+	flags.Bool(flagAutoCorrect, false, "automatycznie wystawiaj faktury korygujące")
 	config.CorrectionsFlags(flags)
 
 	RootCommand.AddCommand(statefulUpload)
@@ -34,7 +42,11 @@ func init() {
 func statefulUploadRun(cmd *cobra.Command, args []string) error {
 	vip := viper.GetViper()
 
-	upl, err := uploader.New(vip)
+	upl, err := uploader.New(
+		vip,
+		uploader.WithConfirm(vip.GetBool(flagConfirm)),
+		uploader.WithAutoCorrect(vip.GetBool(flagAutoCorrect)),
+	)
 	if err != nil {
 		return err
 	}
@@ -48,6 +60,12 @@ func statefulUploadRun(cmd *cobra.Command, args []string) error {
 	upl.SetGenerator(generator)
 
 	if err = generator.ProcessSourceFile(args[0]); err != nil {
+		if err == uploader.ErrAutoCorrectDisabled {
+			err = errors.New("tryb automatycznego wystawiania korekt nie został włączony. użyj flagi --auto-correct")
+		}
+		if err == uploader.ErrRecipientChanged {
+			err = errors.New("wykryto zmianę numeru NIP nabywcy faktury. należy wygenerować fakturę korygującą oraz nową fakturę.")
+		}
 		return err
 	}
 

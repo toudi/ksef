@@ -9,6 +9,7 @@ import (
 
 var (
 	errCertificateMissingAndOfflineModeSelected = errors.New("nie wskazano certyfikatu dla faktury Offline")
+	errConflictingRefsForSameChecksum           = errors.New("different invoice already registered for the same checksum")
 )
 
 func (r *InvoiceRegistry) AddInvoice(
@@ -16,6 +17,25 @@ func (r *InvoiceRegistry) AddInvoice(
 	checksum string,
 	certificate *certsdb.Certificate,
 ) error {
+	var index int
+	var exists bool
+
+	// sanity checks:
+	// 1. we can replace existing invoice with overriding it's reference number, but only if it was not registered
+	// in KSeF
+	if index, exists = r.checksumIndex[checksum]; exists {
+		if r.Invoices[index].ReferenceNumber != invoice.InvoiceNumber && r.Invoices[index].KSeFReferenceNumber != "" {
+			return errConflictingRefsForSameChecksum
+		}
+	}
+	// 2. we can replace existing invoice with a different content only if the original invoice was not registered
+	// in KSeF
+	if index, exists = r.refNoIndex[invoice.InvoiceNumber]; exists {
+		if r.Invoices[index].Checksum != checksum && r.Invoices[index].KSeFReferenceNumber != "" {
+			return errConflictingRefsForSameChecksum
+		}
+	}
+
 	var regInvoice = types.Invoice{
 		Metadata:            invoice.Metadata,
 		ReferenceNumber:     invoice.InvoiceNumber,
@@ -51,8 +71,21 @@ func (r *InvoiceRegistry) AddInvoice(
 		}
 		regInvoice.QRCodes.Certificate = certificateQRCode
 	}
-	r.Invoices = append(r.Invoices, regInvoice)
-	r.seiRefNoIndex[invoice.KSeFNumber] = len(r.Invoices)
-	r.checksumIndex[checksum] = len(r.Invoices)
+	// see if we're overwriting an existing invoice:
+	if index, exists = r.refNoIndex[invoice.InvoiceNumber]; exists {
+		currentInvoice := r.Invoices[index]
+		delete(r.checksumIndex, currentInvoice.Checksum)
+		delete(r.seiRefNoIndex, currentInvoice.KSeFReferenceNumber)
+		r.Invoices[index] = regInvoice
+	} else {
+		// it's a new invoice.
+		index = len(r.Invoices)
+		r.Invoices = append(r.Invoices, regInvoice)
+	}
+	if invoice.KSeFNumber != "" {
+		r.seiRefNoIndex[invoice.KSeFNumber] = index
+	}
+	r.checksumIndex[checksum] = index
+	r.refNoIndex[invoice.InvoiceNumber] = index
 	return nil
 }
