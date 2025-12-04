@@ -5,20 +5,15 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"ksef/internal/keyring"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
-
-	"github.com/zalando/go-keyring"
 )
 
 var (
 	errEmptySessionTokens = errors.New("session tokens are empty")
 	errCannotUseToken     = errors.New("token cannot be used")
 )
-
-func keyringKey(gw runtime.Gateway) string {
-	return string(gw) + "-sessionTokens"
-}
 
 func (tm *TokenManager) persistTokens() error {
 	logging.AuthLogger.Debug("zapisywanie tokenów sesyjnych")
@@ -36,7 +31,8 @@ func (tm *TokenManager) persistTokens() error {
 		logging.AuthLogger.Error("nieprawidłowy numer NIP", "err", err)
 		return err
 	}
-	err = keyring.Set(keyringKey(runtime.GetGateway(tm.vip)), nip, buffer.String())
+	err = tm.keyring.Set(string(runtime.GetGateway(tm.vip)), nip, keyring.KeySessionTokens, buffer.String())
+
 	logging.AuthLogger.Debug("rezultat zapisywania tokenów do keyringu", "err", err)
 	return err
 }
@@ -51,7 +47,7 @@ func (tm *TokenManager) clearSessionTokens() error {
 	if err != nil {
 		return err
 	}
-	return keyring.Delete(keyringKey(runtime.GetGateway(tm.vip)), nip)
+	return tm.keyring.Delete(string(runtime.GetGateway(tm.vip)), nip, keyring.KeySessionTokens)
 }
 
 func (tm *TokenManager) restoreTokens(ctx context.Context) error {
@@ -63,7 +59,7 @@ func (tm *TokenManager) restoreTokens(ctx context.Context) error {
 		return err
 	}
 	gateway := runtime.GetGateway(tm.vip)
-	tokens, err := keyring.Get(keyringKey(gateway), nip)
+	tokens, err := tm.keyring.Get(string(gateway), nip, keyring.KeySessionTokens)
 	if err != nil && err != keyring.ErrNotFound {
 		logger.Error("błąd odczytu tokenów", "err", err)
 		return err
@@ -82,12 +78,18 @@ func (tm *TokenManager) restoreTokens(ctx context.Context) error {
 	}
 	// because we're restoring tokens, let's check if we can use them
 	// maybe the client already loggout out previously and so the token is invalid ?
-	if tm.validateSessionTokens(ctx, &sessionTokens) {
+	canBeUsed, refreshed := tm.validateSessionTokens(ctx, &sessionTokens)
+	if canBeUsed {
 		logger.Debug("tokeny mogą być użyte ponownie")
 		tm.sessionTokens = &sessionTokens
-		if err = tm.persistTokens(); err != nil {
-			logger.Error("błąd zapisu odświeżonych tokenów", "err", err)
-			return err
+		if refreshed {
+			if err = tm.persistTokens(); err != nil {
+				logger.Error("błąd zapisu odświeżonych tokenów", "err", err)
+				return err
+			}
+		}
+		if tm.vip.GetBool(FlagExitAfterPersistingToken) {
+			tm.finished = true
 		}
 		return nil
 	}

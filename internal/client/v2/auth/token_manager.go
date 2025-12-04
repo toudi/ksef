@@ -5,6 +5,7 @@ import (
 	"errors"
 	"ksef/internal/client/v2/auth/validator"
 	"ksef/internal/http"
+	"ksef/internal/keyring"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
 	"sync"
@@ -49,6 +50,7 @@ type TokenManager struct {
 	done                chan struct{}
 	vip                 *viper.Viper
 	obtainNewChallenge  bool
+	keyring             keyring.Keyring
 }
 
 func NewTokenManager(ctx context.Context, vip *viper.Viper, challengeValidator validator.AuthChallengeValidator) (*TokenManager, error) {
@@ -61,12 +63,19 @@ func NewTokenManager(ctx context.Context, vip *viper.Viper, challengeValidator v
 		}
 	}
 
+	keyring, err := keyring.NewKeyring(vip)
+	if err != nil {
+		logging.AuthLogger.Error("unable to initialize keyring", "err", err)
+		return nil, err
+	}
+
 	tm := &TokenManager{
 		updateChannel:      make(chan TokenUpdate),
 		httpClient:         httpClient,
 		challengeValidator: challengeValidator,
 		done:               make(chan struct{}),
 		vip:                vip,
+		keyring:            keyring,
 	}
 
 	if !vip.GetBool(FlagDoNotRestoreTokens) {

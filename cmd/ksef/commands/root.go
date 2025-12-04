@@ -5,6 +5,7 @@ import (
 	"ksef/cmd/ksef/commands/authorization"
 	"ksef/cmd/ksef/commands/certificates"
 	"ksef/cmd/ksef/commands/download"
+	"ksef/cmd/ksef/commands/keyring"
 	"ksef/internal/config"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
@@ -56,6 +57,8 @@ func init() {
 	RootCommand.AddCommand(uploadCommand)
 	RootCommand.AddCommand(statusCommand)
 	RootCommand.AddCommand(renderPDFCommand)
+	RootCommand.AddCommand(keyring.KeyringCommand)
+	config.KeyringFlags(RootCommand.PersistentFlags())
 	RootCommand.CompletionOptions = cobra.CompletionOptions{DisableDefaultCmd: true}
 }
 

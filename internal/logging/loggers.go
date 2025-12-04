@@ -26,6 +26,7 @@ func defaultLogger() *slog.Logger {
 
 var AuthLogger *slog.Logger = defaultLogger()
 var CertsDBLogger *slog.Logger = defaultLogger().With("module", "certsdb")
+var KeyringLogger *slog.Logger = defaultLogger()
 var SeiLogger *slog.Logger = defaultLogger()
 var GenerateLogger *slog.Logger = defaultLogger()
 var UploadLogger *slog.Logger = defaultLogger()
@@ -45,6 +46,7 @@ func init() {
 	loggers = map[string]*slog.Logger{
 		"main":         SeiLogger,
 		"certsdb":      CertsDBLogger,
+		"keyring":      KeyringLogger,
 		"auth":         AuthLogger,
 		"http":         HTTPLogger,
 		"generate":     GenerateLogger,

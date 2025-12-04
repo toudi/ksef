@@ -3,8 +3,10 @@ package authorization
 import (
 	"errors"
 	"ksef/cmd/ksef/commands/authorization/challenge"
+	"ksef/cmd/ksef/flags"
 	"ksef/internal/certsdb"
 	v2 "ksef/internal/client/v2"
+	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/token"
 	"ksef/internal/client/v2/auth/validator"
 	"ksef/internal/runtime"
@@ -26,6 +28,7 @@ var (
 )
 
 func init() {
+	flags.NIP(debugCommand.Flags())
 	debugCommand.Flags().BoolVar(&useCert, "cert", false, "spróbuj użyć certyfikatu")
 	debugCommand.Flags().StringVarP(&signedFile, "signed", "s", "", "ścieżka do *PODPISANEGO* pliku wyzwania")
 	debugCommand.MarkFlagsOneRequired("cert", "signed")
@@ -35,6 +38,7 @@ func init() {
 func authSessionDebug(cmd *cobra.Command, _ []string) error {
 	var authValidator validator.AuthChallengeValidator
 	vip := viper.GetViper()
+	vip.Set(auth.FlagExitAfterPersistingToken, "true")
 	var nip string
 	var gateway = runtime.GetGateway(vip)
 	var err error
@@ -73,5 +77,5 @@ func authSessionDebug(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	return cli.Logout()
+	return cli.WaitForTokenManagerLoop()
 }

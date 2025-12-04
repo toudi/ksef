@@ -68,8 +68,6 @@ func (t *TokenManager) Run() {
 			if validatorEvent.State == validator.StateValidationReferenceResult {
 				t.validationReference = validatorEvent.ValidationReference
 			}
-			if validatorEvent.State == validator.StateTokensRestored {
-			}
 			if validatorEvent.State == validator.StateExit {
 				// at the moment it's used only by the "fake" validator of type xadesInit
 				// which has a single purpose of dumping the challenge to a file.
@@ -79,6 +77,10 @@ func (t *TokenManager) Run() {
 	}
 
 	ticker.Stop()
+
+	if err := t.keyring.Close(); err != nil {
+		logging.AuthLogger.Error("error saving keyring", "err", err)
+	}
 
 	t.done <- struct{}{}
 }
