@@ -68,7 +68,7 @@ func GetFileBasedKeyringConfig(vip *viper.Viper) (*FileBasedKeyringConfig, error
 	if vip.GetBool(cfgKeyKeyringFileAskPassword) {
 		// we have to ask user for the password
 		fmt.Printf("podaj hasło do keyringu: \n")
-		bytePassword, err := term.ReadPassword(syscall.Stdin)
+		bytePassword, err := term.ReadPassword(int(syscall.Stdin))
 		if err != nil {
 			return nil, err
 		}
