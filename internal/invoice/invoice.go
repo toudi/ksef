@@ -48,10 +48,16 @@ type CorrectionInfo struct {
 	RefNo             string
 	KSeFRefNo         string
 }
+
+type Issuer struct {
+	NIP  string
+	Name string
+}
+
 type Invoice struct {
 	Type             string
 	Correction       *CorrectionInfo
-	IssuerNIP        string
+	Issuer           Issuer
 	RecipientName    string
 	GenerationTime   time.Time
 	Number           string

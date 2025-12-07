@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"ksef/internal/certsdb"
-	"ksef/internal/config"
 	"ksef/internal/registry"
 	"ksef/internal/runtime"
 	"ksef/internal/sei"
@@ -29,7 +28,7 @@ type Uploader struct {
 }
 
 func New(vip *viper.Viper, initializers ...func(*Uploader)) (*Uploader, error) {
-	dataDir := config.DataDir(vip)
+	dataDir := "data"
 	if err := os.MkdirAll(dataDir, 0775); err != nil {
 		return nil, err
 	}

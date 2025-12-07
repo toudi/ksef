@@ -49,3 +49,12 @@ func ResolveFilepath(config FilepathResolverConfig) (string, error) {
 
 	return finalOutput, nil
 }
+
+func FileExists(filename string) (*os.File, bool, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		// either the file does not exist or it's another kind of error
+		return nil, false, err
+	}
+	return file, true, nil
+}

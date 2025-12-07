@@ -40,7 +40,8 @@ func (fg *FAGenerator) LineHandler(
 	}
 
 	if strings.HasPrefix(strings.ToLower(section), issuerDataSection) {
-		inv.IssuerNIP = data["NIP"]
+		inv.Issuer.NIP = data["NIP"]
+		inv.Issuer.Name = data["Nazwa"]
 	}
 
 	if strings.ToLower(section) == invoiceHeaderSection {

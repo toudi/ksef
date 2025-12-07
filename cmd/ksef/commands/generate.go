@@ -30,69 +30,49 @@ var generateCommand = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 }
 
-type generateArgsType struct {
-	Output                 string
-	Delimiter              string
-	GeneratorName          string
-	EncodingConversionFile string
-	SheetName              string
-	Offline                bool
-}
-
-var generateArgs = &generateArgsType{}
-
 func init() {
 	flags := generateCommand.Flags()
-	flags.StringVarP(&generateArgs.Output, "output", "o", "", "nazwa katalogu wyjściowego")
-	flags.StringVarP(&generateArgs.Delimiter, "csv.delimiter", "d", ",", "łańcuch znaków rozdzielający pola (tylko dla CSV)")
-	flags.StringVarP(&generateArgs.EncodingConversionFile, "csv.encoding", "e", "", "użyj pliku z konwersją znaków (tylko dla CSV)")
-	flags.StringVarP(&generateArgs.SheetName, "xlsx.sheet", "s", "", "Nazwa skoroszytu do przetworzenia (tylko dla XLSX)")
-	flags.StringVarP(&generateArgs.GeneratorName, "generator", "g", "fa-3_1.0", "nazwa generatora")
-	flags.BoolVar(&generateArgs.Offline, "offline", false, "oznacz faktury jako generowane w trybie offline")
+	inputprocessors.GeneratorFlags(flags)
+	flags.StringP("output", "o", "", "nazwa katalogu wyjściowego")
 	flags.BoolP("mkdir", "m", false, "stwórz katalog rejestru, jeśli nie istnieje")
 
 	RootCommand.AddCommand(generateCommand)
 }
 
 func generateRun(cmd *cobra.Command, args []string) error {
+	vip := viper.GetViper()
+	output := vip.GetString("output")
+	offlineMode := vip.GetBool("offline")
+
 	logging.GenerateLogger.Info("generate")
 	fileName := args[0]
-	if fileName == "" || generateArgs.Output == "" {
+	if fileName == "" || output == "" {
 		return cmd.Usage()
 	}
 
-	vip := viper.GetViper()
-
 	// check if the registry directory does not exist:
-	if _, err := os.Stat(generateArgs.Output); os.IsNotExist(err) {
+	if _, err := os.Stat(output); os.IsNotExist(err) {
 		if !viper.GetBool("mkdir") {
 			return errTargetDirectoryDoesNotExist
 		}
-		if err = os.MkdirAll(generateArgs.Output, 0775); err != nil {
+		if err = os.MkdirAll(output, 0775); err != nil {
 			return err
 		}
 	}
 
-	registry, err := registryPkg.OpenOrCreate(generateArgs.Output)
+	registry, err := registryPkg.OpenOrCreate(output)
 	if err != nil {
 		return err
 	}
 
-	var conversionParameters inputprocessors.InputProcessorConfig
-	conversionParameters.CSV.Delimiter = generateArgs.Delimiter
-	conversionParameters.CSV.EncodingConversionFile = generateArgs.EncodingConversionFile
-	conversionParameters.XLSX.SheetName = generateArgs.SheetName
-	conversionParameters.Generator = generateArgs.GeneratorName
-	conversionParameters.OfflineMode = generateArgs.Offline
-
 	var xmlBuffer bytes.Buffer
 
 	sei, err := sei.SEI_Init(
-		runtime.GetGateway(viper.GetViper()),
-		conversionParameters,
+		vip,
+
 		sei.WithInvoiceReadyFunc(func(i *sei.ParsedInvoice) error {
 			xmlBuffer.Reset()
-			outputFile, err := os.Create(path.Join(generateArgs.Output, fmt.Sprintf("invoice-%d.xml", len(registry.Invoices))))
+			outputFile, err := os.Create(path.Join(output, fmt.Sprintf("invoice-%d.xml", len(registry.Invoices))))
 			if err != nil {
 				return err
 			}
@@ -105,10 +85,10 @@ func generateRun(cmd *cobra.Command, args []string) error {
 				return err
 			}
 			var certificate *certsdb.Certificate
-			if generateArgs.Offline {
+			if offlineMode {
 				if certificate, err = getOfflineCertificate(
 					vip,
-					i.Invoice.IssuerNIP,
+					i.Invoice.Issuer.NIP,
 				); err != nil {
 					return err
 				}
@@ -119,7 +99,7 @@ func generateRun(cmd *cobra.Command, args []string) error {
 					InvoiceNumber: i.Invoice.Number,
 					IssueDate:     i.Invoice.Issued.Format("2006-01-02"),
 					Seller: invoices.InvoiceSubjectMetadata{
-						NIP: i.Invoice.IssuerNIP,
+						NIP: i.Invoice.Issuer.NIP,
 					},
 					Offline: i.Invoice.KSeFFlags.Offline,
 				},

@@ -1,15 +1,10 @@
 package commands
 
 import (
-	"errors"
 	"ksef/internal/config"
-	"ksef/internal/runtime"
-	"ksef/internal/sei"
 	inputprocessors "ksef/internal/sei/input_processors"
-	"ksef/internal/uploader"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var statefulUpload = &cobra.Command{
@@ -40,34 +35,35 @@ func init() {
 }
 
 func statefulUploadRun(cmd *cobra.Command, args []string) error {
-	vip := viper.GetViper()
+	return nil
+	// vip := viper.GetViper()
 
-	upl, err := uploader.New(
-		vip,
-		uploader.WithConfirm(vip.GetBool(flagConfirm)),
-		uploader.WithAutoCorrect(vip.GetBool(flagAutoCorrect)),
-	)
-	if err != nil {
-		return err
-	}
+	// upl, err := uploader.New(
+	// 	vip,
+	// 	uploader.WithConfirm(vip.GetBool(flagConfirm)),
+	// 	uploader.WithAutoCorrect(vip.GetBool(flagAutoCorrect)),
+	// )
+	// if err != nil {
+	// 	return err
+	// }
 
-	generator, err := sei.SEI_Init(runtime.GetGateway(vip), conversionParameters, sei.WithInvoiceReadyFunc(upl.InvoiceReady))
+	// generator, err := sei.SEI_Init(runtime.GetGateway(vip), conversionParameters, sei.WithInvoiceReadyFunc(upl.InvoiceReady))
 
-	if err != nil {
-		return err
-	}
+	// if err != nil {
+	// 	return err
+	// }
 
-	upl.SetGenerator(generator)
+	// upl.SetGenerator(generator)
 
-	if err = generator.ProcessSourceFile(args[0]); err != nil {
-		if err == uploader.ErrAutoCorrectDisabled {
-			err = errors.New("tryb automatycznego wystawiania korekt nie został włączony. użyj flagi --auto-correct")
-		}
-		if err == uploader.ErrRecipientChanged {
-			err = errors.New("wykryto zmianę numeru NIP nabywcy faktury. należy wygenerować fakturę korygującą oraz nową fakturę.")
-		}
-		return err
-	}
+	// if err = generator.ProcessSourceFile(args[0]); err != nil {
+	// 	if err == uploader.ErrAutoCorrectDisabled {
+	// 		err = errors.New("tryb automatycznego wystawiania korekt nie został włączony. użyj flagi --auto-correct")
+	// 	}
+	// 	if err == uploader.ErrRecipientChanged {
+	// 		err = errors.New("wykryto zmianę numeru NIP nabywcy faktury. należy wygenerować fakturę korygującą oraz nową fakturę.")
+	// 	}
+	// 	return err
+	// }
 
-	return upl.Close()
+	// return upl.Close()
 }

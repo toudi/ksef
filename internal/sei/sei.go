@@ -7,21 +7,20 @@ import (
 	"errors"
 	"ksef/internal/certsdb"
 	"ksef/internal/interfaces"
-	"ksef/internal/invoice"
-	"ksef/internal/runtime"
 	"ksef/internal/sei/generators"
 	inputprocessors "ksef/internal/sei/input_processors"
 	"ksef/internal/sei/parser"
 	"ksef/internal/xml"
 	"path/filepath"
 	"strings"
+
+	"github.com/spf13/viper"
 )
 
 var errUnknownSourceExtension = errors.New("unknown file extension")
 
 // SEI is an government acronym for Structured Electronic Invoice
 type SEI struct {
-	env runtime.Gateway
 	// conversion parameters for the input processor
 	conversionParameters inputprocessors.InputProcessorConfig
 	// this function will be called each time the invoice will be ready
@@ -34,8 +33,9 @@ type SEI struct {
 	invoiceExistsFunc         func(refNo string) bool
 }
 
-func SEI_Init(env runtime.Gateway, conversionParams inputprocessors.InputProcessorConfig, initializers ...func(s *SEI)) (*SEI, error) {
+func SEI_Init(vip *viper.Viper, initializers ...func(s *SEI)) (*SEI, error) {
 	var err error
+	conversionParams := inputprocessors.GetInputProcessorConfig(vip)
 
 	var generator interfaces.Generator
 
@@ -44,7 +44,6 @@ func SEI_Init(env runtime.Gateway, conversionParams inputprocessors.InputProcess
 	}
 
 	sei := &SEI{
-		env:                  env,
 		conversionParameters: conversionParams,
 		parser:               &parser.Parser{},
 		generator:            generator,
@@ -162,20 +161,20 @@ func (s *SEI) calculateInvoiceHash(root *xml.Node) (checksum string, err error) 
 	return checksum, nil
 }
 
-func (s *SEI) GetOfflineModeCertificate(i *invoice.Invoice) (*certsdb.Certificate, error) {
-	if s.certificateForOfflineMode == nil {
-		certsDB, err := certsdb.OpenOrCreate(s.env)
-		if err != nil {
-			return nil, err
-		}
-		offlineCert, err := certsDB.GetByUsage(
-			certsdb.UsageOffline, i.IssuerNIP,
-		)
-		if err != nil {
-			return nil, err
-		}
-		s.certificateForOfflineMode = &offlineCert
-	}
+// func (s *SEI) GetOfflineModeCertificate(i *invoice.Invoice) (*certsdb.Certificate, error) {
+// 	if s.certificateForOfflineMode == nil {
+// 		certsDB, err := certsdb.OpenOrCreate(s.env)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		offlineCert, err := certsDB.GetByUsage(
+// 			certsdb.UsageOffline, i.IssuerNIP,
+// 		)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		s.certificateForOfflineMode = &offlineCert
+// 	}
 
-	return s.certificateForOfflineMode, nil
-}
+// 	return s.certificateForOfflineMode, nil
+// }

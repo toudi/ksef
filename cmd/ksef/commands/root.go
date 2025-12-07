@@ -5,6 +5,7 @@ import (
 	"ksef/cmd/ksef/commands/authorization"
 	"ksef/cmd/ksef/commands/certificates"
 	"ksef/cmd/ksef/commands/download"
+	"ksef/cmd/ksef/commands/invoices"
 	"ksef/cmd/ksef/commands/keyring"
 	"ksef/internal/config"
 	"ksef/internal/logging"
@@ -47,7 +48,6 @@ func init() {
 		runtime.SetGateway(viper.GetViper(), runtime.DemoGateway)
 		return nil
 	})
-	config.DataDirFlag(RootCommand)
 	RootCommand.PersistentFlags().SortFlags = false
 
 	RootCommand.AddCommand(authorization.AuthCommand)
@@ -58,6 +58,7 @@ func init() {
 	RootCommand.AddCommand(statusCommand)
 	RootCommand.AddCommand(renderPDFCommand)
 	RootCommand.AddCommand(keyring.KeyringCommand)
+	RootCommand.AddCommand(invoices.InvoicesCommand)
 	config.KeyringFlags(RootCommand.PersistentFlags())
 	RootCommand.CompletionOptions = cobra.CompletionOptions{DisableDefaultCmd: true}
 }
