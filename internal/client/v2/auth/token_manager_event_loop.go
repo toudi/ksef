@@ -22,6 +22,17 @@ func (t *TokenManager) Run() {
 	ctx := context.Background()
 	logger := logging.AuthLogger.With("auth", "token manager")
 
+	if !t.vip.GetBool(FlagDoNotRestoreTokens) {
+		if err := t.restoreTokens(ctx); err != nil {
+			if err != errCannotUseToken {
+				logger.Error("fatal (?) error during token restoration", "err", err)
+				t.finished = true
+			} else {
+				t.obtainNewChallenge = true
+			}
+		}
+	}
+
 	if t.obtainNewChallenge {
 		t.obtainNewChallenge = false
 		go t.beginAuth(ctx, logger)

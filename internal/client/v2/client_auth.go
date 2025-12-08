@@ -9,6 +9,7 @@ import (
 
 var (
 	errTimeoutWaitingForTokenEvent = errors.New("timeout waiting for token manager event loop")
+	errTokenManagerNotInitialized  = errors.New("token manager is not initialized")
 )
 
 func (c *APIClient) WaitForTokenManagerLoop() error {
@@ -43,4 +44,13 @@ func (c *APIClient) Logout() error {
 
 func (c *APIClient) BindNIPToPESEL(ctx context.Context, nip, pesel string) error {
 	return auth.BindNIPToPESEL(ctx, c.httpClient, nip, pesel)
+}
+
+func (c *APIClient) StartTokenManager() error {
+	if c.tokenManager == nil {
+		return errTokenManagerNotInitialized
+	}
+
+	go c.tokenManager.Run()
+	return nil
 }

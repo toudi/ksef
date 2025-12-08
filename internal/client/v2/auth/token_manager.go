@@ -78,16 +78,6 @@ func NewTokenManager(ctx context.Context, vip *viper.Viper, challengeValidator v
 		keyring:            keyring,
 	}
 
-	if !vip.GetBool(FlagDoNotRestoreTokens) {
-		if err := tm.restoreTokens(ctx); err != nil {
-			if err != errCannotUseToken {
-				return nil, err
-			} else {
-				tm.obtainNewChallenge = true
-			}
-		}
-	}
-
 	return tm, nil
 }
 

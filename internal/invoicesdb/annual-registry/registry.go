@@ -3,6 +3,7 @@ package annualregistry
 import (
 	"errors"
 	"ksef/internal/utils"
+	"os"
 	"path"
 )
 
@@ -23,10 +24,10 @@ type Registry struct {
 
 func OpenOrCreate(dir string) (*Registry, error) {
 	regFile, exists, err := utils.FileExists(path.Join(dir, registryName))
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		// the only way for the err to be not nil is when there's a problem opening
 		// file
-		return nil, errOpeningRegistryFile
+		return nil, errors.Join(errOpeningRegistryFile, err)
 	}
 
 	var reg = &Registry{

@@ -24,6 +24,8 @@ type APIClient struct {
 	registry     *registryPkg.InvoiceRegistry
 	certificates *certificates.Manager
 	certsDB      *certsdb.CertificatesDB
+	// init options
+	runTokenManager bool
 }
 
 type InitializerFunc func(c *APIClient)
@@ -34,8 +36,9 @@ func NewClient(ctx context.Context, vip *viper.Viper, options ...InitializerFunc
 	httpClient := http.NewClient(string(runtime.GetGateway(vip)))
 
 	client := &APIClient{
-		ctx:        ctx,
-		httpClient: httpClient,
+		ctx:             ctx,
+		httpClient:      httpClient,
+		runTokenManager: true,
 	}
 
 	for _, option := range options {
@@ -47,7 +50,9 @@ func NewClient(ctx context.Context, vip *viper.Viper, options ...InitializerFunc
 		if client.tokenManager, err = auth.NewTokenManager(ctx, vip, client.authChallengeValidator); err != nil {
 			return nil, err
 		}
-		go client.tokenManager.Run()
+		if client.runTokenManager {
+			go client.tokenManager.Run()
+		}
 	}
 
 	return client, nil
@@ -80,5 +85,11 @@ func WithAuthValidator(validator validator.AuthChallengeValidator) func(client *
 func WithCertificatesDB(certsDB *certsdb.CertificatesDB) func(client *APIClient) {
 	return func(client *APIClient) {
 		client.certsDB = certsDB
+	}
+}
+
+func WithoutTokenManager() func(client *APIClient) {
+	return func(client *APIClient) {
+		client.runTokenManager = false
 	}
 }

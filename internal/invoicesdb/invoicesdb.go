@@ -3,6 +3,7 @@ package invoicesdb
 import (
 	"bytes"
 	"ksef/internal/certsdb"
+	v2 "ksef/internal/client/v2"
 	annualregistry "ksef/internal/invoicesdb/annual-registry"
 	"ksef/internal/invoicesdb/config"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
@@ -24,20 +25,34 @@ type InvoicesDB struct {
 	vip     *viper.Viper
 	// for sync only
 	prefix string
+	// gateway client
+	ksefClient *v2.APIClient
 }
 
-func NewInvoicesDB(vip *viper.Viper) (*InvoicesDB, error) {
+func NewInvoicesDB(vip *viper.Viper, initializers ...func(i *InvoicesDB)) (*InvoicesDB, error) {
 	certsDB, err := certsdb.OpenOrCreate(runtime.GetGateway(vip))
 	if err != nil {
 		return nil, err
 	}
 
-	return &InvoicesDB{
+	idb := &InvoicesDB{
 		cfg:       config.GetInvoicesDBConfig(vip),
 		importCfg: config.GetImportConfig(vip),
 		certsDB:   certsDB,
 		vip:       vip,
-	}, nil
+	}
+
+	for _, initializer := range initializers {
+		initializer(idb)
+	}
+
+	return idb, nil
+}
+
+func WithKSeFClient(client *v2.APIClient) func(idb *InvoicesDB) {
+	return func(idb *InvoicesDB) {
+		idb.ksefClient = client
+	}
 }
 
 func (idb *InvoicesDB) Save() error {

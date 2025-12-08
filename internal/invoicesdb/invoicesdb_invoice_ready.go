@@ -16,7 +16,7 @@ var (
 	ErrAutoCorrectDisabled = errors.New("auto-correct is disabled")
 )
 
-func (idb *InvoicesDB) InvoiceReady(inv *sei.ParsedInvoice) error {
+func (idb *InvoicesDB) invoiceReady(inv *sei.ParsedInvoice) error {
 	var err error
 	var annualRegistry *annualregistry.Registry
 
@@ -34,6 +34,7 @@ func (idb *InvoicesDB) InvoiceReady(inv *sei.ParsedInvoice) error {
 
 	fmt.Printf("invoice: %+v\n", inv)
 	if annualRegistry, err = idb.getAnnualRegistryForInvoice(inv); err != nil {
+		logging.InvoicesDBLogger.Error("error initializing annual registry", "err", err)
 		return err
 	}
 	invoice := inv.Invoice
@@ -66,7 +67,7 @@ func (idb *InvoicesDB) InvoiceReady(inv *sei.ParsedInvoice) error {
 	// and now we can finally detect if this is potentially a correction candidate or
 	// simply we've already processed this.
 	if _invoice != nil && checksum == _invoice.Checksum {
-		logging.GenerateLogger.Debug("faktura została już zaimportowana. no-op.")
+		logging.GenerateLogger.Info("faktura została już zaimportowana. no-op.", "numer faktury", _invoice.RefNo)
 		return nil
 	}
 

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"ksef/internal/certsdb"
 	"ksef/internal/utils"
+	"os"
 	"path"
 	"time"
 
@@ -23,7 +24,7 @@ var (
 
 func OpenOrCreate(dir string, certsDB *certsdb.CertificatesDB, vip *viper.Viper) (*Registry, error) {
 	regFile, exists, err := utils.FileExists(path.Join(dir, registryName))
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		// the only way for the err to be not nil is when there's a problem opening
 		// file
 		return nil, errOpeningRegistryFile
@@ -59,19 +60,22 @@ func OpenForMonth(prefix string, month time.Time) (*Registry, error) {
 		registryName,
 	)
 
-	regFile, _, err := utils.FileExists(regFilename)
-	if err != nil {
+	regFile, exists, err := utils.FileExists(regFilename)
+	if err != nil && !os.IsNotExist(err) {
 		return nil, err
 	}
-	defer regFile.Close()
 
 	var reg = &Registry{
 		invoices: make([]*Invoice, 0),
 		dir:      registryPath,
 	}
 
-	if err = utils.ReadYAML(regFile, &reg.invoices); err != nil {
-		return nil, errors.Join(errReadingRegistryContents, err)
+	if exists {
+		defer regFile.Close()
+
+		if err = utils.ReadYAML(regFile, &reg.invoices); err != nil {
+			return nil, errors.Join(errReadingRegistryContents, err)
+		}
 	}
 
 	return reg, nil

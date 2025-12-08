@@ -1,9 +1,10 @@
 package invoices
 
 import (
+	"ksef/cmd/ksef/commands/client"
+	v2 "ksef/internal/client/v2"
 	"ksef/internal/invoicesdb"
-	"ksef/internal/logging"
-	"ksef/internal/sei"
+	invoicesdbconfig "ksef/internal/invoicesdb/config"
 	inputprocessors "ksef/internal/sei/input_processors"
 
 	"github.com/spf13/cobra"
@@ -18,6 +19,7 @@ var importCommand = &cobra.Command{
 }
 
 func init() {
+	invoicesdbconfig.ImportFlags(importCommand.Flags())
 	inputprocessors.GeneratorFlags(importCommand.Flags())
 	importCommand.Flags().SortFlags = false
 	InvoicesCommand.AddCommand(importCommand)
@@ -25,29 +27,20 @@ func init() {
 
 func importRun(cmd *cobra.Command, args []string) error {
 	vip := viper.GetViper()
+	ksefClient, err := client.InitClient(cmd, v2.WithoutTokenManager())
+	if err != nil {
+		return err
+	}
+	defer ksefClient.Close()
 	// initialize the invoicesdb
-	invoicesDB, err := invoicesdb.NewInvoicesDB(vip)
+	invoicesDB, err := invoicesdb.NewInvoicesDB(vip, invoicesdb.WithKSeFClient(ksefClient))
 	if err != nil {
 		return err
 	}
-	// initialize importer
-	var invoiceReadyHandler = func(i *sei.ParsedInvoice) error {
-		// dummy implementation that does nothing.
-		return nil
-	}
-	if vip.GetBool(flagNameConfirm) {
-		invoiceReadyHandler = invoicesDB.InvoiceReady
-		defer func() {
-			if err := invoicesDB.Save(); err != nil {
-				logging.InvoicesDBLogger.Error("błąd zapisu rejestru faktur", "err", err)
-			}
-		}()
-	} else {
-		logging.InvoicesDBLogger.Info("nie wybrano flagi --confirm - żadne dane nie zostaną zapisane na dysku")
-	}
-	importer, err := sei.SEI_Init(vip, sei.WithInvoiceReadyFunc(invoiceReadyHandler))
-	if err != nil {
-		return err
-	}
-	return importer.ProcessSourceFile(args[0])
+	return invoicesDB.Import(
+		cmd.Context(),
+		vip,
+		args[0],
+		vip.GetBool(flagNameConfirm),
+	)
 }
