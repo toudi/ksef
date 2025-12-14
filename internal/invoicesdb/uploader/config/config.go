@@ -4,9 +4,14 @@ import (
 	"time"
 )
 
+type UPODownloaderConfig struct {
+	Enabled      bool
+	ConvertToPDF bool
+	Timeout      time.Duration
+}
 type UploaderConfig struct {
 	WaitForStatus bool
 	WaitTimeout   time.Duration
-	DownloadUPO   bool
-	SaveUPOAsPDF  bool
+	BatchSession  bool
+	UPODownloader UPODownloaderConfig
 }

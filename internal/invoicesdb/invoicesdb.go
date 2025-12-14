@@ -46,6 +46,13 @@ func NewInvoicesDB(vip *viper.Viper, initializers ...func(i *InvoicesDB)) (*Invo
 		initializer(idb)
 	}
 
+	prefix, err := idb.getMonthlyRegistryPrefix()
+	if err != nil {
+		return nil, err
+	}
+
+	idb.prefix = prefix
+
 	return idb, nil
 }
 

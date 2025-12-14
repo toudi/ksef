@@ -1,15 +1,16 @@
 package batch
 
 import (
+	"ksef/internal/client/v2/session/types"
 	"ksef/internal/encryption"
-	"ksef/internal/registry"
 	"net/url"
 )
 
 type batchSessionInitRequest struct {
-	FormCode   registry.InvoiceFormCode     `json:"formCode"`
+	FormCode   types.InvoiceFormCode        `json:"formCode"`
 	BatchFile  batchArchiveInfo             `json:"batchFile"`
 	Encryption encryption.CipherHTTPRequest `json:"encryption"`
+	Offline    bool                         `json:"offlineMode"`
 }
 
 type batchSessionPartUploadRequest struct {

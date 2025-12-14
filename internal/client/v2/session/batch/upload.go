@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"ksef/internal/certsdb"
+	"ksef/internal/client/v2/session/types"
 	"ksef/internal/encryption"
 	HTTP "ksef/internal/http"
-	"ksef/internal/registry"
 	baseHTTP "net/http"
 )
 
@@ -18,22 +18,22 @@ var (
 	ErrCannotInitializeCiper = errors.New("unable to initialize cipher")
 )
 
-func (b *Session) UploadInvoices(ctx context.Context) error {
-	collection, err := b.registry.InvoiceCollection()
-	if err != nil {
-		return err
-	}
-
+func (b *Session) UploadInvoices(
+	ctx context.Context,
+	payload types.UploadPayload,
+) ([]*types.UploadSessionResult, error) {
+	var result []*types.UploadSessionResult
 	// v2 specs forces us to group invoices by their form code
 	// on the other hand, it no longer forces us to send invoices through a 3rd party server
-	for formCode, files := range collection.Files {
-		if err := b.uploadInvoicesForForm(ctx, formCode, files); err != nil {
-			return err
+	for formCode, files := range payload {
+		uploadResult, err := b.uploadInvoicesForForm(ctx, formCode, files)
+		if err != nil {
+			return nil, err
 		}
+		result = append(result, uploadResult)
 	}
 
-	return nil
-
+	return result, nil
 }
 
 type batchArchivePart struct {
@@ -49,25 +49,29 @@ type batchArchiveInfo struct {
 	FileParts []batchArchivePart `json:"fileParts"`
 }
 
-func (b *Session) uploadInvoicesForForm(ctx context.Context, formCode registry.InvoiceFormCode, files []registry.CollectionFile) error {
+func (b *Session) uploadInvoicesForForm(
+	ctx context.Context,
+	formCode types.InvoiceFormCode,
+	files []types.Invoice,
+) (*types.UploadSessionResult, error) {
 	// first, let's prepare metadata info
 	initSessionReq, err := b.generateMetadataByFormCode(formCode, files)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	cipher, err := encryption.CipherInit(32)
 	if err != nil {
-		return errors.Join(ErrCannotInitializeCiper, err)
+		return nil, errors.Join(ErrCannotInitializeCiper, err)
 	}
 
 	certificate, err := b.certsDB.GetByUsage(certsdb.UsageSymmetricKeyEncryption, "")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	initSessionReq.Encryption, err = cipher.PrepareHTTPRequestPayload(certificate.Filename())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var resp batchSessionInitResponse
@@ -83,5 +87,12 @@ func (b *Session) uploadInvoicesForForm(ctx context.Context, formCode registry.I
 		endpointBatchSessionInit,
 	)
 
-	return err
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: implement actual uploading
+	return &types.UploadSessionResult{
+		SessionID: resp.ReferenceNumber,
+	}, nil
 }

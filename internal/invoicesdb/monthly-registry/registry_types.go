@@ -3,6 +3,8 @@ package monthlyregistry
 import (
 	"ksef/internal/certsdb"
 
+	sessionTypes "ksef/internal/client/v2/session/types"
+
 	"github.com/spf13/viper"
 )
 
@@ -12,12 +14,6 @@ const (
 	InvoiceTypeIssued   InvoiceType = 0
 	InvoiceTypeReceived InvoiceType = 1
 )
-
-type InvoiceFormCode struct {
-	SystemCode    string `xml:"kodSystemowy,attr" json:"systemCode"`
-	SchemaVersion string `xml:"wersjaSchemy,attr" json:"schemaVersion"`
-	Value         string `xml:",chardata" json:"value"`
-}
 
 type InvoiceQRCodes struct {
 	Invoice string `yaml:"invoice"`
@@ -35,14 +31,20 @@ type Invoice struct {
 }
 
 type InvoiceMetadata struct {
-	FormCode InvoiceFormCode
+	FormCode sessionTypes.InvoiceFormCode
 	Invoice  *Invoice
 	Filename string
-	Registry *Registry
+}
+
+type UploadSession struct {
+	RefNo     string     `yaml:"ref-no"`
+	Processed bool       `yaml:"processed,omitempty"`
+	Invoices  []*Invoice `yaml:"invoices"`
 }
 
 type Registry struct {
-	invoices []*Invoice
+	invoices       []*Invoice       `yaml:"invoices"`
+	uploadSessions []*UploadSession `yaml:"upload-sessions,omitempty"`
 
 	dir     string
 	certsDB *certsdb.CertificatesDB

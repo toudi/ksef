@@ -4,13 +4,12 @@ import (
 	"context"
 	"errors"
 	"ksef/internal/certsdb"
+	"ksef/internal/client/v2/session/types"
 	HTTP "ksef/internal/http"
 	"ksef/internal/logging"
-	"ksef/internal/registry"
 )
 
 type Session struct {
-	registry   *registry.InvoiceRegistry
 	httpClient *HTTP.Client
 	certsDB    *certsdb.CertificatesDB
 }
@@ -20,26 +19,28 @@ var (
 	ErrProbablyUsedSend          = errors.New("upload command probably used previously")
 )
 
-func NewSession(httpClient *HTTP.Client, registry *registry.InvoiceRegistry, certsDB *certsdb.CertificatesDB) *Session {
+func NewSession(httpClient *HTTP.Client, certsDB *certsdb.CertificatesDB) *Session {
 	return &Session{
 		httpClient: httpClient,
-		registry:   registry,
 		certsDB:    certsDB,
 	}
 }
 
-func (s *Session) UploadInvoices(ctx context.Context, params UploadParams) error {
-	// at this point the collection has already been initialized and retrieved so no need for checking the error
-	collection, _ := s.registry.InvoiceCollection()
-
+func (s *Session) UploadInvoices(
+	ctx context.Context,
+	payload types.UploadPayload,
+) ([]*types.UploadSessionResult, error) {
+	var result []*types.UploadSessionResult
 	// v2 specs forces us to group invoices by their form code
 	// on the other hand, it no longer forces us to send invoices through a 3rd party server
-	for formCode, files := range collection.Files {
+	for formCode, files := range payload {
 		logging.InteractiveLogger.With("formCode", formCode).Info("przesyłanie faktur")
-		if err := s.uploadInvoicesForForm(ctx, formCode, files); err != nil {
-			return err
+		uploadResult, err := s.uploadInvoicesForForm(ctx, formCode, files)
+		if err != nil {
+			return result, err
 		}
+		result = append(result, uploadResult)
 	}
 
-	return nil
+	return result, nil
 }

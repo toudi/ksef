@@ -1,19 +1,24 @@
 package uploader
 
 import (
-	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
+	v2 "ksef/internal/client/v2"
+	sessionTypes "ksef/internal/client/v2/session/types"
+	"ksef/internal/invoicesdb/uploader/config"
 
 	"github.com/spf13/viper"
 )
 
 type Uploader struct {
-	Queue                     map[monthlyregistry.InvoiceFormCode][]string
-	registryByInvoiceChecksum map[string]*monthlyregistry.Registry
+	Queue sessionTypes.UploadPayload
+	// internal pointers
+	ksefClient *v2.APIClient
+	config     config.UploaderConfig
 }
 
-func NewUploader(vip *viper.Viper) *Uploader {
+func NewUploader(vip *viper.Viper, config config.UploaderConfig, ksefClient *v2.APIClient) *Uploader {
 	return &Uploader{
-		Queue:                     make(map[monthlyregistry.InvoiceFormCode][]string),
-		registryByInvoiceChecksum: make(map[string]*monthlyregistry.Registry),
+		Queue:      make(sessionTypes.UploadPayload),
+		config:     config,
+		ksefClient: ksefClient,
 	}
 }

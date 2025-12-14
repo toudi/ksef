@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"ksef/internal/certsdb"
+	"ksef/internal/client/v2/session/types"
 	"ksef/internal/encryption"
 	HTTP "ksef/internal/http"
 	"ksef/internal/logging"
-	"ksef/internal/registry"
 	"net/http"
 )
 
@@ -17,7 +17,7 @@ const (
 )
 
 type uploadSessionRequest struct {
-	FormCode   registry.InvoiceFormCode     `json:"formCode"`
+	FormCode   types.InvoiceFormCode        `json:"formCode"`
 	Encryption encryption.CipherHTTPRequest `json:"encryption"`
 }
 type uploadSessionResponse struct {
@@ -31,7 +31,7 @@ type uploadSession struct {
 	seiRefNumbers map[string]string // mapping between local filename and KSeF reference numbers
 }
 
-func (s *Session) initialize(ctx context.Context, invoiceFormCode registry.InvoiceFormCode) (*uploadSession, error) {
+func (s *Session) initialize(ctx context.Context, invoiceFormCode types.InvoiceFormCode) (*uploadSession, error) {
 	// prepare encryption data
 	var err error
 
@@ -78,15 +78,34 @@ func (s *Session) initialize(ctx context.Context, invoiceFormCode registry.Invoi
 	}, nil
 }
 
-func (s *Session) uploadInvoicesForForm(ctx context.Context, invoiceFormCode registry.InvoiceFormCode, files []registry.CollectionFile) error {
+func (s *Session) uploadInvoicesForForm(
+	ctx context.Context,
+	invoiceFormCode types.InvoiceFormCode,
+	files []types.Invoice,
+) (*types.UploadSessionResult, error) {
 	us, err := s.initialize(ctx, invoiceFormCode)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	for i, file := range files {
-		if err = s.uploadFile(ctx, us, file.Filename); err != nil {
+		if err = s.uploadFile(ctx, us, file); err != nil {
 			logging.InteractiveLogger.Error("error uploading invoice", "counter", i, "error", err)
 		}
 	}
-	return s.closeUploadSession(ctx, us)
+	if err = s.closeUploadSession(ctx, us); err != nil {
+		return nil, err
+	}
+	// collect reference numbers and/or potential errors
+	var result = &types.UploadSessionResult{
+		SessionID: us.refNo,
+		Invoices:  make([]types.InvoiceUploadResult, 0, len(files)),
+	}
+	for _, file := range files {
+		result.Invoices = append(result.Invoices, types.InvoiceUploadResult{
+			Checksum:  file.Checksum,
+			KSeFRefNo: us.seiRefNumbers[file.Filename],
+		})
+	}
+
+	return result, nil
 }

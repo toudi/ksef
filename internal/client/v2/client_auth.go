@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"ksef/internal/client/v2/auth"
+	"ksef/internal/http"
 	"time"
 )
 
@@ -53,4 +54,10 @@ func (c *APIClient) StartTokenManager() error {
 
 	go c.tokenManager.Run()
 	return nil
+}
+
+// yeah, I should probably rewrite it at some point.
+// don't have the time now
+func (c *APIClient) GetAuthedHTTPClient() *http.Client {
+	return c.authenticatedHTTPClient()
 }

@@ -33,15 +33,13 @@ func init() {
 	flagSet := statusCommand.Flags()
 	cobra.MarkFlagRequired(flagSet, flagNameRegistry)
 
-	upoDownloaderParams.Format = upo.UPOFormatPDF
-
 	flagSet.StringVarP(&registryPath, flagNameRegistry, "r", "", "ścieżka do katalogu z rejestrem")
 	flagSet.StringVarP(&upoDownloaderParams.Path, "output", "o", "", "ścieżka do zapisu UPO (domyślnie katalog rejestru + {nrRef}.pdf)")
 	flagSet.BoolVarP(&upoDownloaderParams.Mkdir, "m", "", false, "stwórz ktalog do zapisu, jeśli wskazany nie istnieje")
-	flagSet.BoolFunc("xml", "zapis UPO jako plik XML", func(s string) error {
-		upoDownloaderParams.Format = upo.UPOFormatXML
-		return nil
-	})
+	// flagSet.BoolFunc("xml", "zapis UPO jako plik XML", func(s string) error {
+	// 	upoDownloaderParams.Format = upo.UPOFormatXML
+	// 	return nil
+	// })
 	flagSet.DurationP("wait", "w", time.Duration(0), "czekaj na przetworzenie sesji (tryb synchroniczny)")
 	flagSet.Lookup("wait").NoOptDefVal = "5m"
 

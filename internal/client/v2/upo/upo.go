@@ -10,23 +10,15 @@ import (
 	"time"
 )
 
-type UPODownloadFormat string
-
-const (
-	UPOFormatPDF UPODownloadFormat = "pdf"
-	UPOFormatXML UPODownloadFormat = "xml"
-)
-
 type UPODownloadPage struct {
-	ReferenceNumber string `json:"referenceNumber"`
-	DownloadUrl     string `json:"downloadUrl"`
+	ReferenceNumber string `json:"referenceNumber" yaml:"ref-no"`
+	DownloadUrl     string `json:"downloadUrl" yaml:"downloadUrl"`
 }
 
 type UPODownloaderParams struct {
-	Path   string
-	Mkdir  bool
-	Format UPODownloadFormat
-	Wait   time.Duration
+	Path  string
+	Mkdir bool
+	Wait  time.Duration
 }
 
 // prawdopodobny adres:
@@ -44,16 +36,20 @@ func NewDownloader(httpClient *HTTP.Client, params UPODownloaderParams) *UPODown
 	}
 }
 
-func (ud *UPODownloader) Download(ctx context.Context, uploadSessionId string, pages []UPODownloadPage, success func(upoRefNo string)) error {
+func (ud *UPODownloader) Download(
+	ctx context.Context,
+	uploadSessionId string,
+	pages []UPODownloadPage,
+	success func(upoXMLFilename string),
+) error {
 	// outputPath
 	_, err := utils.ResolveFilepath(
 		utils.FilepathResolverConfig{
 			Path:  ud.params.Path,
 			Mkdir: ud.params.Mkdir,
 			DefaultFilename: fmt.Sprintf(
-				"%s.%s",
+				"%s.xml",
 				uploadSessionId,
-				ud.params.Format,
 			),
 		},
 	)
@@ -66,7 +62,8 @@ func (ud *UPODownloader) Download(ctx context.Context, uploadSessionId string, p
 	}
 
 	for _, page := range pages {
-		outputFile, err := os.Create(filepath.Join(ud.params.Path, page.ReferenceNumber) + ".xml")
+		outputFileName := filepath.Join(ud.params.Path, page.ReferenceNumber) + ".xml"
+		outputFile, err := os.Create(outputFileName)
 		if err != nil {
 			return err
 		}
@@ -79,7 +76,7 @@ func (ud *UPODownloader) Download(ctx context.Context, uploadSessionId string, p
 		}
 		outputFile.Close()
 
-		success(page.ReferenceNumber)
+		success(outputFileName)
 	}
 
 	return nil

@@ -12,10 +12,10 @@ type SessionUploadPayload struct {
 	EncryptedInvoiceHash    string `json:"encryptedInvoiceHash"`
 	EncryptedInvoiceSize    int    `json:"encryptedInvoiceSize"`
 	EncryptedInvoiceContent string `json:"encryptedInvoiceContent"`
-	OfflineMode             bool   `json:"offlineMode"` // TODO: unsupported for now
+	OfflineMode             bool   `json:"offlineMode"`
 }
 
-func (s *Session) getUploadPayload(us *uploadSession, filename string) (*SessionUploadPayload, error) {
+func (s *Session) getUploadPayload(us *uploadSession, filename string, offline bool) (*SessionUploadPayload, error) {
 	var payload SessionUploadPayload
 	var err error
 
@@ -36,6 +36,7 @@ func (s *Session) getUploadPayload(us *uploadSession, filename string) (*Session
 	if payload.EncryptedInvoiceHash, err = utils.Sha256Base64(encryptedInvoiceBytes); err != nil {
 		return nil, err
 	}
+	payload.OfflineMode = offline
 
 	return &payload, nil
 }

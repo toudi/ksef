@@ -2,6 +2,7 @@ package invoices
 
 import (
 	"ksef/cmd/ksef/commands/client"
+	"ksef/cmd/ksef/flags"
 	"ksef/internal/invoicesdb"
 	invoicesdbconfig "ksef/internal/invoicesdb/config"
 
@@ -13,10 +14,13 @@ var uploadCommand = &cobra.Command{
 	Use:   "upload",
 	Short: "wyślij faktury do KSeF",
 	RunE:  uploadInvoicesRun,
+	Args:  cobra.MaximumNArgs(1),
 }
 
 func init() {
 	invoicesdbconfig.UploaderFlags(uploadCommand.Flags())
+	flags.NIP(uploadCommand.Flags())
+	uploadCommand.MarkFlagRequired(flags.FlagNameNIP)
 	InvoicesCommand.AddCommand(uploadCommand)
 }
 

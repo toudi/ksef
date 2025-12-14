@@ -3,6 +3,7 @@ package monthlyregistry
 import (
 	"encoding/xml"
 	"errors"
+	sessionTypes "ksef/internal/client/v2/session/types"
 	"os"
 )
 
@@ -12,11 +13,11 @@ var (
 )
 
 type XMLInvoice struct {
-	XMLName        xml.Name        `xml:"Faktura"`
-	HeaderFormCode InvoiceFormCode `xml:"Naglowek>KodFormularza"`
-	Issuer         string          `xml:"Podmiot1>DaneIdentyfikacyjne>NIP"`
-	Issued         string          `xml:"Fa>P_1"`
-	InvoiceNumber  string          `xml:"Fa>P_2"`
+	XMLName        xml.Name                     `xml:"Faktura"`
+	HeaderFormCode sessionTypes.InvoiceFormCode `xml:"Naglowek>KodFormularza"`
+	Issuer         string                       `xml:"Podmiot1>DaneIdentyfikacyjne>NIP"`
+	Issued         string                       `xml:"Fa>P_1"`
+	InvoiceNumber  string                       `xml:"Fa>P_2"`
 }
 
 func (r *Registry) getInvoiceMetadata(input *Invoice, ordNo int) (*InvoiceMetadata, error) {
@@ -29,7 +30,6 @@ func (r *Registry) getInvoiceMetadata(input *Invoice, ordNo int) (*InvoiceMetada
 			FormCode: xmlInvoice.HeaderFormCode,
 			Invoice:  input,
 			Filename: invoiceFilename,
-			Registry: r, // we add pointer to the registry so that the uploader can later find the invoice and save it's reference number
 		}, nil
 	}
 }

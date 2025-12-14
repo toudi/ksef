@@ -26,6 +26,7 @@ func (r *Registry) AddInvoice(
 			Contents:       invoiceContents,
 			Checksum:       checksum,
 			GenerationTime: parsed.Invoice.GenerationTime,
+			Filename:       fileName,
 		},
 	)
 	return nil

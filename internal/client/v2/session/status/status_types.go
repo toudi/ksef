@@ -18,3 +18,7 @@ type StatusResponse struct {
 	SuccessfulInvoiceCount int `json:"successfulInvoiceCount"`
 	FailedInvoiceCount     int `json:"failedInvoiceCount"`
 }
+
+func (s *StatusResponse) IsProcessed() bool {
+	return s.Status.Code >= 200
+}

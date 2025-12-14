@@ -3,7 +3,7 @@ package batch
 import (
 	"fmt"
 	"ksef/internal/client/v2/session/batch/archive"
-	"ksef/internal/registry"
+	"ksef/internal/client/v2/session/types"
 	"path"
 	"path/filepath"
 )
@@ -13,7 +13,10 @@ const (
 	maxArchivePartSize int = 104_857_600   // 100 MiB
 )
 
-func (b *Session) generateMetadataByFormCode(formCode registry.InvoiceFormCode, files []registry.CollectionFile) (*batchSessionInitRequest, error) {
+func (b *Session) generateMetadataByFormCode(
+	formCode types.InvoiceFormCode,
+	files []types.Invoice,
+) (*batchSessionInitRequest, error) {
 	var err error
 	var batchMetadataRequest = &batchSessionInitRequest{
 		FormCode: formCode,
@@ -21,7 +24,7 @@ func (b *Session) generateMetadataByFormCode(formCode registry.InvoiceFormCode, 
 
 	var randomPart = "abcdef" // it is actually going to be random, just trying to figure out where to initiate it
 	var basename = fmt.Sprintf("%s-batch-%s", formCode.SchemaVersion, randomPart)
-	_archive, err := archive.New(path.Join(b.registry.Dir, basename), maxArchiveSize)
+	_archive, err := archive.New(path.Join(b.workDir, basename), maxArchiveSize)
 	if err != nil {
 		return nil, err
 	}
@@ -34,6 +37,15 @@ func (b *Session) generateMetadataByFormCode(formCode registry.InvoiceFormCode, 
 				// they would exceed the limits
 				break
 			}
+		}
+		// yeah, that's a bit of a problem with using batch sessions.
+		// I mean theoretically if we'd like to be super pure about it,
+		// we should split the payload into separate sessions - these marked
+		// with offline mode and this unmarked.
+		// as it is the case with multiple modules in this project -
+		// - desperate times call for desperate measures.
+		if file.Offline {
+			batchMetadataRequest.Offline = true
 		}
 	}
 

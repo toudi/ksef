@@ -2,9 +2,8 @@ package interactive
 
 import (
 	"context"
+	sessionTypes "ksef/internal/client/v2/session/types"
 	HTTP "ksef/internal/http"
-	"ksef/internal/registry/types"
-	"ksef/internal/utils"
 	"net/http"
 )
 
@@ -12,8 +11,12 @@ type InvoiceUploadResponse struct {
 	ReferenceNumber string `json:"referenceNumber"`
 }
 
-func (s *Session) uploadFile(ctx context.Context, us *uploadSession, filename string) error {
-	payload, err := s.getUploadPayload(us, filename)
+func (s *Session) uploadFile(
+	ctx context.Context,
+	us *uploadSession,
+	file sessionTypes.Invoice,
+) error {
+	payload, err := s.getUploadPayload(us, file.Filename, file.Offline)
 	if err != nil {
 		return err
 	}
@@ -33,15 +36,7 @@ func (s *Session) uploadFile(ctx context.Context, us *uploadSession, filename st
 		return err
 	}
 
-	us.seiRefNumbers[filename] = resp.ReferenceNumber
-
-	// notify invoice registry that we've uploaded `filename` within `us.refNo` upload session and that it has
-	// received `resp.ReferenceNumber`. This will be important when we'll want to retrieve UPO's
-	s.registry.SetUploadResult(us.refNo, &types.InvoiceUploadResult{
-		Filename: filename,
-		Checksum: utils.Base64ToHex(payload.InvoiceHash),
-		SeiRefNo: resp.ReferenceNumber,
-	})
+	us.seiRefNumbers[file.Filename] = resp.ReferenceNumber
 
 	return nil
 }

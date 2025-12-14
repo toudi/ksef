@@ -9,7 +9,11 @@ import (
 
 const endpointSessionStatus = "/api/v2/sessions/%s"
 
-func CheckSessionStatus(ctx context.Context, httpClient *HTTP.Client, sessionId string) (*StatusResponse, error) {
+func CheckSessionStatus(
+	ctx context.Context,
+	httpClient *HTTP.Client,
+	sessionId string,
+) (*StatusResponse, error) {
 	var resp StatusResponse
 
 	_, err := httpClient.Request(

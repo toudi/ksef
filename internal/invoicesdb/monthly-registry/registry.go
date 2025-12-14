@@ -30,16 +30,17 @@ func OpenOrCreate(dir string, certsDB *certsdb.CertificatesDB, vip *viper.Viper)
 		return nil, errOpeningRegistryFile
 	}
 	var reg = &Registry{
-		invoices: make([]*Invoice, 0),
-		certsDB:  certsDB,
-		vip:      vip,
-		dir:      dir,
+		invoices:       make([]*Invoice, 0),
+		uploadSessions: make([]*UploadSession, 0),
+		certsDB:        certsDB,
+		vip:            vip,
+		dir:            dir,
 	}
 
 	if exists {
 		// if the file exists, then we need to read it's contents
 		defer regFile.Close()
-		if err = utils.ReadYAML(regFile, &reg.invoices); err != nil {
+		if err = utils.ReadYAML(regFile, &reg); err != nil {
 			return nil, errors.Join(errReadingRegistryContents, err)
 		}
 	}
@@ -61,7 +62,7 @@ func OpenForMonth(prefix string, month time.Time) (*Registry, error) {
 	)
 
 	regFile, exists, err := utils.FileExists(regFilename)
-	if err != nil && !os.IsNotExist(err) {
+	if err != nil && !os.IsNotExist(err) || !exists {
 		return nil, err
 	}
 

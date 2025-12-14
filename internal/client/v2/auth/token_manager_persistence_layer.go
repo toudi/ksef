@@ -91,6 +91,11 @@ func (tm *TokenManager) restoreTokens(ctx context.Context) error {
 		if tm.vip.GetBool(FlagExitAfterPersistingToken) {
 			tm.finished = true
 		}
+		go func() {
+			tm.updateChannel <- TokenUpdate{
+				Token: sessionTokens.AuthorizationToken.Token,
+			}
+		}()
 		return nil
 	}
 	logger.Debug("tokeny nie mogą być użyte ponownie - usuwam z pęku kluczy")
