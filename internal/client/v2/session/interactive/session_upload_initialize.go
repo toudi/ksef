@@ -9,6 +9,7 @@ import (
 	HTTP "ksef/internal/http"
 	"ksef/internal/logging"
 	"net/http"
+	"time"
 )
 
 const (
@@ -95,17 +96,9 @@ func (s *Session) uploadInvoicesForForm(
 	if err = s.closeUploadSession(ctx, us); err != nil {
 		return nil, err
 	}
-	// collect reference numbers and/or potential errors
-	var result = &types.UploadSessionResult{
-		SessionID: us.refNo,
-		Invoices:  make([]types.InvoiceUploadResult, 0, len(files)),
-	}
-	for _, file := range files {
-		result.Invoices = append(result.Invoices, types.InvoiceUploadResult{
-			Checksum:  file.Checksum,
-			KSeFRefNo: us.seiRefNumbers[file.Filename],
-		})
-	}
 
-	return result, nil
+	return &types.UploadSessionResult{
+		Timestamp: time.Now(),
+		SessionID: us.refNo,
+	}, nil
 }

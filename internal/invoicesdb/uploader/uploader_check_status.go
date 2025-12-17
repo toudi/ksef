@@ -12,9 +12,8 @@ import (
 func (u *Uploader) checkUploadSessionStatus(
 	ctx context.Context,
 	result []*sessionTypes.UploadSessionResult,
+	statusChecker *status.SessionStatusChecker,
 ) (finished bool, err error) {
-	var authedClient = u.ksefClient.GetAuthedHTTPClient()
-
 	var processedSessions int
 	for _, session := range result {
 		if session.Processed {
@@ -22,13 +21,17 @@ func (u *Uploader) checkUploadSessionStatus(
 			continue
 		}
 
-		sessionStatus, err := status.CheckSessionStatus(ctx, authedClient, session.SessionID)
+		sessionStatus, err := statusChecker.CheckSessionStatus(ctx, session.SessionID)
 		if err != nil {
 			return true, err
 		}
 		session.Processed = sessionStatus.IsProcessed()
 		if session.Processed {
 			session.Status = sessionStatus
+			session.Invoices, err = statusChecker.GetInvoiceList(ctx, session.SessionID)
+			if err != nil {
+				return true, err
+			}
 		}
 	}
 	return processedSessions == len(result), nil

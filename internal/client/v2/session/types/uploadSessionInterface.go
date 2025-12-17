@@ -3,17 +3,13 @@ package types
 import (
 	"context"
 	"ksef/internal/client/v2/session/status"
+	"time"
 )
 
-type InvoiceUploadResult struct {
-	Checksum  string
-	KSeFRefNo string
-	Errors    []string
-}
-
 type UploadSessionResult struct {
+	Timestamp time.Time
 	SessionID string
-	Invoices  []InvoiceUploadResult
+	Invoices  []status.InvoiceInfo
 	Status    *status.StatusResponse
 	Processed bool
 }

@@ -30,7 +30,7 @@ func (r *InvoiceRegistry) SetUploadResult(
 
 func (r *InvoiceRegistry) MarkFailedInvoices(
 	uploadSessionRefNo string,
-	failedInvoices []statusTypes.FailedInvoiceDetails,
+	failedInvoices []statusTypes.InvoiceInfo,
 ) error {
 	sessionUploadStatus, exists := r.UploadSessions[uploadSessionRefNo]
 	if !exists {
@@ -38,8 +38,9 @@ func (r *InvoiceRegistry) MarkFailedInvoices(
 	}
 
 	for _, uploadResult := range failedInvoices {
-		sessionUploadStatus.Invoices[uploadResult.OrdinalNumber].Failed = true
-		sessionUploadStatus.Invoices[uploadResult.OrdinalNumber].Errors = uploadResult.Details
+		// ordinal numbers are 1-based
+		sessionUploadStatus.Invoices[uploadResult.OrdinalNumber-1].Failed = true
+		sessionUploadStatus.Invoices[uploadResult.OrdinalNumber-1].Errors = uploadResult.Status.Details
 	}
 
 	return nil

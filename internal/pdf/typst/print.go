@@ -6,6 +6,7 @@ import (
 	"ksef/internal/utils"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"text/template"
 )
@@ -15,6 +16,7 @@ func (tp *typstPrinter) printTemplate(
 	templateName string,
 	templateVars any,
 	output string,
+	copy2tmp ...string,
 ) (err error) {
 	tmpDir, err := os.MkdirTemp(tp.cfg.Workdir, "")
 	if err != nil {
@@ -25,6 +27,14 @@ func (tp *typstPrinter) printTemplate(
 		return err
 	}
 	defer tmpFile.Close()
+
+	for _, file := range copy2tmp {
+		if err = utils.CopyFile(
+			file, filepath.Join(tmpDir, filepath.Base(file)),
+		); err != nil {
+			return err
+		}
+	}
 
 	if err = tmpl.ExecuteTemplate(tmpFile, templateName, templateVars); err != nil {
 		return err
@@ -41,7 +51,10 @@ func (tp *typstPrinter) printTemplate(
 
 	cmd := exec.Command(
 		binary,
-		"compile", tmpFile.Name(),
+		"compile",
+		"--root",
+		tmpDir,
+		tmpFile.Name(),
 	)
 
 	var stdErrBuffer bytes.Buffer

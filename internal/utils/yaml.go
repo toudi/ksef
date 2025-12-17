@@ -8,7 +8,11 @@ import (
 )
 
 func ReadYAML(reader io.Reader, dest any) error {
-	return yaml.NewDecoder(reader).Decode(dest)
+	err := yaml.NewDecoder(reader).Decode(dest)
+	if err == io.EOF {
+		return nil
+	}
+	return err
 }
 
 func SaveYAML(data any, dest string) error {

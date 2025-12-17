@@ -43,8 +43,7 @@ type UploadSession struct {
 }
 
 type Registry struct {
-	invoices       []*Invoice       `yaml:"invoices"`
-	uploadSessions []*UploadSession `yaml:"upload-sessions,omitempty"`
+	invoices []*Invoice `yaml:"invoices"`
 
 	dir     string
 	certsDB *certsdb.CertificatesDB

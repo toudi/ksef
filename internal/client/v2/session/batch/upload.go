@@ -8,6 +8,7 @@ import (
 	"ksef/internal/encryption"
 	HTTP "ksef/internal/http"
 	baseHTTP "net/http"
+	"time"
 )
 
 const (
@@ -93,6 +94,7 @@ func (b *Session) uploadInvoicesForForm(
 
 	// TODO: implement actual uploading
 	return &types.UploadSessionResult{
+		Timestamp: time.Now(),
 		SessionID: resp.ReferenceNumber,
 	}, nil
 }

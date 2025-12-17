@@ -1,6 +1,7 @@
 package invoices
 
 import (
+	"errors"
 	"ksef/cmd/ksef/commands/client"
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/invoicesdb"
@@ -18,6 +19,11 @@ var importCommand = &cobra.Command{
 	RunE:  importRun,
 }
 
+var (
+	errClientInit     = errors.New("error during client initialization")
+	errInvoicesDBInit = errors.New("error during invoicesDB init")
+)
+
 func init() {
 	invoicesdbconfig.ImportFlags(importCommand.Flags())
 	inputprocessors.GeneratorFlags(importCommand.Flags())
@@ -29,13 +35,17 @@ func importRun(cmd *cobra.Command, args []string) error {
 	vip := viper.GetViper()
 	ksefClient, err := client.InitClient(cmd, v2.WithoutTokenManager())
 	if err != nil {
-		return err
+		return errors.Join(errClientInit, err)
 	}
 	defer ksefClient.Close()
 	// initialize the invoicesdb
-	invoicesDB, err := invoicesdb.NewInvoicesDB(vip, invoicesdb.WithKSeFClient(ksefClient))
+	invoicesDB, err := invoicesdb.NewInvoicesDB(
+		vip,
+		invoicesdb.WithKSeFClient(ksefClient),
+		invoicesdb.WithoutInitializingPrefix(),
+	)
 	if err != nil {
-		return err
+		return errors.Join(errInvoicesDBInit, err)
 	}
 	return invoicesDB.Import(
 		cmd.Context(),

@@ -26,7 +26,15 @@ func (u *Uploader) UploadInvoices(ctx context.Context) ([]*sessionTypes.UploadSe
 
 // this method does the actual work of uploading invoices to KSeF
 func (u *Uploader) uploadInvoices(ctx context.Context) ([]*sessionTypes.UploadSessionResult, error) {
-	uploadSession, err := u.ksefClient.InteractiveSession()
+	var uploadSession sessionTypes.UploadSession
+	var err error
+
+	if !u.config.BatchSession {
+		uploadSession, err = u.ksefClient.InteractiveSession()
+	} else {
+		uploadSession, err = u.ksefClient.BatchSession("/tmp")
+	}
+
 	if err != nil {
 		return nil, err
 	}

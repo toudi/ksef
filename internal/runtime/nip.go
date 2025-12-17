@@ -18,6 +18,12 @@ func GetNIP(vip *viper.Viper) (string, error) {
 	return rawNIP, nipValidator(rawNIP)
 }
 
+func SetNIPIfUnset(vip *viper.Viper, nip string) {
+	if !vip.IsSet(cfgKeyNip) {
+		SetNIP(vip, nip)
+	}
+}
+
 func SetNIP(vip *viper.Viper, nip string) {
 	vip.Set(cfgKeyNip, nip)
 }

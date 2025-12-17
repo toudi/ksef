@@ -3,15 +3,17 @@ package invoicesdb
 import (
 	"context"
 	"errors"
-	"fmt"
 	"ksef/internal/client/v2/upo"
 	"ksef/internal/http"
 	"ksef/internal/invoicesdb/config"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	"ksef/internal/invoicesdb/uploader"
 	"ksef/internal/logging"
+	"ksef/internal/pdf"
+	"ksef/internal/pdf/printer"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -22,8 +24,6 @@ func (i *InvoicesDB) UploadOutstandingInvoices(
 	vip *viper.Viper,
 ) error {
 	uploaderConfig := config.GetUploaderConfig(vip)
-	fmt.Printf("uploaderConfig: %+v\n", uploaderConfig)
-	return errors.New("celowe")
 
 	var uploader = uploader.NewUploader(i.vip, uploaderConfig, i.ksefClient)
 	// in order to handle the 31st day / 1st day problem, let's just
@@ -44,10 +44,8 @@ func (i *InvoicesDB) UploadOutstandingInvoices(
 	}
 
 	for _, month := range months {
-		fmt.Printf("month: %v\n", month)
 		// try to initialize monthly registry for the given month
 		registry, err := monthlyregistry.OpenForMonth(i.prefix, month)
-		fmt.Printf("registry: %v; err: %v\n", registry, err)
 		if err != nil && os.IsNotExist(err) {
 			logging.InvoicesDBLogger.Debug("registry does not exist; no-op", "dir", path.Join(i.prefix, month.Format("2006/01")))
 			continue
@@ -65,8 +63,6 @@ func (i *InvoicesDB) UploadOutstandingInvoices(
 		}
 	}
 
-	logging.UploadLogger.Debug("invoiceChecksumToRegistryMapping", "reg", invoiceChecksumToRegistryMapping)
-
 	if len(uploader.Queue) == 0 {
 		logging.InvoicesDBLogger.Info("no unsynced invoices")
 		return nil
@@ -77,6 +73,10 @@ func (i *InvoicesDB) UploadOutstandingInvoices(
 		return errors.Join(errUnableToUpload, uploadErr)
 	}
 
+	// with the interactive session, Update will actually already take care of
+	// assigning KSeFRefNo to each of the invoices. However,
+	// in batch mode, it will simply populate the timestamps and upload session
+	// ref no's and nothing else
 	if err = uploadSessionRegistry.Update(
 		uploadResult,
 		invoiceChecksumToRegistryMapping,
@@ -89,7 +89,8 @@ func (i *InvoicesDB) UploadOutstandingInvoices(
 			return err
 		}
 
-		if err = uploadSessionRegistry.UpdateUploadedInvoicesResult(
+		// now the uploadResult will be updated with any potential errors and so on.
+		if err = uploadSessionRegistry.Update(
 			uploadResult, invoiceChecksumToRegistryMapping,
 		); err != nil {
 			return err
@@ -101,6 +102,15 @@ func (i *InvoicesDB) UploadOutstandingInvoices(
 			upoDestPath, err := i.getUPODownloadPath(today)
 			if err != nil {
 				return err
+			}
+
+			var printer printer.PDFPrinter
+
+			if uploaderConfig.UPODownloader.ConvertToPDF {
+				printer, err = pdf.GetLocalPrintingEngine()
+				if err != nil {
+					return err
+				}
 			}
 
 			upoDownloader := upo.NewDownloader(
@@ -118,7 +128,11 @@ func (i *InvoicesDB) UploadOutstandingInvoices(
 					uploadSession.Status.Upo.Pages,
 					func(upoXMLFilename string) {
 						if uploaderConfig.UPODownloader.ConvertToPDF {
-							fmt.Printf("convert %s to PDF\n", upoXMLFilename)
+							if err = printer.PrintUPO(
+								upoXMLFilename, strings.Replace(upoXMLFilename, ".xml", ".pdf", 1),
+							); err != nil {
+								logging.PDFRendererLogger.Error("błąd konwersji UPO do PDF", "src", upoXMLFilename, "err", err)
+							}
 						}
 					},
 				); err != nil {

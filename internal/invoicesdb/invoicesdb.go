@@ -27,6 +27,14 @@ type InvoicesDB struct {
 	prefix string
 	// gateway client
 	ksefClient *v2.APIClient
+	// internal flags
+	// prefix initialization is important during upload / sync commands
+	// because we have to narrow down the invoice db to a single NIP passed
+	// by the user. However, for import command we can rely on the NIP retrieved
+	// from the invoice itself. Because we do not pass nip from the command line
+	// and we do not actually use idb.prefix for anything during import - we can
+	// safely skip this.
+	skipPrefixInitialization bool
 }
 
 func NewInvoicesDB(vip *viper.Viper, initializers ...func(i *InvoicesDB)) (*InvoicesDB, error) {
@@ -46,12 +54,14 @@ func NewInvoicesDB(vip *viper.Viper, initializers ...func(i *InvoicesDB)) (*Invo
 		initializer(idb)
 	}
 
-	prefix, err := idb.getMonthlyRegistryPrefix()
-	if err != nil {
-		return nil, err
-	}
+	if !idb.skipPrefixInitialization {
+		prefix, err := idb.getMonthlyRegistryPrefix()
+		if err != nil {
+			return nil, err
+		}
 
-	idb.prefix = prefix
+		idb.prefix = prefix
+	}
 
 	return idb, nil
 }
@@ -59,6 +69,12 @@ func NewInvoicesDB(vip *viper.Viper, initializers ...func(i *InvoicesDB)) (*Invo
 func WithKSeFClient(client *v2.APIClient) func(idb *InvoicesDB) {
 	return func(idb *InvoicesDB) {
 		idb.ksefClient = client
+	}
+}
+
+func WithoutInitializingPrefix() func(idb *InvoicesDB) {
+	return func(idb *InvoicesDB) {
+		idb.skipPrefixInitialization = true
 	}
 }
 

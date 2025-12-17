@@ -2,12 +2,14 @@ package sessionregistry
 
 import (
 	"errors"
+	"ksef/internal/client/v2/session/status"
 	"ksef/internal/client/v2/upo"
 	"ksef/internal/logging"
 	"ksef/internal/utils"
 	"log/slog"
 	"os"
 	"path"
+	"time"
 )
 
 const (
@@ -21,17 +23,19 @@ var (
 
 type Invoice struct {
 	RefNo     string   `yaml:"ref-no"`
-	KSeFRefNo string   `yaml:"ksef-ref-no"`
-	Filename  string   `yaml:"filename"`
+	KSeFRefNo string   `yaml:"ksef-ref-no,omitempty"`
+	Filename  string   `yaml:"filename,omitempty,omitzero"`
 	Checksum  string   `yaml:"checksum"`
-	Errors    []string `yaml:"errors,omitempty"`
+	Errors    []string `yaml:"errors,omitempty,omitzero"`
 }
 
 type UploadSession struct {
-	RefNo     string                `yaml:"ref-no"`
-	Processed bool                  `yaml:"processed,omitempty"`
-	Invoices  []*Invoice            `yaml:"invoices"`
-	UPO       []upo.UPODownloadPage `yaml:"upo,omitempty"`
+	Timestamp time.Time              `yaml:"timestamp"`
+	RefNo     string                 `yaml:"ref-no"`
+	Processed bool                   `yaml:"processed,omitempty"`
+	Status    *status.StatusResponse `yaml:"status,omitempty"`
+	Invoices  []*Invoice             `yaml:"invoices"`
+	UPO       []upo.UPODownloadPage  `yaml:"upo,omitempty,omitzero"`
 }
 
 type Registry struct {

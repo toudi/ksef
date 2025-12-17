@@ -10,13 +10,13 @@ type StatusResponse struct {
 	Status struct {
 		Code        int    `json:"code"`
 		Description string `json:"description"`
-	} `json:"status"`
+	} `json:"status" yaml:"status,omitempty"`
 	Upo struct {
 		Pages []upo.UPODownloadPage `json:"pages"`
-	} `json:"upo"`
-	InvoiceCount           int `json:"invoiceCount"`
-	SuccessfulInvoiceCount int `json:"successfulInvoiceCount"`
-	FailedInvoiceCount     int `json:"failedInvoiceCount"`
+	} `json:"upo" yaml:"-"`
+	InvoiceCount           int `json:"invoiceCount" yaml:"invoice-count"`
+	SuccessfulInvoiceCount int `json:"successfulInvoiceCount" yaml:"successful-invoice-count"`
+	FailedInvoiceCount     int `json:"failedInvoiceCount" yaml:"failed-invoice-count"`
 }
 
 func (s *StatusResponse) IsProcessed() bool {

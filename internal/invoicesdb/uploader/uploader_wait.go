@@ -3,6 +3,7 @@ package uploader
 import (
 	"context"
 	"errors"
+	"ksef/internal/client/v2/session/status"
 	sessionTypes "ksef/internal/client/v2/session/types"
 	"time"
 )
@@ -25,12 +26,14 @@ func (u *Uploader) WaitForResult(
 	var finished bool = false
 	var err error
 
+	var statusChecker *status.SessionStatusChecker = u.ksefClient.SessionStatusChecker()
+
 	for !finished {
 		select {
 		case <-timeoutCtx.Done():
 			return nil, errTimeoutWaitingForStatus
 		case <-pollingTicker.C:
-			finished, err = u.checkUploadSessionStatus(ctx, result)
+			finished, err = u.checkUploadSessionStatus(ctx, result, statusChecker)
 			if err != nil {
 				return nil, errors.Join(errCheckingStatus, err)
 			}
