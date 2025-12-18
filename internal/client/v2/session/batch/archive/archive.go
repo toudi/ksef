@@ -12,9 +12,9 @@ type Archive struct {
 	outputPath string
 	writer     *zip.Writer
 	// current size of the archive
-	size int
+	size int64
 	// maximum allowed archive size
-	maxFileSize int
+	maxFileSize int64
 	// where the target zip archive should be created in
 	outputDir string
 	// base name of the file, without .zip extension
@@ -24,7 +24,7 @@ type Archive struct {
 	partWriter *os.File
 }
 
-func New(basename string, maxFileSize int) (*Archive, error) {
+func New(basename string, maxFileSize int64) (*Archive, error) {
 	outputFilename := basename + ".zip"
 	output, err := os.Create(outputFilename)
 	if err != nil {

@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	maxArchiveSize     int = 5_368_709_120 // 5 GiB
-	maxArchivePartSize int = 104_857_600   // 100 MiB
+	maxArchiveSize     int64 = 5_368_709_120 // 5 GiB
+	maxArchivePartSize int   = 104_857_600   // 100 MiB
 )
 
 func (b *Session) generateMetadataByFormCode(

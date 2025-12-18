@@ -17,7 +17,7 @@ func (a *Archive) AddFile(fileName string) error {
 		return err
 	}
 
-	if (a.size + int(fileInfo.Size())) > a.maxFileSize {
+	if (a.size + int64(fileInfo.Size())) > a.maxFileSize {
 		return ErrExeedsMaxSize
 	}
 
