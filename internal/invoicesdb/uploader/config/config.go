@@ -1,17 +1,24 @@
 package config
 
 import (
-	"time"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
-type UPODownloaderConfig struct {
-	Enabled      bool
-	ConvertToPDF bool
-	Timeout      time.Duration
-}
+const (
+	cfgKeyUseBatchSession = "upload.batch"
+)
+
 type UploaderConfig struct {
-	WaitForStatus bool
-	WaitTimeout   time.Duration
-	BatchSession  bool
-	UPODownloader UPODownloaderConfig
+	BatchSession bool
+}
+
+func UploaderFlags(flagSet *pflag.FlagSet) {
+	flagSet.Bool(cfgKeyUseBatchSession, false, "użyj sesji wsadowej (batch). Domyślnie - klient używa sesji interaktywnej")
+}
+
+func GetUploaderConfig(vip *viper.Viper) UploaderConfig {
+	return UploaderConfig{
+		BatchSession: vip.GetBool(cfgKeyUseBatchSession),
+	}
 }

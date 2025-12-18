@@ -8,11 +8,25 @@ import (
 	"ksef/internal/runtime"
 	"ksef/internal/sei"
 	"net/url"
+	"time"
 )
 
 const (
 	contextIdentifierNIP = "Nip"
 )
+
+func generateInvoiceQRCodeInner(env string, issuerNIP string, issued time.Time, checksumBytes []byte) string {
+	qrcode, _ := url.JoinPath(
+		"https://"+env,
+		"client-app",
+		"invoice",
+		issuerNIP,
+		issued.Format("02-01-2006"),
+		base64.URLEncoding.EncodeToString(checksumBytes),
+	)
+
+	return qrcode
+}
 
 // https://github.com/CIRFMF/ksef-docs/blob/main/kody-qr.md#1-kodi--weryfikacja-i-pobieranie-faktury
 func (i *Invoice) generateInvoiceQRCode(env runtime.Gateway, parsed *sei.ParsedInvoice) (string, error) {

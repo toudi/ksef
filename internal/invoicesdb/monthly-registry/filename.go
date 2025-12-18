@@ -2,14 +2,23 @@ package monthlyregistry
 
 import (
 	"fmt"
+	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/sei"
 
 	"github.com/mozillazg/go-slugify"
 )
 
 var dirnameByType = map[InvoiceType]string{
-	InvoiceTypeIssued:   "wystawione",
-	InvoiceTypeReceived: "otrzymane",
+	InvoiceTypeIssued:     "wystawione",
+	InvoiceTypeReceived:   "otrzymane",
+	InvoiceTypePayer:      "platnika",
+	InvoiceTypeAuthorized: "strony-upowaznionej",
+}
+
+var ksefSubjectTypeToRegistryInvoiceType = map[invoices.SubjectType]InvoiceType{
+	invoices.SubjectTypeRecipient:  InvoiceTypeReceived,
+	invoices.SubjectTypePayer:      InvoiceTypePayer,
+	invoices.SubjectTypeAuthorized: InvoiceTypeAuthorized,
 }
 
 func (r *Registry) getIssuedInvoiceFilename(invoiceNumber string, ordNo int) string {
@@ -40,8 +49,22 @@ func (r *Registry) GetDestFileName(inv *sei.ParsedInvoice, invoiceType InvoiceTy
 
 }
 
+func (r *Registry) GetDestFileNameForAPIInvoice(subjectType invoices.SubjectType, inv invoices.InvoiceMetadata) string {
+	var invoiceType = ksefSubjectTypeToRegistryInvoiceType[subjectType]
+	numInvoices := r.countInvoicesByType(invoiceType)
+
+	return fmt.Sprintf(
+		"%s/%s/%04d-%s-%s.xml",
+		r.dir,
+		dirnameByType[invoiceType],
+		numInvoices+1,
+		slugify.Slugify(inv.Seller.Name),
+		slugify.Slugify(inv.InvoiceNumber),
+	)
+}
+
 func (r *Registry) countInvoicesByType(invoiceType InvoiceType) (count int) {
-	for _, invoice := range r.invoices {
+	for _, invoice := range r.Invoices {
 		if invoice.Type == invoiceType {
 			count += 1
 		}

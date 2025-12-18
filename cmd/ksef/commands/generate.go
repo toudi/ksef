@@ -97,7 +97,7 @@ func generateRun(cmd *cobra.Command, args []string) error {
 				invoices.InvoiceMetadata{
 					Metadata:      i.Invoice.Meta,
 					InvoiceNumber: i.Invoice.Number,
-					IssueDate:     i.Invoice.Issued.Format("2006-01-02"),
+					IssueDate:     i.Invoice.Issued.Format(time.DateOnly),
 					Seller: invoices.InvoiceSubjectMetadata{
 						NIP: i.Invoice.Issuer.NIP,
 					},

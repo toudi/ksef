@@ -2,7 +2,6 @@ package sessionregistry
 
 import (
 	"ksef/internal/client/v2/session/status"
-	"ksef/internal/utils"
 
 	"github.com/samber/lo"
 )
@@ -22,7 +21,7 @@ func (us *UploadSession) addInfoAboutInvoice(
 	} else {
 		var invoice = &Invoice{
 			RefNo:    uploadStatus.InvoiceNumber,
-			Checksum: utils.Base64ToHex(uploadStatus.Checksum),
+			Checksum: uploadStatus.Checksum,
 		}
 		if uploadStatus.Status.Successful() {
 			invoice.KSeFRefNo = uploadStatus.KSeFRefNo

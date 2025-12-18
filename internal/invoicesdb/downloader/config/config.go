@@ -61,21 +61,21 @@ func DownloaderFlags(flagSet *pflag.FlagSet, prefix string) {
 	flagSet.SortFlags = false
 }
 
-func GetDownloaderConfig(vip *viper.Viper) (params invoices.DownloadParams, err error) {
-	params.Incremental = vip.GetBool(flagIncremental)
-	params.PDF = vip.GetBool(flagPDF)
+func GetDownloaderConfig(vip *viper.Viper, prefix string) (params invoices.DownloadParams, err error) {
+	params.Incremental = vip.GetBool(prefixedFlag(prefix, flagIncremental))
+	params.PDF = vip.GetBool(prefixedFlag(prefix, flagPDF))
 	params.SubjectTypes = subjectTypes
-	params.PageSize = vip.GetInt(flagPageSize)
-	dateRangeType := vip.GetString(flagDateType)
+	params.PageSize = vip.GetInt(prefixedFlag(prefix, flagPageSize))
+	dateRangeType := vip.GetString(prefixedFlag(prefix, flagDateType))
 	params.DateType = invoices.DateRangeType(dateRangeType)
-	if params.Incremental {
+	if params.Incremental || params.DateType == "" {
 		params.DateType = invoices.DateTypeStorage
 	}
-	startDate := vip.GetString(flagStartDate)
+	startDate := vip.GetString(prefixedFlag(prefix, flagStartDate))
 	if params.StartDate, err = time.ParseInLocation(time.DateOnly, startDate, time.Local); err != nil {
 		return params, err
 	}
-	endDate := vip.GetString(flagEndDate)
+	endDate := vip.GetString(prefixedFlag(prefix, flagEndDate))
 	if endDate != "" {
 		if *params.EndDate, err = time.ParseInLocation(time.DateOnly, endDate, time.Local); err != nil {
 			return params, err

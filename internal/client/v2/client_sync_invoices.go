@@ -1,15 +1,18 @@
 package v2
 
 import (
-	"context"
 	"ksef/internal/client/v2/invoices"
+	invoiceTypes "ksef/internal/client/v2/types/invoices"
+	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 )
 
-func (c *APIClient) SyncInvoices(ctx context.Context, params invoices.SyncParams) error {
-	return invoices.Sync(
-		ctx,
+func (c *APIClient) InvoiceDownloader(
+	params invoiceTypes.DownloadParams,
+	registry *monthlyregistry.Registry,
+) *invoices.InvoiceDownloader {
+	return invoices.NewInvoiceDownloader(
 		c.authenticatedHTTPClient(),
 		params,
-		c.registry,
+		registry,
 	)
 }

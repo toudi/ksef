@@ -107,21 +107,3 @@ func (idb *InvoicesDB) getUploadSessionRegistry(month time.Time) (*sessionregist
 
 	return sessionregistry.OpenOrCreate(path)
 }
-
-func (idb *InvoicesDB) getUPODownloadPath(month time.Time) (string, error) {
-	nip, err := runtime.GetNIP(idb.vip)
-	if err != nil {
-		return "", err
-	}
-
-	gateway := runtime.GetGateway(idb.vip)
-
-	return path.Join(
-		idb.cfg.Root,
-		string(gateway),
-		nip,
-		month.Format("2006"),
-		month.Format("01"),
-		"upo",
-	), nil
-}

@@ -3,6 +3,8 @@ package invoicesdb
 import (
 	"context"
 	"ksef/internal/invoicesdb/config"
+	statuscheckerconfig "ksef/internal/invoicesdb/status-checker/config"
+	uploaderconfig "ksef/internal/invoicesdb/uploader/config"
 	"ksef/internal/logging"
 	"ksef/internal/sei"
 
@@ -51,7 +53,8 @@ func (idb *InvoicesDB) Import(
 	// user wants to automatically upload invoices
 	return idb.UploadOutstandingInvoices(
 		ctx,
-		vip,
+		uploaderconfig.GetUploaderConfig(vip),
+		statuscheckerconfig.GetStatusCheckerConfig(vip),
 	)
 }
 

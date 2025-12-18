@@ -25,9 +25,9 @@ func defaultLogger() *slog.Logger {
 }
 
 var AuthLogger *slog.Logger = defaultLogger()
-var InvoicesDBLogger *slog.Logger = defaultLogger()
+var InvoicesDBLogger *slog.Logger = defaultLogger().With("module", "invoicesDB")
 var RegistryLogger *slog.Logger = defaultLogger()
-var CertsDBLogger *slog.Logger = defaultLogger().With("module", "certsdb")
+var CertsDBLogger *slog.Logger = defaultLogger().With("module", "certsDB")
 var KeyringLogger *slog.Logger = defaultLogger()
 var SeiLogger *slog.Logger = defaultLogger()
 var GenerateLogger *slog.Logger = defaultLogger()

@@ -14,7 +14,7 @@ var (
 	errInvalidRegistry = errors.New("specified invoices registry does not exist")
 )
 
-func OpenForNIP(nip string, vip *viper.Viper) (*InvoicesDB, error) {
+func OpenForNIP(nip string, vip *viper.Viper, initializers ...func(*InvoicesDB)) (*InvoicesDB, error) {
 	cfg := config.GetInvoicesDBConfig(vip)
 	gateway := runtime.GetGateway(vip)
 
@@ -30,9 +30,12 @@ func OpenForNIP(nip string, vip *viper.Viper) (*InvoicesDB, error) {
 		return nil, errors.Join(errInvalidRegistry, err)
 	}
 
-	return &InvoicesDB{
-		cfg:    cfg,
-		vip:    vip,
-		prefix: prefix,
-	}, nil
+	idb := newInvoicesDB(vip)
+	idb.prefix = prefix
+
+	for _, initializer := range initializers {
+		initializer(idb)
+	}
+
+	return idb, nil
 }

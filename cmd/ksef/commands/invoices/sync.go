@@ -1,6 +1,7 @@
 package invoices
 
 import (
+	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
 	"ksef/internal/invoicesdb"
 	"ksef/internal/invoicesdb/config"
@@ -30,7 +31,14 @@ func syncInvoicesRun(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	invoicesDB, err := invoicesdb.OpenForNIP(nip, vip)
+
+	ksefClient, err := client.InitClient(cmd)
+	if err != nil {
+		return err
+	}
+	defer ksefClient.Close()
+
+	invoicesDB, err := invoicesdb.OpenForNIP(nip, vip, invoicesdb.WithKSeFClient(ksefClient))
 	if err != nil {
 		return err
 	}

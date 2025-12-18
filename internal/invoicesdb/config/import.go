@@ -32,7 +32,7 @@ func ImportFlags(flagSet *pflag.FlagSet) {
 	flagSet.Bool(cfgKeyAutoCorrection, false, "automatycznie wystawiaj korekty faktur")
 	flagSet.String(cfgKeyCorrectionNumbering, "FK/{count}/{year}", "Schemat numeracji faktur korygujących")
 	flagSet.BoolP(cfgKeyAutoUpload, "u", false, "automatycznie wyślij faktury po zakończonym imporcie")
-	UploaderFlags(flagSet)
+	uploaderconfig.UploaderFlags(flagSet)
 }
 
 func GetImportConfig(vip *viper.Viper) ImportConfig {
@@ -43,7 +43,7 @@ func GetImportConfig(vip *viper.Viper) ImportConfig {
 		},
 		Upload: UploadConfig{
 			Enabled:        vip.GetBool(cfgKeyAutoUpload),
-			UploaderConfig: GetUploaderConfig(vip),
+			UploaderConfig: uploaderconfig.GetUploaderConfig(vip),
 		},
 	}
 }

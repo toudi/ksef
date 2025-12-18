@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"ksef/internal/certsdb"
+	"ksef/internal/client/v2/session/status"
 	"ksef/internal/client/v2/session/types"
 	"ksef/internal/encryption"
 	HTTP "ksef/internal/http"
@@ -88,10 +89,16 @@ func (s *Session) uploadInvoicesForForm(
 	if err != nil {
 		return nil, err
 	}
+
+	var uploadedInvoices []status.InvoiceInfo
+
 	for i, file := range files {
 		if err = s.uploadFile(ctx, us, file); err != nil {
 			logging.InteractiveLogger.Error("error uploading invoice", "counter", i, "error", err)
 		}
+		uploadedInvoices = append(uploadedInvoices, status.InvoiceInfo{
+			Checksum: file.Checksum,
+		})
 	}
 	if err = s.closeUploadSession(ctx, us); err != nil {
 		return nil, err
@@ -100,5 +107,6 @@ func (s *Session) uploadInvoicesForForm(
 	return &types.UploadSessionResult{
 		Timestamp: time.Now(),
 		SessionID: us.refNo,
+		Invoices:  uploadedInvoices,
 	}, nil
 }

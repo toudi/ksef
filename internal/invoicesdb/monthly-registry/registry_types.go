@@ -2,8 +2,10 @@ package monthlyregistry
 
 import (
 	"ksef/internal/certsdb"
+	"time"
 
 	sessionTypes "ksef/internal/client/v2/session/types"
+	"ksef/internal/client/v2/types/invoices"
 
 	"github.com/spf13/viper"
 )
@@ -11,8 +13,10 @@ import (
 type InvoiceType uint8
 
 const (
-	InvoiceTypeIssued   InvoiceType = 0
-	InvoiceTypeReceived InvoiceType = 1
+	InvoiceTypeIssued     InvoiceType = 0
+	InvoiceTypeReceived   InvoiceType = 1
+	InvoiceTypePayer      InvoiceType = 2
+	InvoiceTypeAuthorized InvoiceType = 3
 )
 
 type InvoiceQRCodes struct {
@@ -42,8 +46,14 @@ type UploadSession struct {
 	Invoices  []*Invoice `yaml:"invoices"`
 }
 
+type SyncParams struct {
+	LastTimestamp time.Time              `yaml:"last-timestamp,omitempty"`
+	SubjectTypes  []invoices.SubjectType `yaml:"subject-types,omitempty"`
+}
+
 type Registry struct {
-	invoices []*Invoice `yaml:"invoices"`
+	Invoices   []*Invoice  `yaml:"invoices"`
+	SyncParams *SyncParams `yaml:"sync,omitempty"`
 
 	dir     string
 	certsDB *certsdb.CertificatesDB

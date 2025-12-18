@@ -1,10 +1,13 @@
 package monthlyregistry
 
 import (
+	"encoding/base64"
 	"errors"
 	"ksef/internal/certsdb"
+	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/runtime"
 	"ksef/internal/sei"
+	"ksef/internal/utils"
 )
 
 var (
@@ -19,7 +22,7 @@ func (r *Registry) AddInvoice(
 	checksum string,
 ) error {
 	// check if the invoice with this checksum already exists
-	if r.invoiceExistsByChecksum(checksum) {
+	if r.ContainsHash(checksum) {
 		return nil
 	}
 
@@ -68,8 +71,38 @@ func (r *Registry) AddInvoice(
 		}
 	}
 
-	r.invoices = append(
-		r.invoices,
+	r.Invoices = append(
+		r.Invoices,
+		invoice,
+	)
+
+	return nil
+}
+
+func (r *Registry) AddReceivedInvoice(ksefInvoice invoices.InvoiceMetadata, subjectType invoices.SubjectType, gateway runtime.Gateway) (err error) {
+	var checksumBytes []byte
+	checksumBytes, err = base64.StdEncoding.DecodeString(ksefInvoice.InvoiceHashBase64)
+	if err != nil {
+		return err
+	}
+
+	var invoice = &Invoice{
+		RefNo:     ksefInvoice.InvoiceNumber,
+		KSeFRefNo: ksefInvoice.KSeFNumber,
+		Checksum:  utils.Base64ToHex(ksefInvoice.Checksum()),
+		QRCodes: InvoiceQRCodes{
+			Invoice: generateInvoiceQRCodeInner(
+				string(gateway),
+				ksefInvoice.Seller.NIP,
+				ksefInvoice.IssueTime(),
+				checksumBytes,
+			),
+		},
+		Type: ksefSubjectTypeToRegistryInvoiceType[subjectType],
+	}
+
+	r.Invoices = append(
+		r.Invoices,
 		invoice,
 	)
 

@@ -4,7 +4,8 @@ import (
 	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
 	"ksef/internal/invoicesdb"
-	invoicesdbconfig "ksef/internal/invoicesdb/config"
+	statuscheckerconfig "ksef/internal/invoicesdb/status-checker/config"
+	uploaderconfig "ksef/internal/invoicesdb/uploader/config"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -18,7 +19,8 @@ var uploadCommand = &cobra.Command{
 }
 
 func init() {
-	invoicesdbconfig.UploaderFlags(uploadCommand.Flags())
+	uploaderconfig.UploaderFlags(uploadCommand.Flags())
+	statuscheckerconfig.StatusCheckerFlags(uploadCommand.Flags())
 	flags.NIP(uploadCommand.Flags())
 	uploadCommand.MarkFlagRequired(flags.FlagNameNIP)
 	InvoicesCommand.AddCommand(uploadCommand)
@@ -37,5 +39,9 @@ func uploadInvoicesRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	return invoicesDB.UploadOutstandingInvoices(cmd.Context(), vip)
+	return invoicesDB.UploadOutstandingInvoices(
+		cmd.Context(),
+		uploaderconfig.GetUploaderConfig(vip),
+		statuscheckerconfig.GetStatusCheckerConfig(vip),
+	)
 }

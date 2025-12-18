@@ -4,12 +4,16 @@ import (
 	"errors"
 	"ksef/internal/client/v2/session/status"
 	"ksef/internal/client/v2/upo"
+	"ksef/internal/invoicesdb/config"
 	"ksef/internal/logging"
+	"ksef/internal/runtime"
 	"ksef/internal/utils"
 	"log/slog"
 	"os"
 	"path"
 	"time"
+
+	"github.com/spf13/viper"
 )
 
 const (
@@ -22,7 +26,7 @@ var (
 )
 
 type Invoice struct {
-	RefNo     string   `yaml:"ref-no"`
+	RefNo     string   `yaml:"ref-no,omitempty"`
 	KSeFRefNo string   `yaml:"ksef-ref-no,omitempty"`
 	Filename  string   `yaml:"filename,omitempty,omitzero"`
 	Checksum  string   `yaml:"checksum"`
@@ -73,5 +77,31 @@ func OpenOrCreate(dirName string) (*Registry, error) {
 	}
 
 	return reg, nil
+}
+
+func OpenForMonth(vip *viper.Viper, month time.Time) (*Registry, error) {
+	nip, err := runtime.GetNIP(vip)
+	if err != nil {
+		return nil, err
+	}
+
+	gateway := runtime.GetGateway(vip)
+
+	invoicesDBConfig := config.GetInvoicesDBConfig(vip)
+
+	// there is no active registry - let's try to create it.
+	path := path.Join(
+		invoicesDBConfig.Root,
+		string(gateway),
+		nip,
+		month.Format("2006"),
+		month.Format("01"),
+	)
+
+	if _, exists, _ := utils.FileExists(path); !exists {
+		return nil, os.ErrNotExist
+	}
+
+	return OpenOrCreate(path)
 
 }

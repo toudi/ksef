@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	HTTP "ksef/internal/http"
+	"ksef/internal/utils"
 	"net/http"
 )
 
@@ -20,11 +21,12 @@ func (is InvoiceStatus) Successful() bool {
 }
 
 type InvoiceInfo struct {
-	OrdinalNumber int           `json:"ordinalNumber"`
-	Checksum      string        `json:"invoiceHash"`
-	InvoiceNumber string        `json:"invoiceNumber"`
-	KSeFRefNo     string        `json:"ksefNumber"`
-	Status        InvoiceStatus `json:"status"`
+	OrdinalNumber  int           `json:"ordinalNumber"`
+	ChecksumBase64 string        `json:"invoiceHash"` // checksum as returned by KSeF gateway, i.e. raw bytes of sha256sum encoded with base64
+	Checksum       string        // checksum as a simple hex string, i.e. result of sha256sum <file>
+	InvoiceNumber  string        `json:"invoiceNumber"`
+	KSeFRefNo      string        `json:"ksefNumber"`
+	Status         InvoiceStatus `json:"status"`
 }
 
 type SessionInvoicesResponse struct {
@@ -76,6 +78,11 @@ func (sc *SessionStatusChecker) GetInvoiceList(
 				allDetails = append(allDetails, invoiceInfo.Status.Details...)
 				invoiceInfo.Status.Details = allDetails
 			}
+
+			// unfortunetely, KSeF API returns checksums in base64 form which is space-efficient,
+			// but makes it painful to compare with local checksums generated with command-line
+			// utilities, therefore internally we're keeping the hex-encoded checksum
+			invoiceInfo.Checksum = utils.Base64ToHex(invoiceInfo.ChecksumBase64)
 			sessionInvoices = append(sessionInvoices, invoiceInfo)
 		}
 	}

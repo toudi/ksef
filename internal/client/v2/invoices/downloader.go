@@ -1,71 +1,64 @@
 package invoices
 
 import (
+	"bytes"
 	"context"
-	"fmt"
+	"errors"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/http"
-	"ksef/internal/registry"
-	"ksef/internal/utils"
-	baseHTTP "net/http"
-	"os"
-	"path"
+	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
+	"ksef/internal/logging"
 )
 
-const (
-	endpointDownloadInvoice = "/api/v2/invoices/ksef/%s"
+var (
+	errFetchingInvoices = errors.New("error fetching invoices")
 )
 
-type invoiceDownloader struct {
+type InvoiceDownloader struct {
 	httpClient *http.Client
-	registry   *registry.InvoiceRegistry
-	targetPath string
+	registry   *monthlyregistry.Registry
+	params     invoices.DownloadParams
 }
 
-func NewInvoiceDownloader(httpClient *http.Client, registry *registry.InvoiceRegistry) *invoiceDownloader {
-	return &invoiceDownloader{
+func NewInvoiceDownloader(
+	httpClient *http.Client,
+	downloadParams invoices.DownloadParams,
+	registry *monthlyregistry.Registry,
+) *InvoiceDownloader {
+	return &InvoiceDownloader{
 		httpClient: httpClient,
 		registry:   registry,
-		targetPath: registry.Dir,
+		params:     downloadParams,
 	}
 }
 
-func (d *invoiceDownloader) Download(
+func (d *InvoiceDownloader) Download(
 	ctx context.Context,
-	invoiceMeta invoices.InvoiceMetadata,
-	subjectType invoices.SubjectType,
-) (outputFilename string, checksum string, err error) {
-	outputFilename = d.registry.GetTargetFilename(invoiceMeta, subjectType)
+	invoiceReady func(subjectType invoices.SubjectType, invoice invoices.InvoiceMetadata, content bytes.Buffer) error,
+) (err error) {
+	var startTimestamp = d.registry.SyncParams.LastTimestamp
+	var req InvoiceMetadataRequest
 
-	if err = os.MkdirAll(path.Dir(outputFilename), 0755); err != nil {
-		return "", "", err
+	for _, subject := range d.params.SubjectTypes {
+		var logger = logging.DownloadLogger.With("subjectType", subject)
+		logger.Debug("fetch invoices list", "start timestamp", startTimestamp)
+		req = InvoiceMetadataRequest{
+			SubjectType: subject,
+			DateRange: DateRange{
+				DateType: DateRangeStorage,
+				From:     startTimestamp,
+			},
+		}
+
+		if err = d.fetchInvoices(
+			ctx,
+			req,
+			d.params,
+			invoiceReady,
+		); err != nil {
+			return errors.Join(errFetchingInvoices, err)
+		}
 	}
 
-	outputFile, err := os.Create(outputFilename)
-	if err != nil {
-		return "", "", err
-	}
-	defer outputFile.Close()
-
-	_, err = d.httpClient.Request(
-		ctx, http.RequestConfig{
-			DestWriter:     outputFile,
-			ExpectedStatus: baseHTTP.StatusOK,
-		}, fmt.Sprintf(endpointDownloadInvoice, invoiceMeta.KSeFNumber),
-	)
-
-	if err != nil {
-		return "", "", err
-	}
-
-	fileMeta, err := utils.FileSizeAndSha256Hash(outputFilename)
-	if err != nil {
-		return "", "", err
-	}
-
-	checksum = fileMeta.Hash
-
-	err = d.registry.AddInvoice(invoiceMeta, checksum, nil)
-
-	return outputFilename, fileMeta.Hash, err
+	return nil
 }

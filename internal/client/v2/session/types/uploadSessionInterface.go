@@ -11,7 +11,14 @@ type UploadSessionResult struct {
 	SessionID string
 	Invoices  []status.InvoiceInfo
 	Status    *status.StatusResponse
-	Processed bool
+}
+
+func (usr UploadSessionResult) IsProcessed() bool {
+	if usr.Status == nil {
+		return false
+	}
+
+	return usr.Status.IsProcessed()
 }
 
 type UploadSession interface {
