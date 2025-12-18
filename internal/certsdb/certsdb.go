@@ -4,6 +4,7 @@ import (
 	"errors"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
+	"ksef/internal/utils"
 	"os"
 	"path"
 	"slices"
@@ -13,7 +14,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var ErrCertificateNotFound = errors.New("unable to find a certificate suitable for the selected usage")
+var (
+	ErrCertificateNotFound  = errors.New("unable to find a certificate suitable for the selected usage")
+	errDecodingCertificates = errors.New("unable to decode certificates array from file")
+)
 
 type (
 	Usage string
@@ -136,19 +140,19 @@ func OpenOrCreate(environment runtime.Gateway) (*CertificatesDB, error) {
 	if err := os.MkdirAll(path.Dir(certificatesDBFile), 0775); err != nil {
 		return nil, err
 	}
-	dbFile, err := os.Open(certificatesDBFile)
+	dbFile, exists, err := utils.FileExists(certificatesDBFile)
 	// isNotExist is fine
 	if err != nil && !os.IsNotExist(err) {
 		return nil, err
 	}
+
 	// if the error was that the file does not exist then there's no point
 	// reading any certs as there won't be any
-	if err == nil {
+	if exists {
 		defer dbFile.Close()
 		var certificates []*Certificate
-		decoder := yaml.NewDecoder(dbFile)
-		if err := decoder.Decode(&certificates); err != nil {
-			return nil, err
+		if err = utils.ReadYAML(dbFile, &certificates); err != nil {
+			return nil, errors.Join(errDecodingCertificates, err)
 		}
 
 		// load up only the certificates that belong to the selected environment
