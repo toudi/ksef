@@ -15,7 +15,7 @@ func (cdb *CertificatesDB) AddCert(handler func(newCert *Certificate) error) err
 	var uid string
 	for collision {
 		uid = uidFactory()
-		_, collision = cdb.index[uid]
+		_, collision = cdb.uidIndex[uid]
 	}
 	newCert := &Certificate{
 		UID: uid,
@@ -27,7 +27,8 @@ func (cdb *CertificatesDB) AddCert(handler func(newCert *Certificate) error) err
 	}
 
 	cdb.certs = append(cdb.certs, newCert)
-	cdb.index[uid] = len(cdb.certs) - 1
+	cdb.index[newCert.Hash()] = len(cdb.certs) - 1
+	cdb.uidIndex[uid] = len(cdb.certs) - 1
 	cdb.dirty = true
 
 	return nil

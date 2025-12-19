@@ -37,9 +37,6 @@ const (
 	// certyfikaty RSA używane przez ministerstwo finansów
 	UsageTokenEncryption        Usage = "KsefTokenEncryption"
 	UsageSymmetricKeyEncryption Usage = "SymmetricKeyEncryption"
-	// certyfikaty wustawiane przez KSeF
-	UsageAuthentication Usage = "Authentication"
-	UsageOffline        Usage = "Offline"
 )
 
 type CertificatesDB struct {
@@ -48,6 +45,8 @@ type CertificatesDB struct {
 	dirty bool
 	// map between certificate hash and it's position in the array
 	index map[string]int
+	// map between certificate UID and it's position in the array - required only for adding new certificates
+	uidIndex map[string]int
 	// used during opening so that all of the certs inserted inherit this value
 	env runtime.Gateway
 }
@@ -62,7 +61,7 @@ func (cdb *CertificatesDB) GetByUsage(usage Usage, nip string) (Certificate, err
 	var now = time.Now()
 
 	for _, cert := range cdb.certs {
-		if !slices.Contains(cert.Usage, usage) {
+		if !slices.Contains(cert.Usage, usage) || !cert.available {
 			continue
 		}
 		if cert.ValidFrom.After(now) || cert.ValidTo.Before(now) {
@@ -133,8 +132,9 @@ func (cdb *CertificatesDB) Save() error {
 
 func OpenOrCreate(environment runtime.Gateway) (*CertificatesDB, error) {
 	var certificatesDB = CertificatesDB{
-		index: make(map[string]int),
-		env:   environment,
+		index:    make(map[string]int),
+		uidIndex: make(map[string]int),
+		env:      environment,
 	}
 
 	if err := os.MkdirAll(path.Dir(certificatesDBFile), 0775); err != nil {
@@ -155,15 +155,14 @@ func OpenOrCreate(environment runtime.Gateway) (*CertificatesDB, error) {
 			return nil, errors.Join(errDecodingCertificates, err)
 		}
 
-		// load up only the certificates that belong to the selected environment
-		certificatesDB.certs = lo.Filter(certificates, func(c *Certificate, _ int) bool {
-			return c.Environment == environment
-		})
+		certificatesDB.certs = certificates
 
-		for index, cert := range certificatesDB.certs {
+		for index, cert := range certificates {
+			// load up only the certificates that belong to the selected environment
+			cert.available = cert.Environment == environment
 			certificatesDB.index[cert.Hash()] = index
+			certificatesDB.uidIndex[cert.UID] = index
 		}
-
 	}
 
 	return &certificatesDB, nil

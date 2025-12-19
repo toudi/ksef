@@ -16,7 +16,7 @@
 
 dist/
 data/
-certificates/
+.certificates/
 .DS_Store
 docs/.vitepress/cache
 docs/.vitepress/dist

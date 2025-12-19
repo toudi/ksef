@@ -36,6 +36,7 @@ func (ch CertificateHash) Hash() string {
 
 type Certificate struct {
 	CertificateHash `yaml:",inline"`
+	available       bool
 	removed         bool
 	UID             string `yaml:"uid"`
 	SelfSigned      bool   `yaml:"self-signed,omitempty"`
