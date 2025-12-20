@@ -4,7 +4,9 @@ import (
 	"encoding/xml"
 	"errors"
 	sessionTypes "ksef/internal/client/v2/session/types"
+	"ksef/internal/utils"
 	"os"
+	"time"
 )
 
 var (
@@ -15,6 +17,7 @@ var (
 type XMLInvoice struct {
 	XMLName        xml.Name                     `xml:"Faktura"`
 	HeaderFormCode sessionTypes.InvoiceFormCode `xml:"Naglowek>KodFormularza"`
+	GeneratedTime  time.Time                    `xml:"Naglowek>DataWytworzeniaFa"`
 	Issuer         string                       `xml:"Podmiot1>DaneIdentyfikacyjne>NIP"`
 	Issued         string                       `xml:"Fa>P_1"`
 	InvoiceNumber  string                       `xml:"Fa>P_2"`
@@ -23,7 +26,7 @@ type XMLInvoice struct {
 func (r *Registry) getInvoiceMetadata(input *Invoice, ordNo int) (*InvoiceMetadata, error) {
 	invoiceFilename := r.getIssuedInvoiceFilename(input.RefNo, ordNo)
 	// in order to obtain the metadata we need to parse XML and extract the formcode
-	if xmlInvoice, err := parseInvoice(invoiceFilename); err != nil {
+	if xmlInvoice, _, err := ParseInvoice(invoiceFilename); err != nil {
 		return nil, err
 	} else {
 		return &InvoiceMetadata{
@@ -34,15 +37,15 @@ func (r *Registry) getInvoiceMetadata(input *Invoice, ordNo int) (*InvoiceMetada
 	}
 }
 
-func parseInvoice(sourceFile string) (*XMLInvoice, error) {
+func ParseInvoice(sourceFile string) (*XMLInvoice, string, error) {
 	var invoice XMLInvoice
 	xmlContents, err := os.ReadFile(sourceFile)
 	if err != nil {
-		return nil, errors.Join(errUnableToReadFile, err)
+		return nil, "", errors.Join(errUnableToReadFile, err)
 	}
 	if err = xml.Unmarshal(xmlContents, &invoice); err != nil {
-		return nil, errors.Join(errUnableToParseXML, err)
+		return nil, "", errors.Join(errUnableToParseXML, err)
 	}
 
-	return &invoice, nil
+	return &invoice, utils.Sha256Hex(xmlContents), nil
 }

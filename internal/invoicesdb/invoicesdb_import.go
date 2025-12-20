@@ -7,6 +7,8 @@ import (
 	uploaderconfig "ksef/internal/invoicesdb/uploader/config"
 	"ksef/internal/logging"
 	"ksef/internal/sei"
+	"path/filepath"
+	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -18,7 +20,7 @@ func (idb *InvoicesDB) Import(
 	vip *viper.Viper,
 	srcFilename string,
 	confirm bool,
-) error {
+) (err error) {
 	importConfig := config.GetImportConfig(vip)
 
 	// initialize importer
@@ -30,12 +32,21 @@ func (idb *InvoicesDB) Import(
 		logging.InvoicesDBLogger.Info("nie wybrano flagi --confirm - żadne dane nie zostaną zapisane na dysku")
 	}
 
-	importer, err := sei.SEI_Init(vip, sei.WithInvoiceReadyFunc(invoiceReadyHandler))
-	if err != nil {
-		return err
-	}
-	if importErr := importer.ProcessSourceFile(srcFilename); importErr != nil {
-		return importErr
+	// check if the source filename is of type XML. If yes - then the user is trying to import
+	// invoices that are already in FA format.
+	if isXML(srcFilename) {
+		if err = idb.importXMLInvoices(srcFilename); err != nil {
+			return err
+		}
+	} else {
+		// importing from other invoice sources (i.e. csv / yaml / ...)
+		importer, err := sei.SEI_Init(vip, sei.WithInvoiceReadyFunc(invoiceReadyHandler))
+		if err != nil {
+			return err
+		}
+		if importErr := importer.ProcessSourceFile(srcFilename); importErr != nil {
+			return importErr
+		}
 	}
 
 	// save the database before uploading
@@ -62,4 +73,8 @@ func dummyInvoiceReadyHandler(i *sei.ParsedInvoice) error {
 	// dummy implementation that does nothing.
 
 	return nil
+}
+
+func isXML(filename string) bool {
+	return strings.ToLower(filepath.Ext(filename)) == ".xml"
 }

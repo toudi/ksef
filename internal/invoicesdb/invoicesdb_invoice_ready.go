@@ -2,7 +2,6 @@ package invoicesdb
 
 import (
 	"errors"
-	"fmt"
 	annualregistry "ksef/internal/invoicesdb/annual-registry"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
@@ -33,7 +32,6 @@ func (idb *InvoicesDB) invoiceReady(inv *sei.ParsedInvoice) error {
 	//                      wysylki/01/2025-01-02T03:04:05/
 	//                      invoices.yaml
 
-	fmt.Printf("invoice: %+v\n", inv)
 	runtime.SetNIPIfUnset(idb.vip, inv.Invoice.Issuer.NIP)
 	if annualRegistry, err = idb.getAnnualRegistryForInvoice(inv); err != nil {
 		logging.InvoicesDBLogger.Error("error initializing annual registry", "err", err)

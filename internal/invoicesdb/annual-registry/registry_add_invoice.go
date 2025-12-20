@@ -12,12 +12,15 @@ var (
 
 func (r *Registry) AddInvoice(
 	parsed *sei.ParsedInvoice,
-	fileName string,
 	checksum string,
-) error {
-	invoiceContents, err := utils.Base64GZippedCBor(parsed.Invoice, 80)
-	if err != nil {
-		return errors.Join(errGeneratingContent, err)
+	storeContents bool,
+) (err error) {
+	var invoiceContents string
+	if storeContents {
+		invoiceContents, err = utils.Base64GZippedCBor(parsed.Invoice, 80)
+		if err != nil {
+			return errors.Join(errGeneratingContent, err)
+		}
 	}
 	r.invoices = append(
 		r.invoices,
@@ -26,7 +29,6 @@ func (r *Registry) AddInvoice(
 			Contents:       invoiceContents,
 			Checksum:       checksum,
 			GenerationTime: parsed.Invoice.GenerationTime,
-			Filename:       fileName,
 		},
 	)
 	return nil

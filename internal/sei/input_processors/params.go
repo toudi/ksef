@@ -15,10 +15,9 @@ type xlsxConfig struct {
 }
 
 type InputProcessorConfig struct {
-	CSV         csvConfig
-	XLSX        xlsxConfig
-	Generator   string
-	OfflineMode bool
+	CSV       csvConfig
+	XLSX      xlsxConfig
+	Generator string
 }
 
 const (
@@ -26,7 +25,6 @@ const (
 	cfgKeyCSVEncoding  = "csv.encoding"
 	cfgKeySheetName    = "xlsx.sheet"
 	cfgKeyGenerator    = "generator"
-	cfgKeyOffline      = "offline"
 )
 
 func GeneratorFlags(flags *pflag.FlagSet) {
@@ -34,7 +32,6 @@ func GeneratorFlags(flags *pflag.FlagSet) {
 	flags.StringP(cfgKeyCSVEncoding, "e", "", "użyj pliku z konwersją znaków (tylko dla CSV)")
 	flags.StringP(cfgKeySheetName, "s", "", "Nazwa skoroszytu do przetworzenia (tylko dla XLSX)")
 	flags.StringP(cfgKeyGenerator, "g", "fa-3_1.0", "nazwa generatora")
-	flags.Bool(cfgKeyOffline, false, "oznacz faktury jako generowane w trybie offline")
 }
 
 func GetInputProcessorConfig(vip *viper.Viper) InputProcessorConfig {
@@ -46,7 +43,6 @@ func GetInputProcessorConfig(vip *viper.Viper) InputProcessorConfig {
 		XLSX: xlsxConfig{
 			SheetName: viper.GetString(cfgKeySheetName),
 		},
-		Generator:   viper.GetString(cfgKeyGenerator),
-		OfflineMode: viper.GetBool(cfgKeyOffline),
+		Generator: viper.GetString(cfgKeyGenerator),
 	}
 }
