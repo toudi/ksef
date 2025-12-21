@@ -1,0 +1,9 @@
+header:
+  left: Lewa strona nagłówka
+  right: Prawa strona nagłówka
+
+invoice:
+  ksef-ref-no: 1111111111-20251218-AABBCCDDEEFF-AA
+  qr-codes:
+    invoice: https://ksef-test.mf.gov.pl/client-app/invoice/1111111111/17-12-2025/aabbccddeeffgghhiijjkkllmmnnooppqqrr_112233=
+    #offline: https://ksef-test.mf.gov.pl/client-app/certificate/Nip/1111111111/1111111111/0011223344556677/ ....
