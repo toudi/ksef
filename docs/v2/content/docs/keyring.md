@@ -1,3 +1,7 @@
+---
+linkTitle: Keyring
+---
+
 # keyring
 
 Tokeny KSeF przechowywane są w keyringu. Domyślnie jest to keyring systemowy (tj. wbudowany w system operacyjny taki jak MacOS, Windows czy Linux), ale w wyjątkowej sytuacji (tj. w przypadku systemu który nie jest w stanie wspierać tego rozwiązania) można użyć keyringu opartego o zaszyfrowany plik. Opiszę tutaj jak to zrobić
