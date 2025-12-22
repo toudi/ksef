@@ -1,112 +1,97 @@
 package commands
 
 import (
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/hex"
+	"encoding/xml"
 	"ksef/internal/config"
+	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	"ksef/internal/pdf"
-	registryPkg "ksef/internal/registry"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var renderPDFCommand = &cobra.Command{
 	Use:   "pdf",
 	Short: "drukuje PDF dla wskazanego dokumentu",
+	RunE:  renderPDF,
 }
 
-var renderInvoicePDFCommand = &cobra.Command{
-	Use:   "invoice",
-	Short: "drukuje PDF dla wskazanej faktury",
-	Args:  cobra.ExactArgs(1),
-	RunE:  renderInvoicePDF,
-}
-var renderUPOPDFCommand = &cobra.Command{
-	Use:   "upo",
-	Short: "drukuje PDF dla wkazanego UPO",
-	Args:  cobra.ExactArgs(1),
-	RunE:  renderUPOPDF,
+const (
+	flagNameOutput = "output"
+)
+
+type XMLFile struct {
+	XMLName xml.Name
 }
 
 func init() {
-	if err := config.PDFPrinterFlags(renderPDFCommand, renderPDFCommand.PersistentFlags()); err != nil {
-		panic(err)
-	}
-	renderPDFCommand.AddCommand(renderInvoicePDFCommand)
-	renderPDFCommand.AddCommand(renderUPOPDFCommand)
+	renderPDFCommand.Flags().StringP(flagNameOutput, "o", "", "plik wyjścia (jeśli go nie wskażesz, PDF zostanie utworzony w katalogu ze źródłowym XML)")
 }
 
-func renderInvoicePDF(cmd *cobra.Command, args []string) error {
+func renderPDF(cmd *cobra.Command, args []string) error {
+	vip := viper.GetViper()
+
 	// let's grab the source filename
-	invoiceSourceXML := args[0]
-
-	var registry *registryPkg.InvoiceRegistry
-	var outputPath string = filepath.Dir(invoiceSourceXML)
-	var err error
-
-	for _, registryDir := range []string{
-		filepath.Dir(invoiceSourceXML),
-		filepath.Join(filepath.Dir(invoiceSourceXML), ".."),
-	} {
-		if registry, err = registryPkg.LoadRegistry(registryDir); err == nil {
-			break
-		}
-	}
-
-	if registry == nil {
-		return err
-	}
-
-	// let's read the invoice into memory. we will need it anyway to pass it to the renderer
-	// and to hash it (in order to generate the qrcode url)
-	invoiceBytes, err := os.ReadFile(invoiceSourceXML)
+	xmlContent, err := os.ReadFile(args[0])
 	if err != nil {
 		return err
 	}
-	// invoice, invoiceBytes, err := registryPkg.ReadAndParseInvoice(invoiceSourceXML)
-	// if err != nil {
-	// 	return err
-	// }
-	hash := sha256.Sum256(invoiceBytes)
-	invoiceMeta, err := registry.GetInvoiceByChecksum(hex.EncodeToString(hash[:]))
+	var xmlFile XMLFile
+	if err = xml.Unmarshal(xmlContent, &xmlFile); err != nil {
+		return err
+	}
+
+	pdfConfig, err := config.GetPDFPrinterConfig(vip)
 	if err != nil {
 		return err
 	}
 
-	// we're almost done. now let's prepare the qrcode URL
-	// var qrcode string = "https://" + string(registry.Environment) + "/client-app/invoice/" + registry.Issuer + "/" + base64.URLEncoding.EncodeToString(hash[:])
-
-	engine, err := pdf.GetLocalPrintingEngine()
+	output := strings.Replace(args[0], ".xml", ".pdf", 1)
+	customOutput, err := cmd.Flags().GetString(flagNameOutput)
 	if err != nil {
 		return err
 	}
-	basename, _ := strings.CutSuffix(filepath.Base(invoiceSourceXML), filepath.Ext(invoiceSourceXML))
-	output := filepath.Join(outputPath, basename+".pdf")
-	return engine.Print(base64.StdEncoding.EncodeToString(invoiceBytes), invoiceMeta, output)
+	if customOutput != "" {
+		output = customOutput
+	}
+
+	if xmlFile.XMLName.Local == "Potwierdzenie" {
+		return renderUPO(pdfConfig, args[0], output)
+	}
+	return renderInvoice(pdfConfig, args[0], output)
 }
 
-func renderUPOPDF(cmd *cobra.Command, args []string) error {
-	upoSourceXML := args[0]
-	// based on that, we can open registry
-	registry, err := registryPkg.LoadRegistry(filepath.Dir(upoSourceXML))
+func renderUPO(pdfConfig config.PDFPrinterConfig, upoXML string, output string) error {
+	engineConfig, err := pdfConfig.GetEngine("upo")
 	if err != nil {
 		return err
 	}
-	engine, err := pdf.GetLocalPrintingEngine()
-	if err != nil {
-		return err
-	}
-	upoBytes, err := os.ReadFile(upoSourceXML)
+	printer, err := pdf.GetEngine(engineConfig)
 	if err != nil {
 		return err
 	}
 
-	basename, _ := strings.CutSuffix(filepath.Base(upoSourceXML), filepath.Ext(upoSourceXML))
-	output := filepath.Join(registry.Dir, basename+".pdf")
+	return printer.PrintUPO(upoXML, output)
+}
 
-	return engine.PrintUPO(base64.StdEncoding.EncodeToString(upoBytes), output)
+func renderInvoice(
+	pdfConfig config.PDFPrinterConfig,
+	invoiceXML string,
+	output string,
+) error {
+	invoiceMeta, err := monthlyregistry.GetInvoicePrintingMeta(invoiceXML)
+	if err != nil {
+		return err
+	}
+	engineConfig, err := pdfConfig.GetEngine(invoiceMeta.Usage)
+	if err != nil {
+		return err
+	}
+	printer, err := pdf.GetEngine(engineConfig)
+	if err != nil {
+		return err
+	}
+	return printer.PrintInvoice(invoiceXML, output, invoiceMeta)
 }

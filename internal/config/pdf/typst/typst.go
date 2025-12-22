@@ -1,10 +1,6 @@
 package typst
 
 import (
-	"ksef/internal/config/pdf/abstract"
-
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
@@ -21,34 +17,39 @@ const (
 	cfgKeyTypstUpoTemplates     = "pdf.typst.upo.templates"
 )
 
-type TypstPrinterConfig struct {
-	Debug     bool
-	Workdir   string
-	Templates abstract.Templates
+type HeaderFooterConfig struct {
+	Left   string `yaml:"left"`
+	Center string `yaml:"center"`
+	Right  string `yaml:"right"`
 }
 
-func PrinterConfigFlags(cmd *cobra.Command, flags *pflag.FlagSet) {
-	flags.Bool(cfgKeyTypstDebug, false, "tryb diagnostyczny (kopiuje wynikowy plik .typ oraz ewentualny plik z błędami do katalogu wyjściowego)")
-	flags.String(cfgKeyTypstWorkdir, "/tmp", "katalog roboczy do tymczasowych plików")
-	flags.String(cfgKeyTypstInvoiceTemplates, "", "ścieżka do katalogu z szablonami faktur")
-	flags.String(cfgKeyTypstUpoTemplates, "", "ścieżka do katalogu z szablonem UPO")
-	flags.String(cfgKeyTypstInvoiceHeaderL, "", "nagłówek faktury (strona lewa)")
-	flags.String(cfgKeyTypstInvoiceHeaderC, "", "nagłówek faktury (środek)")
-	flags.String(cfgKeyTypstInvoiceHeaderR, "", "nagłówek faktury (strona prawa)")
-	flags.String(cfgKeyTypstInvoiceFooterL, "", "stopka faktury (strona lewa)")
-	flags.String(cfgKeyTypstInvoiceFooterC, "", "stopka faktury (środek)")
-	flags.String(cfgKeyTypstInvoiceFooterR, "", "stopka faktury (strona prawa)")
+type TypstInvoicePrinterConfig struct {
+	Template string             `yaml:"template"`
+	Header   HeaderFooterConfig `yaml:"header"`
+	Footer   HeaderFooterConfig `yaml:"footer"`
+}
+
+type TypstUPOPrinterConfig struct {
+	Template string `yaml:"template"`
+}
+
+type TypstPrinterConfig struct {
+	Debug     bool                      `yaml:"debug"`
+	Workdir   string                    `yaml:"workdir"`
+	Templates string                    `yaml:"templates-dir"`
+	Invoice   TypstInvoicePrinterConfig `yaml:"invoice"`
+	UPO       TypstUPOPrinterConfig     `yaml:"upo"`
 }
 
 func PrinterConfig(vip *viper.Viper) (*TypstPrinterConfig, error) {
 	var err error
 
-	var config = &TypstPrinterConfig{
+	config := &TypstPrinterConfig{
 		Debug:   viper.GetBool(cfgKeyTypstDebug),
 		Workdir: viper.GetString(cfgKeyTypstWorkdir),
 	}
 
-	config.Templates, err = parseTemplates(vip)
+	// config.Templates, err = parseTemplates(vip)
 
 	return config, err
 }

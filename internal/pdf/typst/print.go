@@ -2,60 +2,61 @@ package typst
 
 import (
 	"bytes"
+	"io/fs"
 	"ksef/internal/logging"
 	"ksef/internal/utils"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"text/template"
 )
 
-func (tp *typstPrinter) printTemplate(
-	tmpl *template.Template,
-	templateName string,
-	templateVars any,
-	output string,
-	copy2tmp ...string,
-) (err error) {
-	tmpDir, err := os.MkdirTemp(tp.cfg.Workdir, "")
-	if err != nil {
+func (tp *typstPrinter) prepareWorkdir() error {
+	if err := os.MkdirAll(tp.cfg.Workdir, 0775); err != nil {
 		return err
 	}
-	tmpFile, err := os.CreateTemp(tmpDir, "*.typ")
-	if err != nil {
-		return err
-	}
-	defer tmpFile.Close()
+	_, err := os.Stat(filepath.Join(tp.cfg.Workdir, "upo"))
+	if os.IsNotExist(err) {
+		// copy everything from templates-dir to workdir
+		if err = filepath.WalkDir(tp.cfg.Templates, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
 
-	for _, file := range copy2tmp {
-		if err = utils.CopyFile(
-			file, filepath.Join(tmpDir, filepath.Base(file)),
-		); err != nil {
+			destLocalPath := strings.TrimPrefix(path, tp.cfg.Templates)
+			if destLocalPath == "" {
+				return nil
+			}
+
+			if d.IsDir() {
+				return os.MkdirAll(filepath.Join(tp.cfg.Workdir, destLocalPath), 0775)
+			}
+
+			return utils.CopyFile(
+				path,
+				filepath.Join(tp.cfg.Workdir, destLocalPath),
+			)
+		}); err != nil {
 			return err
 		}
 	}
+	return nil
+}
 
-	if err = tmpl.ExecuteTemplate(tmpFile, templateName, templateVars); err != nil {
-		return err
-	}
-
-	if tp.cfg.Debug {
-		if copyTypErr := utils.CopyFile(tmpFile.Name(), strings.Replace(output, ".pdf", ".typ", 1)); copyTypErr != nil {
-			logging.PDFRendererLogger.Error("błąd kopiowania pliku .typ", "err", copyTypErr)
-		}
-	}
-
-	// now call typst:
-	binary := "typst"
-
+func (tp *typstPrinter) print(
+	template string,
+	output string,
+) (err error) {
 	cmd := exec.Command(
-		binary,
+		"typst",
 		"compile",
 		"--root",
-		tmpDir,
-		tmpFile.Name(),
+		tp.cfg.Workdir,
+		filepath.Join(tp.cfg.Workdir, template),
+		output,
 	)
+
+	logging.PDFRendererLogger.Debug("executing", "cmd", cmd.String())
 
 	var stdErrBuffer bytes.Buffer
 
@@ -63,10 +64,7 @@ func (tp *typstPrinter) printTemplate(
 		cmd.Stderr = &stdErrBuffer
 	}
 
-	defer os.RemoveAll(tmpDir)
-
 	err = cmd.Run()
-
 	if err != nil {
 		if tp.cfg.Debug && stdErrBuffer.Len() > 0 {
 			if writeErr := os.WriteFile(strings.Replace(output, ".pdf", "-error.txt", 1), stdErrBuffer.Bytes(), 0644); writeErr != nil {
@@ -77,10 +75,5 @@ func (tp *typstPrinter) printTemplate(
 		return err
 	}
 
-	if copyPDFErr := utils.CopyFile(strings.Replace(tmpFile.Name(), ".typ", ".pdf", 1), output); copyPDFErr != nil {
-		logging.PDFRendererLogger.Error("błąd kopiowania pliku PDF", "err", copyPDFErr)
-	}
-
-	return err
-
+	return nil
 }

@@ -7,18 +7,19 @@
 #import "./components/header.typ": invoice-header
 
 #let page-header(meta) = {
-  if "header" in meta {
+  if "page" in meta and "header" in meta.at("page") {
+    let header = meta.at("page").at("header")
     let left = [#h(1fr)]
     let middle = [#h(1fr)]
     let right = [#h(1fr)]
-    if "left" in meta.at("header") {
-      left = [#{ meta.header.left }]
+    if "left" in header and header.left.len() > 0 {
+      left = [#{ header.left }]
     }
-    if "center" in meta.at("header") {
-      middle = [#{ meta.header.center }]
+    if "center" in header and header.center.len() > 0 {
+      middle = [#{ header.center }]
     }
-    if "right" in meta.at("header") {
-      right = [#{ meta.header.right }]
+    if "right" in header and header.right.len() > 0 {
+      right = [#{ header.right }]
     }
     grid(
       grid(

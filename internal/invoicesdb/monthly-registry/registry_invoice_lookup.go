@@ -1,7 +1,7 @@
 package monthlyregistry
 
 func (r *Registry) ContainsHash(checksum string) bool {
-	return r.getInvoiceByChecksum(checksum) != nil
+	return r.GetInvoiceByChecksum(checksum) != nil
 }
 
 func (r *Registry) getInvoiceByRefNo(refNo string) *Invoice {
@@ -15,7 +15,7 @@ func (r *Registry) getInvoiceByRefNo(refNo string) *Invoice {
 	return nil
 }
 
-func (r *Registry) getInvoiceByChecksum(checksum string) *Invoice {
+func (r *Registry) GetInvoiceByChecksum(checksum string) *Invoice {
 	// TODO: implement proper indexing ..
 	for _, invoice := range r.Invoices {
 		if invoice.Checksum == checksum {
@@ -45,7 +45,6 @@ func (r *Registry) GetUnsynced() ([]*InvoiceMetadata, error) {
 			}
 
 		}
-
 	}
 
 	return unsynced, nil

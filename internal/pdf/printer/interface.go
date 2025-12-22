@@ -1,10 +1,8 @@
 package printer
 
-import (
-	"ksef/internal/registry/types"
-)
+import monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 
 type PDFPrinter interface {
-	Print(contentBase64 string, meta types.Invoice, output string) error
+	PrintInvoice(srcFile string, output string, meta *monthlyregistry.InvoicePrintingMeta) error
 	PrintUPO(srcFile string, output string) error
 }

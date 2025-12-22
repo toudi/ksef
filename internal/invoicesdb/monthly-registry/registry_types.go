@@ -2,10 +2,10 @@ package monthlyregistry
 
 import (
 	"ksef/internal/certsdb"
+	"ksef/internal/client/v2/types/invoices"
 	"time"
 
 	sessionTypes "ksef/internal/client/v2/session/types"
-	"ksef/internal/client/v2/types/invoices"
 
 	"github.com/spf13/viper"
 )
@@ -18,6 +18,13 @@ const (
 	InvoiceTypePayer      InvoiceType = 2
 	InvoiceTypeAuthorized InvoiceType = 3
 )
+
+var invoiceTypeToPrinterUsage = map[InvoiceType]string{
+	InvoiceTypeIssued:     "issued",
+	InvoiceTypeReceived:   "received",
+	InvoiceTypePayer:      "payer",
+	InvoiceTypeAuthorized: "authorized",
+}
 
 type InvoiceQRCodes struct {
 	Invoice string `yaml:"invoice"`
@@ -32,6 +39,7 @@ type Invoice struct {
 	QRCodes      InvoiceQRCodes `yaml:"qr-codes,omitempty"`
 	Type         InvoiceType    `yaml:"type,omitzero"`
 	UploadErrors []string       `yaml:"upload-errors,omitempty"`
+	PrintoutData map[string]any `yaml:"printout-data,omitempty"`
 }
 
 type InvoiceMetadata struct {
