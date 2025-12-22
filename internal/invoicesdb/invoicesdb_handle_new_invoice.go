@@ -8,9 +8,7 @@ import (
 	"ksef/internal/utils"
 )
 
-var (
-	errUnableToSaveInvoice = errors.New("unable to save invoice to a file")
-)
+var errUnableToSaveInvoice = errors.New("unable to save invoice to a file")
 
 func (idb *InvoicesDB) handleNewInvoice(
 	inv *sei.ParsedInvoice,
@@ -39,6 +37,12 @@ func (idb *InvoicesDB) handleNewInvoice(
 		checksum,
 	); err != nil {
 		return err
+	}
+
+	if inv.Invoice.KSeFFlags.Offline {
+		regInvoice := monthlyRegistry.GetInvoiceByChecksum(checksum)
+		regInvoice.Filename = fileName
+		idb.offlineInvoices = append(idb.offlineInvoices, regInvoice)
 	}
 
 	// now let's save info about the invoice to the annual registry

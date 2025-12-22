@@ -52,7 +52,7 @@ func (c *StatusChecker) downloadUPO(
 	var printer printer.PDFPrinter
 
 	if c.cfg.UPODownloaderConfig.ConvertToPDF {
-		printer, err = pdf.GetLocalPrintingEngine()
+		printer, err = pdf.GetUPOPrinter(c.vip)
 		if err != nil {
 			return err
 		}

@@ -3,6 +3,7 @@ package config
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"ksef/internal/config/pdf/cirfmf"
 	"ksef/internal/config/pdf/typst"
 
@@ -11,18 +12,10 @@ import (
 )
 
 const (
-	printerEngineLatex     = "latex"
-	printerEngineTypst     = "typst"
-	printerEnginePuppeteer = "puppeteer"
-	printerEngineGotenberg = "gotenberg"
-
 	cfgKeyPdf string = "pdf"
 )
 
-var (
-	errInvalidEngine  = errors.New("nieprawidłowa wartość opcji pdf.engine")
-	errEngineNotFound = errors.New("could not found engine for selected usage")
-)
+var errEngineNotFound = errors.New("could not found engine for selected usage")
 
 type PDFEngineConfig struct {
 	UsageRaw     any                       `yaml:"usage"`
@@ -65,10 +58,12 @@ func GetPDFPrinterConfig(vip *viper.Viper) (config PDFPrinterConfig, err error) 
 	// and then decode it from memory to a ready structs.
 	var buffer bytes.Buffer
 	if err = yaml.NewEncoder(&buffer).Encode(rawEngines); err != nil {
+		fmt.Printf("unable to encode raw engines: %v", err)
 		return config, err
 	}
 	var engines []PDFEngineConfig
 	if err = yaml.NewDecoder(&buffer).Decode(&engines); err != nil {
+		fmt.Printf("unable to decode raw engines back into slice: %v", err)
 		return config, err
 	}
 	config.usageIndex = make(map[string]int)
@@ -78,27 +73,6 @@ func GetPDFPrinterConfig(vip *viper.Viper) (config PDFPrinterConfig, err error) 
 		}
 	}
 	config.engines = engines
-	// var engines []engineConfig
-	// engine := vip.GetString(cfgKeyPdfEngine)
-
-	// switch engine {
-	// case printerEngineLatex:
-	// 	var latexConfig *latex.LatexPrinterConfig
-	// 	latexConfig, err = latex.PrinterConfig(vip)
-	// 	if err != nil {
-	// 		break
-	// 	}
-	// 	config.LatexConfig = latexConfig
-	// case printerEngineTypst:
-	// 	var typstConfig *typst.TypstPrinterConfig
-	// 	typstConfig, err = typst.PrinterConfig(vip)
-	// 	if err != nil {
-	// 		break
-	// 	}
-	// 	config.TypstConfig = typstConfig
-	// default:
-	// 	err = errInvalidEngine
-	// }
 
 	return config, err
 }

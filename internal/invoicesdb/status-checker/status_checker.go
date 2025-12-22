@@ -28,9 +28,11 @@ func NewStatusChecker(
 	monthsRange []time.Time,
 ) *StatusChecker {
 	return &StatusChecker{
-		vip:         vip,
-		checker:     ksefClient.SessionStatusChecker(),
-		cfg:         cfg,
-		monthsRange: monthsRange,
+		vip:                          vip,
+		checker:                      ksefClient.SessionStatusChecker(),
+		cfg:                          cfg,
+		monthsRange:                  monthsRange,
+		sessionIdToSessionRegistry:   make(map[string]*sessionregistry.Registry),
+		invoiceHashToMonthlyRegistry: make(map[string]*monthlyregistry.Registry),
 	}
 }

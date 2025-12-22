@@ -23,7 +23,7 @@ var (
 func (i *InvoicesDB) importXMLInvoices(
 	fileName string,
 ) (err error) {
-	var filesToImport = []string{fileName}
+	filesToImport := []string{fileName}
 	// let's check if it is a single file or a wildcard (*.xml)
 	fileBase := strings.ToLower(fileName)
 	if fileBase == "*.xml" {
@@ -76,7 +76,6 @@ func (i *InvoicesDB) importXMLInvoices(
 		annualRegistry, err := i.getAnnualRegistryForInvoice(
 			parsedInvoice,
 		)
-
 		if err != nil {
 			return err
 		}
@@ -101,7 +100,6 @@ func (i *InvoicesDB) importXMLInvoices(
 		monthlyRegistry, err := i.getMonthlyRegistryForInvoice(
 			parsedInvoice,
 		)
-
 		if err != nil {
 			return err
 		}
@@ -118,6 +116,13 @@ func (i *InvoicesDB) importXMLInvoices(
 		); err != nil {
 			return err
 		}
+
+		regInvoice := monthlyRegistry.GetInvoiceByChecksum(
+			checksum,
+		)
+		regInvoice.Filename = fileName
+
+		i.offlineInvoices = append(i.offlineInvoices, regInvoice)
 	}
 	return nil
 }

@@ -46,13 +46,16 @@ type InvoicesDB struct {
 	// of the month but now we're past midnight, we want to take care of that as well
 	monthsRange []time.Time
 	today       time.Time
+	// optimization for caching the filenames of offline invoices
+	// for which we can generate PDF right away
+	offlineInvoices []*monthlyregistry.Invoice
 }
 
 func newInvoicesDB(vip *viper.Viper) *InvoicesDB {
 	// just so that we don't have to call time.Now() time and time again
-	var today = time.Now()
-	var previousMonth = today.AddDate(0, -1, 0)
-	var monthsRange = []time.Time{
+	today := time.Now()
+	previousMonth := today.AddDate(0, -1, 0)
+	monthsRange := []time.Time{
 		previousMonth, today,
 	}
 

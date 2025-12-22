@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	cfgKeyInvoicePdf        = "invoice.pdf"
 	cfgKeyStatusWait        = "status.wait"
 	cfgKeyStatusWaitTimeout = "status.wait.timeout"
 	cfgKeyUPODownload       = "upo"
@@ -26,12 +27,14 @@ type UPODownloaderConfig struct {
 type StatusCheckerConfig struct {
 	Wait                bool
 	WaitTimeout         time.Duration
+	InvoicePDF          bool
 	UPODownloaderConfig UPODownloaderConfig
 }
 
 func StatusCheckerFlags(flagSet *pflag.FlagSet) {
 	flagSet.Bool(cfgKeyStatusWait, false, "czekaj na przetworzenie sesji")
 	flagSet.Duration(cfgKeyStatusWaitTimeout, defaultWaitTimeout, "maksymalny czas oczekiwania na przetworzenie sesji")
+	flagSet.Bool(cfgKeyInvoicePdf, false, "drukuj faktury do PDF")
 	flagSet.Bool(cfgKeyUPODownload, false, "pobierz UPO po przetworzeniu sesji")
 	flagSet.Bool(cfgKeyUPOPdf, false, "konwertuj UPO do PDF")
 	flagSet.Duration(cfgKeyUPOTimeout, defaultWaitTimeout, "Maksymalny czas oczekiwania na rezultat pobrania UPO")
@@ -53,6 +56,7 @@ func GetStatusCheckerConfig(vip *viper.Viper) StatusCheckerConfig {
 	return StatusCheckerConfig{
 		Wait:        vip.GetBool(cfgKeyStatusWait),
 		WaitTimeout: waitTimeout,
+		InvoicePDF:  vip.GetBool(cfgKeyInvoicePdf),
 		UPODownloaderConfig: UPODownloaderConfig{
 			Enabled:      vip.GetBool(cfgKeyUPODownload),
 			ConvertToPDF: vip.GetBool(cfgKeyUPOPdf),

@@ -6,6 +6,7 @@ import (
 	statuscheckerconfig "ksef/internal/invoicesdb/status-checker/config"
 	uploaderconfig "ksef/internal/invoicesdb/uploader/config"
 	"ksef/internal/logging"
+	"ksef/internal/pdf"
 	"ksef/internal/sei"
 	"path/filepath"
 	"strings"
@@ -51,6 +52,20 @@ func (idb *InvoicesDB) Import(
 
 	// save the database before uploading
 	if confirm {
+		printer, err := pdf.GetInvoicePrinter(vip, "invoice:issued")
+		if err != nil {
+			logging.PDFRendererLogger.Error("błąd inicjalizacji silnika PDF", "err", err)
+		} else {
+			for _, offlineInvoice := range idb.offlineInvoices {
+				if err = printer.PrintInvoice(
+					offlineInvoice.Filename,
+					strings.Replace(offlineInvoice.Filename, ".xml", ".pdf", 1),
+					offlineInvoice.GetPrintingMeta(),
+				); err != nil {
+					return err
+				}
+			}
+		}
 		if err := idb.Save(); err != nil {
 			logging.InvoicesDBLogger.Error("błąd zapisu rejestru faktur", "err", err)
 			return err

@@ -40,6 +40,7 @@ type Invoice struct {
 	Type         InvoiceType    `yaml:"type,omitzero"`
 	UploadErrors []string       `yaml:"upload-errors,omitempty"`
 	PrintoutData map[string]any `yaml:"printout-data,omitempty"`
+	Filename     string         `yaml:"-"`
 }
 
 type InvoiceMetadata struct {

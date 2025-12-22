@@ -6,12 +6,17 @@ import (
 	"ksef/internal/client/v2/session/status"
 	"ksef/internal/client/v2/session/types"
 	"ksef/internal/logging"
+	"ksef/internal/pdf"
+	"strings"
 	"time"
 )
 
 var (
 	errUnableToCheckStatus     = errors.New("unable to check session status")
 	errTimeoutWaitingForStatus = errors.New("timed out waiting for upload session status")
+	errPrintingInvoice         = errors.New("error printing invoice to PDF")
+	errDownloadingUPO          = errors.New("error downloading UPO")
+	errUnableToGetPrinter      = errors.New("unable to create PDF printer")
 )
 
 func (c *StatusChecker) CheckSessions(ctx context.Context) error {
@@ -29,10 +34,40 @@ func (c *StatusChecker) CheckSessions(ctx context.Context) error {
 		)
 
 		// if the session is processed we can (conditionally) download UPO
-		if sessionStatus.IsProcessed() && c.cfg.UPODownloaderConfig.Enabled {
-			logging.InvoicesDBLogger.Info("sesja przetworzona pomyślnie. pobieram UPO", "upo", sessionStatus.Status.Upo)
-			if err = c.downloadUPO(ctx, sessionStatus); err != nil {
-				return err
+		if sessionStatus.IsProcessed() {
+			if c.cfg.InvoicePDF {
+				printer, err := pdf.GetInvoicePrinter(c.vip, "invoice:issued")
+				if err != nil {
+					return errors.Join(errUnableToGetPrinter, err)
+				}
+
+				for invoiceHash, registry := range c.invoiceHashToMonthlyRegistry {
+					invoice := registry.GetInvoiceByChecksum(
+						invoiceHash,
+					)
+					if invoice == nil {
+						return errors.New("unable to find invoice")
+					}
+					if invoice.Offline {
+						// offline invoice was rendered to PDF during import - no need to re-render
+						continue
+					}
+
+					if err = printer.PrintInvoice(
+						invoice.Filename,
+						strings.Replace(invoice.Filename, ".xml", ".pdf", 1),
+						invoice.GetPrintingMeta(),
+					); err != nil {
+						return errors.Join(errPrintingInvoice, err)
+					}
+				}
+			}
+
+			if c.cfg.UPODownloaderConfig.Enabled {
+				logging.InvoicesDBLogger.Info("sesja przetworzona pomyślnie. pobieram UPO", "upo", sessionStatus.Status.Upo)
+				if err = c.downloadUPO(ctx, sessionStatus); err != nil {
+					return errors.Join(errDownloadingUPO, err)
+				}
 			}
 		}
 	}

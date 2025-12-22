@@ -17,8 +17,18 @@ func (r *Registry) getInvoiceByRefNo(refNo string) *Invoice {
 
 func (r *Registry) GetInvoiceByChecksum(checksum string) *Invoice {
 	// TODO: implement proper indexing ..
+	countByType := make(map[InvoiceType]int)
+
 	for _, invoice := range r.Invoices {
+		if _, exists := countByType[invoice.Type]; !exists {
+			countByType[invoice.Type] = 0
+		}
+		countByType[invoice.Type]++
 		if invoice.Checksum == checksum {
+			invoice.Filename = r.getIssuedInvoiceFilename(
+				invoice.RefNo,
+				countByType[invoice.Type],
+			)
 			return invoice
 		}
 	}
