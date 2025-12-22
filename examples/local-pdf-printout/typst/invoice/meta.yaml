@@ -1,6 +1,7 @@
-header:
-  left: Lewa strona nagłówka
-  right: Prawa strona nagłówka
+page:
+  header:
+    left: Lewa strona nagłówka
+    right: Prawa strona nagłówka
 
 invoice:
   ksef-ref-no: 1111111111-20251218-AABBCCDDEEFF-AA
