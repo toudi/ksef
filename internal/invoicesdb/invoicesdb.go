@@ -14,6 +14,11 @@ import (
 	"github.com/spf13/viper"
 )
 
+type NewInvoice struct {
+	registry *monthlyregistry.Registry
+	invoice  *monthlyregistry.Invoice
+}
+
 // stateful invoices db registry
 type InvoicesDB struct {
 	cfg       config.InvoicesDBConfig
@@ -48,7 +53,7 @@ type InvoicesDB struct {
 	today       time.Time
 	// optimization for caching the filenames of offline invoices
 	// for which we can generate PDF right away
-	offlineInvoices []*monthlyregistry.Invoice
+	offlineInvoices []*NewInvoice
 }
 
 func newInvoicesDB(vip *viper.Viper) *InvoicesDB {

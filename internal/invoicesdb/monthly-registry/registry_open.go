@@ -53,9 +53,12 @@ func doOpen(regFilename string) (*Registry, error) {
 	}
 
 	reg := &Registry{
-		Invoices:   make([]*Invoice, 0),
-		SyncParams: &SyncParams{},
-		dir:        filepath.Dir(regFilename),
+		Invoices:      make([]*Invoice, 0),
+		SyncParams:    &SyncParams{},
+		dir:           filepath.Dir(regFilename),
+		OrdNums:       make(OrdNumsMap),
+		SavedOrdNums:  make(OrdNums, 0),
+		checksumIndex: make(map[string]int),
 	}
 
 	if exists {
@@ -67,6 +70,14 @@ func doOpen(regFilename string) (*Registry, error) {
 
 		pathParts := strings.Split(reg.dir, string(filepath.Separator))
 		pathLength := len(pathParts)
+
+		if len(reg.SavedOrdNums) == 0 {
+			reg.assignOrdNums()
+		}
+
+		for index, invoice := range reg.Invoices {
+			reg.checksumIndex[invoice.Checksum] = index
+		}
 
 		month, err := strconv.Atoi(pathParts[pathLength-1])
 		if err != nil {

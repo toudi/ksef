@@ -8,6 +8,7 @@ import (
 	"ksef/internal/logging"
 	"ksef/internal/sei"
 	"ksef/internal/utils"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -18,6 +19,7 @@ var (
 	errUnableToParseInvoice   = errors.New("unable to parse invoice")
 	errUnableToParseIssueDate = errors.New("unable to parse issue date")
 	errUnableToCopyFile       = errors.New("unable to copy invoice file")
+	errUnableToCreateDir      = errors.New("unable to create invoice directory")
 )
 
 func (i *InvoicesDB) importXMLInvoices(
@@ -105,6 +107,11 @@ func (i *InvoicesDB) importXMLInvoices(
 		}
 
 		fileName := monthlyRegistry.GetDestFileName(parsedInvoice, monthlyregistry.InvoiceTypeIssued)
+
+		if err = os.MkdirAll(filepath.Dir(fileName), 0775); err != nil {
+			return errors.Join(errUnableToCreateDir, err)
+		}
+
 		if err = utils.CopyFile(srcInvoiceFile, fileName); err != nil {
 			return errors.Join(errUnableToCopyFile, err)
 		}
@@ -120,9 +127,14 @@ func (i *InvoicesDB) importXMLInvoices(
 		regInvoice := monthlyRegistry.GetInvoiceByChecksum(
 			checksum,
 		)
-		regInvoice.Filename = fileName
 
-		i.offlineInvoices = append(i.offlineInvoices, regInvoice)
+		i.offlineInvoices = append(
+			i.offlineInvoices,
+			&NewInvoice{
+				registry: monthlyRegistry,
+				invoice:  regInvoice,
+			},
+		)
 	}
 	return nil
 }

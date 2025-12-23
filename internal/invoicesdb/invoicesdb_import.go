@@ -57,10 +57,11 @@ func (idb *InvoicesDB) Import(
 			logging.PDFRendererLogger.Error("błąd inicjalizacji silnika PDF", "err", err)
 		} else {
 			for _, offlineInvoice := range idb.offlineInvoices {
+				invoiceFilename := offlineInvoice.registry.InvoiceFilename(offlineInvoice.invoice)
 				if err = printer.PrintInvoice(
-					offlineInvoice.Filename,
-					strings.Replace(offlineInvoice.Filename, ".xml", ".pdf", 1),
-					offlineInvoice.GetPrintingMeta(),
+					invoiceFilename,
+					strings.Replace(invoiceFilename, ".xml", ".pdf", 1),
+					offlineInvoice.invoice.GetPrintingMeta(),
 				); err != nil {
 					return err
 				}

@@ -45,6 +45,7 @@ func (r *Registry) AddInvoice(
 		Checksum: checksum,
 		Offline:  inv.Invoice.KSeFFlags.Offline,
 		Type:     invoiceType,
+		OrdNum:   r.countInvoicesByType(invoiceType) + 1,
 	}
 	var err error
 
@@ -75,6 +76,8 @@ func (r *Registry) AddInvoice(
 		r.Invoices,
 		invoice,
 	)
+	r.OrdNums[invoice.Type] += 1
+	r.checksumIndex[checksum] = len(r.Invoices) - 1
 
 	return nil
 }
@@ -86,7 +89,9 @@ func (r *Registry) AddReceivedInvoice(ksefInvoice invoices.InvoiceMetadata, subj
 		return err
 	}
 
-	var invoice = &Invoice{
+	invoiceType := ksefSubjectTypeToRegistryInvoiceType[subjectType]
+
+	invoice := &Invoice{
 		RefNo:     ksefInvoice.InvoiceNumber,
 		KSeFRefNo: ksefInvoice.KSeFNumber,
 		Checksum:  utils.Base64ToHex(ksefInvoice.Checksum()),
@@ -98,13 +103,16 @@ func (r *Registry) AddReceivedInvoice(ksefInvoice invoices.InvoiceMetadata, subj
 				checksumBytes,
 			),
 		},
-		Type: ksefSubjectTypeToRegistryInvoiceType[subjectType],
+		Type:   invoiceType,
+		OrdNum: r.countInvoicesByType(invoiceType) + 1,
 	}
 
 	r.Invoices = append(
 		r.Invoices,
 		invoice,
 	)
+	r.OrdNums[invoice.Type] += 1
+	r.checksumIndex[invoice.Checksum] = len(r.Invoices) - 1
 
 	return nil
 }

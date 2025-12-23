@@ -40,7 +40,7 @@ type Invoice struct {
 	Type         InvoiceType    `yaml:"type,omitzero"`
 	UploadErrors []string       `yaml:"upload-errors,omitempty"`
 	PrintoutData map[string]any `yaml:"printout-data,omitempty"`
-	Filename     string         `yaml:"-"`
+	OrdNum       int            `yaml:"ord-num"`
 }
 
 type InvoiceMetadata struct {
@@ -60,11 +60,38 @@ type SyncParams struct {
 	SubjectTypes  []invoices.SubjectType `yaml:"subject-types,omitempty"`
 }
 
-type Registry struct {
-	Invoices   []*Invoice  `yaml:"invoices"`
-	SyncParams *SyncParams `yaml:"sync,omitempty"`
+type OrdNumState struct {
+	InvoiceType InvoiceType `yaml:"invoice-type"`
+	Count       int         `yaml:"count"`
+}
 
-	dir     string
-	certsDB *certsdb.CertificatesDB
-	vip     *viper.Viper
+type OrdNums []OrdNumState
+
+func (o OrdNums) ToMap() map[InvoiceType]int {
+	result := make(map[InvoiceType]int)
+	for _, entry := range o {
+		result[entry.InvoiceType] = entry.Count
+	}
+	return result
+}
+
+type OrdNumsMap map[InvoiceType]int
+
+func (o OrdNumsMap) ToSlice() (result OrdNums) {
+	for invoiceType, count := range o {
+		result = append(result, OrdNumState{InvoiceType: invoiceType, Count: count})
+	}
+	return result
+}
+
+type Registry struct {
+	Invoices     []*Invoice  `yaml:"invoices"`
+	SyncParams   *SyncParams `yaml:"sync,omitempty"`
+	OrdNums      OrdNumsMap  `yaml:"-"`
+	SavedOrdNums OrdNums     `yaml:"ord-nums,emitempty"`
+
+	checksumIndex map[string]int
+	dir           string
+	certsDB       *certsdb.CertificatesDB
+	vip           *viper.Viper
 }

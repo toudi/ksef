@@ -53,9 +53,10 @@ func (c *StatusChecker) CheckSessions(ctx context.Context) error {
 						continue
 					}
 
+					invoiceFilename := registry.InvoiceFilename(invoice)
 					if err = printer.PrintInvoice(
-						invoice.Filename,
-						strings.Replace(invoice.Filename, ".xml", ".pdf", 1),
+						invoiceFilename,
+						strings.Replace(invoiceFilename, ".xml", ".pdf", 1),
 						invoice.GetPrintingMeta(),
 					); err != nil {
 						return errors.Join(errPrintingInvoice, err)

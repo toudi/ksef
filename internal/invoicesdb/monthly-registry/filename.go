@@ -46,11 +46,10 @@ func (r *Registry) GetDestFileName(inv *sei.ParsedInvoice, invoiceType InvoiceTy
 		slugify.Slugify(inv.Invoice.Issuer.Name),
 		slugify.Slugify(inv.Invoice.Number),
 	)
-
 }
 
 func (r *Registry) GetDestFileNameForAPIInvoice(subjectType invoices.SubjectType, inv invoices.InvoiceMetadata) string {
-	var invoiceType = ksefSubjectTypeToRegistryInvoiceType[subjectType]
+	invoiceType := ksefSubjectTypeToRegistryInvoiceType[subjectType]
 	numInvoices := r.countInvoicesByType(invoiceType)
 
 	return fmt.Sprintf(
@@ -64,11 +63,9 @@ func (r *Registry) GetDestFileNameForAPIInvoice(subjectType invoices.SubjectType
 }
 
 func (r *Registry) countInvoicesByType(invoiceType InvoiceType) (count int) {
-	for _, invoice := range r.Invoices {
-		if invoice.Type == invoiceType {
-			count += 1
-		}
+	currentCount, exists := r.OrdNums[invoiceType]
+	if !exists {
+		return 0
 	}
-
-	return count
+	return currentCount
 }

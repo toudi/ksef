@@ -18,11 +18,14 @@ func OpenOrCreate(dir string, certsDB *certsdb.CertificatesDB, vip *viper.Viper)
 		return nil, errOpeningRegistryFile
 	}
 	reg := &Registry{
-		Invoices:   make([]*Invoice, 0),
-		SyncParams: &SyncParams{},
-		certsDB:    certsDB,
-		vip:        vip,
-		dir:        dir,
+		Invoices:      make([]*Invoice, 0),
+		OrdNums:       make(OrdNumsMap),
+		SavedOrdNums:  make(OrdNums, 0),
+		SyncParams:    &SyncParams{},
+		certsDB:       certsDB,
+		vip:           vip,
+		dir:           dir,
+		checksumIndex: make(map[string]int),
 	}
 
 	if exists {
@@ -31,6 +34,15 @@ func OpenOrCreate(dir string, certsDB *certsdb.CertificatesDB, vip *viper.Viper)
 		if err = utils.ReadYAML(regFile, reg); err != nil {
 			return nil, errors.Join(errReadingRegistryContents, err)
 		}
+
+		if len(reg.SavedOrdNums) == 0 {
+			reg.assignOrdNums()
+		}
+
+		for index, invoice := range reg.Invoices {
+			reg.checksumIndex[invoice.Checksum] = index
+		}
+
 	}
 
 	return reg, nil

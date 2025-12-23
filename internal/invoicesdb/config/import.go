@@ -35,7 +35,6 @@ func ImportFlags(flagSet *pflag.FlagSet) {
 	flagSet.String(cfgKeyCorrectionNumbering, "FK/{count}/{year}", "Schemat numeracji faktur korygujących")
 	flagSet.BoolP(cfgKeyAutoUpload, "u", false, "automatycznie wyślij faktury po zakończonym imporcie")
 	flagSet.Bool(cfgKeyOffline, false, "oznacz faktury jako generowane w trybie offline")
-	uploaderconfig.UploaderFlags(flagSet)
 }
 
 func GetImportConfig(vip *viper.Viper) ImportConfig {

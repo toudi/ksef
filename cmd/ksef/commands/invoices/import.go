@@ -27,6 +27,9 @@ var (
 func init() {
 	invoicesdbconfig.ImportFlags(importCommand.Flags())
 	inputprocessors.GeneratorFlags(importCommand.Flags())
+	// uploaderconfig.UploaderFlags(importCommand.Flags())
+	// statuscheckerconfig.StatusCheckerFlags(importCommand.Flags())
+
 	importCommand.Flags().SortFlags = false
 	InvoicesCommand.AddCommand(importCommand)
 }

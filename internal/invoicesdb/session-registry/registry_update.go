@@ -19,7 +19,7 @@ func (r *Registry) processUploadResult(
 	uploadSessionStatus *sessionTypes.UploadSessionResult,
 	invoiceChecksumToRegistry map[string]*monthlyregistry.Registry,
 ) error {
-	var affectedRegistries = make(map[*monthlyregistry.Registry]bool)
+	affectedRegistries := make(map[*monthlyregistry.Registry]bool)
 
 	// first step - update entries
 	uploadSessionId := uploadSessionStatus.SessionID
@@ -39,9 +39,9 @@ func (r *Registry) processUploadResult(
 	for _, invoiceUploadStatus := range uploadSessionStatus.Invoices {
 		r.logger.Debug("update monthly registry with", "upload session status", invoiceUploadStatus)
 
-		if invoiceUploadStatus.Status.Successful() {
-			var invoiceChecksum = invoiceUploadStatus.Checksum
-			var registry = invoiceChecksumToRegistry[invoiceChecksum]
+		if invoiceUploadStatus.Status.Code > 0 {
+			invoiceChecksum := invoiceUploadStatus.Checksum
+			registry := invoiceChecksumToRegistry[invoiceChecksum]
 			// represents invoice original ref no, extracted from the registry
 			if err := registry.UpdateInvoiceByChecksum(
 				invoiceChecksum,
