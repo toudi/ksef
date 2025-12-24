@@ -5,7 +5,6 @@ import (
 	"ksef/cmd/ksef/commands/authorization/challenge"
 	"ksef/internal/certsdb"
 	"ksef/internal/client/v2/auth/xades"
-	"ksef/internal/runtime"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -13,24 +12,23 @@ import (
 )
 
 var signCommand = &cobra.Command{
-	Use:   "sign",
+	Use:   "sign <challenge-file>",
 	Short: "podpisuje wskazany plik wyzwania przy użyciu certyfikatu",
 	RunE:  signChallengeFile,
+	Args:  cobra.ExactArgs(1),
 }
 
 var outputFile string
 
 func init() {
-	signCommand.Flags().StringVarP(&challengeFile, "challenge", "f", "", "plik wyzwania")
 	signCommand.Flags().StringVarP(&outputFile, "dest", "o", "AuthTokenRequest.signed.xml", "plik docelowy")
-
-	signCommand.MarkFlagRequired("challenge")
 
 	AuthCommand.AddCommand(signCommand)
 }
 
-func signChallengeFile(cmd *cobra.Command, _ []string) error {
-	certsDB, err := certsdb.OpenOrCreate(runtime.GetGateway(viper.GetViper()))
+func signChallengeFile(cmd *cobra.Command, args []string) error {
+	challengeFile = args[0]
+	certsDB, err := certsdb.OpenOrCreate(viper.GetViper())
 	if err != nil {
 		return err
 	}

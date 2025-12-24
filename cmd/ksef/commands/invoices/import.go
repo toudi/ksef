@@ -6,6 +6,9 @@ import (
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/invoicesdb"
 	invoicesdbconfig "ksef/internal/invoicesdb/config"
+	statuscheckerconfig "ksef/internal/invoicesdb/status-checker/config"
+	uploaderconfig "ksef/internal/invoicesdb/uploader/config"
+	"ksef/internal/runtime"
 	inputprocessors "ksef/internal/sei/input_processors"
 
 	"github.com/spf13/cobra"
@@ -27,8 +30,9 @@ var (
 func init() {
 	invoicesdbconfig.ImportFlags(importCommand.Flags())
 	inputprocessors.GeneratorFlags(importCommand.Flags())
-	// uploaderconfig.UploaderFlags(importCommand.Flags())
-	// statuscheckerconfig.StatusCheckerFlags(importCommand.Flags())
+	runtime.CertProfileFlag(importCommand.Flags())
+	uploaderconfig.UploaderFlags(importCommand.Flags())
+	statuscheckerconfig.StatusCheckerFlags(importCommand.Flags())
 
 	importCommand.Flags().SortFlags = false
 	InvoicesCommand.AddCommand(importCommand)

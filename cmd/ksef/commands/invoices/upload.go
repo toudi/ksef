@@ -6,6 +6,7 @@ import (
 	"ksef/internal/invoicesdb"
 	statuscheckerconfig "ksef/internal/invoicesdb/status-checker/config"
 	uploaderconfig "ksef/internal/invoicesdb/uploader/config"
+	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -23,6 +24,7 @@ func init() {
 	statuscheckerconfig.StatusCheckerFlags(uploadCommand.Flags())
 	flags.NIP(uploadCommand.Flags())
 	uploadCommand.MarkFlagRequired(flags.FlagNameNIP)
+	runtime.CertProfileFlag(uploadCommand.Flags())
 	InvoicesCommand.AddCommand(uploadCommand)
 }
 

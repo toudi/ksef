@@ -9,7 +9,6 @@ import (
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/logging"
 	registryPkg "ksef/internal/registry"
-	"ksef/internal/runtime"
 	"ksef/internal/sei"
 	inputprocessors "ksef/internal/sei/input_processors"
 	"ksef/internal/utils"
@@ -124,7 +123,7 @@ func getOfflineCertificate(vip *viper.Viper, nip string) (*certsdb.Certificate, 
 	var err error
 
 	if certsDB == nil {
-		certsDB, err = certsdb.OpenOrCreate(runtime.GetGateway(vip))
+		certsDB, err = certsdb.OpenOrCreate(vip)
 		if err != nil {
 			return nil, err
 		}

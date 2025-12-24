@@ -9,7 +9,6 @@ import (
 	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/token"
 	"ksef/internal/client/v2/auth/validator"
-	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -40,7 +39,7 @@ func authSessionDebug(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
 	vip.Set(auth.FlagExitAfterPersistingToken, "true")
 	var nip string
-	var gateway = runtime.GetGateway(vip)
+
 	var err error
 
 	// there are couple of modes here:
@@ -60,7 +59,7 @@ func authSessionDebug(cmd *cobra.Command, _ []string) error {
 			return errors.New("brak numeru NIP")
 		}
 		// pick up cert from the database
-		certsDB, err := certsdb.OpenOrCreate(gateway)
+		certsDB, err := certsdb.OpenOrCreate(vip)
 		if err != nil {
 			return err
 		}

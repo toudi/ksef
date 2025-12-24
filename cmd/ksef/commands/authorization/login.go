@@ -26,7 +26,7 @@ func init() {
 }
 
 func login(cmd *cobra.Command, args []string) error {
-	var signedChallengeFile = args[0]
+	signedChallengeFile := args[0]
 	vip := viper.GetViper()
 	vip.Set(auth.FlagDoNotRestoreTokens, "true")
 	vip.Set(auth.FlagExitAfterPersistingToken, "true")
@@ -37,13 +37,12 @@ func login(cmd *cobra.Command, args []string) error {
 	}
 	runtime.SetNIP(vip, nip)
 
-	env := runtime.GetGateway(viper.GetViper())
-	certsDB, err := certsdb.OpenOrCreate(env)
+	certsDB, err := certsdb.OpenOrCreate(vip)
 	if err != nil {
 		return err
 	}
 
-	var authValidator = token.NewAuthHandler(
+	authValidator := token.NewAuthHandler(
 		vip,
 		token.WithSignedChallengeFile(signedChallengeFile),
 		token.WithCertsDB(certsDB),
@@ -58,5 +57,4 @@ func login(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	return cli.WaitForTokenManagerLoop()
-
 }

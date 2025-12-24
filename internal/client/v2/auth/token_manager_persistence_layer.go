@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"ksef/internal/certsdb"
 	"ksef/internal/keyring"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
@@ -16,24 +17,30 @@ var (
 )
 
 func (tm *TokenManager) persistTokens() error {
-	logging.AuthLogger.Debug("zapisywanie tokenów sesyjnych")
+	logger := logging.AuthLogger.With("auth", "token manager")
+	logger.Debug("zapisywanie tokenów sesyjnych")
 	if tm.sessionTokens == nil {
-		logging.AuthLogger.Error("tokeny sesyjne nieustawione")
+		logger.Error("tokeny sesyjne nieustawione")
 		return errEmptySessionTokens
 	}
 	var buffer bytes.Buffer
 	if err := json.NewEncoder(&buffer).Encode(tm.sessionTokens); err != nil {
-		logging.AuthLogger.Error("enkodowanie tokenów do JSON zakończone niepowodzeniem", "err", err)
+		logger.Error("enkodowanie tokenów do JSON zakończone niepowodzeniem", "err", err)
 		return err
 	}
 	nip, err := runtime.GetNIP(tm.vip)
 	if err != nil {
-		logging.AuthLogger.Error("nieprawidłowy numer NIP", "err", err)
+		logger.Error("nieprawidłowy numer NIP", "err", err)
 		return err
 	}
-	err = tm.keyring.Set(string(runtime.GetGateway(tm.vip)), nip, keyring.KeySessionTokens, buffer.String())
+	authCert, err := tm.certsDB.GetByUsage(certsdb.UsageAuthentication, nip)
+	if err != nil {
+		logger.Error("nie udało się odczytać certyfikatu", "err", err)
+	}
 
-	logging.AuthLogger.Debug("rezultat zapisywania tokenów do keyringu", "err", err)
+	err = tm.keyring.Set(string(runtime.GetGateway(tm.vip)), nip, keyring.SessionTokensKey(authCert.UID), buffer.String())
+
+	logger.Debug("rezultat zapisywania tokenów do keyringu", "err", err)
 	return err
 }
 
@@ -42,16 +49,23 @@ func (tm *TokenManager) SetSessionTokens(tokens *SessionTokens) {
 }
 
 func (tm *TokenManager) clearSessionTokens() error {
+	logger := logging.AuthLogger.With("auth", "token manager")
+
 	tm.sessionTokens = nil
 	nip, err := runtime.GetNIP(tm.vip)
 	if err != nil {
 		return err
 	}
-	return tm.keyring.Delete(string(runtime.GetGateway(tm.vip)), nip, keyring.KeySessionTokens)
+	authCert, err := tm.certsDB.GetByUsage(certsdb.UsageAuthentication, nip)
+	if err != nil {
+		logger.Error("nie udało się odczytać certyfikatu", "err", err)
+	}
+
+	return tm.keyring.Delete(string(runtime.GetGateway(tm.vip)), nip, keyring.SessionTokensKey(authCert.UID))
 }
 
 func (tm *TokenManager) restoreTokens(ctx context.Context) error {
-	var logger = logging.AuthLogger.With("auth", "token manager")
+	logger := logging.AuthLogger.With("auth", "token manager")
 	logger.Debug("próba odczytania tokenów z systemowego pęku kluczy")
 	nip, err := runtime.GetNIP(tm.vip)
 	if err != nil {
@@ -59,7 +73,12 @@ func (tm *TokenManager) restoreTokens(ctx context.Context) error {
 		return err
 	}
 	gateway := runtime.GetGateway(tm.vip)
-	tokens, err := tm.keyring.Get(string(gateway), nip, keyring.KeySessionTokens)
+	logger.Debug("próba odczytania certyfikatu odpowiedzialnego za autoryzację")
+	authCert, err := tm.certsDB.GetByUsage(certsdb.UsageAuthentication, nip)
+	if err != nil {
+		logger.Error("nie udało się odczytać certyfikatu", "err", err)
+	}
+	tokens, err := tm.keyring.Get(string(gateway), nip, keyring.SessionTokensKey(authCert.UID))
 	if err != nil && err != keyring.ErrNotFound {
 		logger.Error("błąd odczytu tokenów", "err", err)
 		return err

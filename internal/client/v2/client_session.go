@@ -7,13 +7,14 @@ import (
 	"ksef/internal/client/v2/session/types"
 )
 
-var (
-	errCertsDBNotDefined = errors.New("nie zainicjowano bazy certyfikatów")
-)
+var errCertsDBNotDefined = errors.New("nie zainicjowano bazy certyfikatów")
 
 func (c *APIClient) InteractiveSession() (types.UploadSession, error) {
 	if c.certsDB == nil {
 		return nil, errCertsDBNotDefined
+	}
+	if err := c.StartTokenManager(); err != nil {
+		return nil, err
 	}
 	return interactive.NewSession(
 		c.authenticatedHTTPClient(),
@@ -24,6 +25,9 @@ func (c *APIClient) InteractiveSession() (types.UploadSession, error) {
 func (c *APIClient) BatchSession(workDir string) (types.UploadSession, error) {
 	if c.certsDB == nil {
 		return nil, errCertsDBNotDefined
+	}
+	if err := c.StartTokenManager(); err != nil {
+		return nil, err
 	}
 	return batch.NewSession(
 		c.authenticatedHTTPClient(),

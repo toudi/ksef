@@ -2,16 +2,24 @@ package invoicesdb
 
 import (
 	"context"
+	"errors"
 	"ksef/internal/invoicesdb/config"
+	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	statuscheckerconfig "ksef/internal/invoicesdb/status-checker/config"
 	uploaderconfig "ksef/internal/invoicesdb/uploader/config"
 	"ksef/internal/logging"
 	"ksef/internal/pdf"
+	"ksef/internal/runtime"
 	"ksef/internal/sei"
 	"path/filepath"
 	"strings"
 
 	"github.com/spf13/viper"
+)
+
+var (
+	errUnableToDetectNIP           = errors.New("unable to detect NIP based on imported invoice files")
+	errUnableToSaveInvoiceRegistry = errors.New("unable to save monthly registry")
 )
 
 type invoiceReadyHandlerFunc func(i *sei.ParsedInvoice) error
@@ -51,17 +59,28 @@ func (idb *InvoicesDB) Import(
 	}
 
 	// save the database before uploading
+	var nip string
+
 	if confirm {
+		affectedRegistries := make(map[*monthlyregistry.Registry]bool)
+
 		printer, err := pdf.GetInvoicePrinter(vip, "invoice:issued")
 		if err != nil {
 			logging.PDFRendererLogger.Error("błąd inicjalizacji silnika PDF", "err", err)
 		} else {
-			for _, offlineInvoice := range idb.offlineInvoices {
-				invoiceFilename := offlineInvoice.registry.InvoiceFilename(offlineInvoice.invoice)
+			for _, newInvoice := range idb.newInvoices {
+				affectedRegistries[newInvoice.registry] = true
+				if nip == "" {
+					nip = newInvoice.registry.GetNIP()
+				}
+				if !newInvoice.invoice.Offline {
+					continue
+				}
+				invoiceFilename := newInvoice.registry.InvoiceFilename(newInvoice.invoice)
 				if err = printer.PrintInvoice(
-					invoiceFilename,
-					strings.Replace(invoiceFilename, ".xml", ".pdf", 1),
-					offlineInvoice.invoice.GetPrintingMeta(),
+					invoiceFilename.XML,
+					invoiceFilename.PDF,
+					newInvoice.invoice.GetPrintingMeta(),
 				); err != nil {
 					return err
 				}
@@ -71,11 +90,24 @@ func (idb *InvoicesDB) Import(
 			logging.InvoicesDBLogger.Error("błąd zapisu rejestru faktur", "err", err)
 			return err
 		}
+
+		// save the registries so that we persist changes in ord nums
+		for registry := range affectedRegistries {
+			if err = registry.Save(); err != nil {
+				return errors.Join(errUnableToSaveInvoiceRegistry, err)
+			}
+		}
 	}
 
 	if !importConfig.Upload.Enabled {
 		return nil
 	}
+
+	if nip == "" {
+		return errors.Join(errUnableToDetectNIP)
+	}
+
+	runtime.SetNIP(idb.vip, nip)
 
 	// user wants to automatically upload invoices
 	return idb.UploadOutstandingInvoices(

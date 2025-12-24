@@ -25,7 +25,8 @@ type APIClient struct {
 	certificates *certificates.Manager
 	certsDB      *certsdb.CertificatesDB
 	// init options
-	runTokenManager bool
+	runTokenManager     bool
+	tokenManagerStarted bool
 }
 
 type InitializerFunc func(c *APIClient)
@@ -51,7 +52,9 @@ func NewClient(ctx context.Context, vip *viper.Viper, options ...InitializerFunc
 			return nil, err
 		}
 		if client.runTokenManager {
-			go client.tokenManager.Run()
+			if err = client.StartTokenManager(); err != nil {
+				return nil, err
+			}
 		}
 	}
 

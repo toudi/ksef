@@ -52,7 +52,12 @@ func (c *APIClient) StartTokenManager() error {
 		return errTokenManagerNotInitialized
 	}
 
+	if c.tokenManagerStarted {
+		return nil
+	}
+
 	go c.tokenManager.Run()
+	c.tokenManagerStarted = true
 	return nil
 }
 

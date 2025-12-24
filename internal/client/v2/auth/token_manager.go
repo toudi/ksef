@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"errors"
+	"ksef/internal/certsdb"
 	"ksef/internal/client/v2/auth/validator"
 	"ksef/internal/http"
 	"ksef/internal/keyring"
@@ -20,9 +21,7 @@ const (
 	FlagExitAfterPersistingToken = "exit-after-persisting-token"
 )
 
-var (
-	ErrTimeoutReadingToken = errors.New("timeout reading authorization token")
-)
+var ErrTimeoutReadingToken = errors.New("timeout reading authorization token")
 
 type TokenUpdate struct {
 	Token string
@@ -51,6 +50,7 @@ type TokenManager struct {
 	vip                 *viper.Viper
 	obtainNewChallenge  bool
 	keyring             keyring.Keyring
+	certsDB             *certsdb.CertificatesDB
 }
 
 func NewTokenManager(ctx context.Context, vip *viper.Viper, challengeValidator validator.AuthChallengeValidator) (*TokenManager, error) {
@@ -68,6 +68,10 @@ func NewTokenManager(ctx context.Context, vip *viper.Viper, challengeValidator v
 		logging.AuthLogger.Error("unable to initialize keyring", "err", err)
 		return nil, err
 	}
+	certsDB, err := certsdb.OpenOrCreate(vip)
+	if err != nil {
+		return nil, err
+	}
 
 	tm := &TokenManager{
 		updateChannel:      make(chan TokenUpdate),
@@ -76,6 +80,7 @@ func NewTokenManager(ctx context.Context, vip *viper.Viper, challengeValidator v
 		done:               make(chan struct{}),
 		vip:                vip,
 		keyring:            keyring,
+		certsDB:            certsDB,
 	}
 
 	return tm, nil
@@ -100,7 +105,7 @@ func (t *TokenManager) GetAuthorizationToken(timeout ...time.Duration) (string, 
 	defer cancel()
 
 	// so this temporary channel is for retrieving the *current* token
-	var tokenChan = make(chan string)
+	tokenChan := make(chan string)
 	defer close(tokenChan)
 
 	go t.readToken(tokenChan)

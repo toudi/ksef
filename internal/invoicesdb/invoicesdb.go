@@ -8,7 +8,6 @@ import (
 	annualregistry "ksef/internal/invoicesdb/annual-registry"
 	"ksef/internal/invoicesdb/config"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
-	"ksef/internal/runtime"
 	"time"
 
 	"github.com/spf13/viper"
@@ -51,9 +50,9 @@ type InvoicesDB struct {
 	// of the month but now we're past midnight, we want to take care of that as well
 	monthsRange []time.Time
 	today       time.Time
-	// optimization for caching the filenames of offline invoices
-	// for which we can generate PDF right away
-	offlineInvoices []*NewInvoice
+	// optimization for quickly retrieving newly imported invoices so that we could
+	// send them right away and/or generate PDF's
+	newInvoices []*NewInvoice
 }
 
 func newInvoicesDB(vip *viper.Viper) *InvoicesDB {
@@ -76,7 +75,7 @@ func newInvoicesDB(vip *viper.Viper) *InvoicesDB {
 }
 
 func NewInvoicesDB(vip *viper.Viper, initializers ...func(i *InvoicesDB)) (*InvoicesDB, error) {
-	certsDB, err := certsdb.OpenOrCreate(runtime.GetGateway(vip))
+	certsDB, err := certsdb.OpenOrCreate(vip)
 	if err != nil {
 		return nil, err
 	}

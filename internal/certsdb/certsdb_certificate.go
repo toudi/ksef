@@ -45,6 +45,7 @@ type Certificate struct {
 	ReferenceNumber string `yaml:"ref-no,omitempty"`
 	SerialNumber    string `yaml:"serial-number,omitempty"`
 	CSRData         string `yaml:"csr-data,omitempty"`
+	ProfileName     string `yaml:"profile,omitempty"`
 }
 
 func (c Certificate) Filename() string {
@@ -59,7 +60,7 @@ func (c Certificate) Expired() bool {
 	if c.ValidFrom.IsZero() {
 		return false
 	}
-	var now = time.Now()
+	now := time.Now()
 	return c.ValidTo.Before(now)
 }
 
@@ -87,7 +88,6 @@ func (c *Certificate) SaveCert(derBytes []byte) error {
 		Type:  "CERTIFICATE",
 		Bytes: derBytes,
 	})
-
 }
 
 func (c *Certificate) SignContent(content []byte) ([]byte, error) {

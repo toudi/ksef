@@ -18,9 +18,10 @@ var syncCommand = &cobra.Command{
 }
 
 func init() {
-	var flagSet = syncCommand.Flags()
+	flagSet := syncCommand.Flags()
 	flags.NIP(flagSet)
 	config.SyncFlags(flagSet)
+	runtime.CertProfileFlag(flagSet)
 	syncCommand.MarkFlagRequired(flags.FlagNameNIP)
 	InvoicesCommand.AddCommand(syncCommand)
 }

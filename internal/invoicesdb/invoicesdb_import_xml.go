@@ -128,8 +128,8 @@ func (i *InvoicesDB) importXMLInvoices(
 			checksum,
 		)
 
-		i.offlineInvoices = append(
-			i.offlineInvoices,
+		i.newInvoices = append(
+			i.newInvoices,
 			&NewInvoice{
 				registry: monthlyRegistry,
 				invoice:  regInvoice,

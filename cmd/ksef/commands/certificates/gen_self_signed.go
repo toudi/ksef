@@ -42,8 +42,9 @@ func validateParams(cmd *cobra.Command, _ []string) error {
 }
 
 func generateSelfSignedCert(cmd *cobra.Command, _ []string) error {
-	var env = runtime.GetGateway(viper.GetViper())
-	certsDB, err := certsdb.OpenOrCreate(env)
+	vip := viper.GetViper()
+
+	certsDB, err := certsdb.OpenOrCreate(vip)
 	if err != nil {
 		return err
 	}

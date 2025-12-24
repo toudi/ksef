@@ -34,6 +34,7 @@ const (
 	flagNameCertificate = "certificate"
 	flagNameSerial      = "serial"
 	flagNameUsage       = "usage"
+	flagNameProfile     = "profile"
 )
 
 func init() {
@@ -42,6 +43,7 @@ func init() {
 	flagSet.String(flagNameCertificate, "", "plik cerfyfikatu")
 	flagSet.String(flagNameSerial, "", "numer seryjny certyfikatu")
 	flagSet.String(flagNameUsage, "", "przeznaczenie certyfikatu")
+	flagSet.String(flagNameProfile, "", "nazwa profilu")
 	flags.NIP(flagSet)
 
 	flagSet.SortFlags = false
@@ -57,9 +59,9 @@ func init() {
 
 func importCertificateRun(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
-	var env = runtime.GetGateway(vip)
+	env := runtime.GetGateway(vip)
 
-	certsDB, err := certsdb.OpenOrCreate(env)
+	certsDB, err := certsdb.OpenOrCreate(vip)
 	if err != nil {
 		return err
 	}
@@ -101,6 +103,7 @@ func importCertificateRun(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
+	profile, _ := cmd.Flags().GetString(flagNameProfile)
 
 	// prepare certificate hash
 	certificateHash := certsdb.CertificateHash{
@@ -128,6 +131,7 @@ func importCertificateRun(cmd *cobra.Command, _ []string) error {
 		newCert.Usage = []certsdb.Usage{usage}
 		newCert.ValidFrom = certificate.NotBefore
 		newCert.ValidTo = certificate.NotAfter
+		newCert.ProfileName = profile
 
 		return nil
 	}); err != nil {

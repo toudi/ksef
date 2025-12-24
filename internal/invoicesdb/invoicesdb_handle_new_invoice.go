@@ -39,10 +39,14 @@ func (idb *InvoicesDB) handleNewInvoice(
 		return err
 	}
 
-	if inv.Invoice.KSeFFlags.Offline {
-		regInvoice := monthlyRegistry.GetInvoiceByChecksum(checksum)
-		idb.offlineInvoices = append(idb.offlineInvoices, &NewInvoice{registry: monthlyRegistry, invoice: regInvoice})
-	}
+	regInvoice := monthlyRegistry.GetInvoiceByChecksum(checksum)
+	idb.newInvoices = append(
+		idb.newInvoices,
+		&NewInvoice{
+			registry: monthlyRegistry,
+			invoice:  regInvoice,
+		},
+	)
 
 	// now let's save info about the invoice to the annual registry
 	return annualRegistry.AddInvoice(

@@ -7,7 +7,6 @@ import (
 	"ksef/internal/client/v2/session/types"
 	"ksef/internal/logging"
 	"ksef/internal/pdf"
-	"strings"
 	"time"
 )
 
@@ -55,8 +54,8 @@ func (c *StatusChecker) CheckSessions(ctx context.Context) error {
 
 					invoiceFilename := registry.InvoiceFilename(invoice)
 					if err = printer.PrintInvoice(
-						invoiceFilename,
-						strings.Replace(invoiceFilename, ".xml", ".pdf", 1),
+						invoiceFilename.XML,
+						invoiceFilename.PDF,
 						invoice.GetPrintingMeta(),
 					); err != nil {
 						return errors.Join(errPrintingInvoice, err)

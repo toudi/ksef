@@ -3,7 +3,6 @@ package certificates
 import (
 	"fmt"
 	"ksef/internal/certsdb"
-	"ksef/internal/runtime"
 
 	"github.com/alexeyco/simpletable"
 	"github.com/spf13/cobra"
@@ -21,8 +20,9 @@ func init() {
 }
 
 func listCerts(cmd *cobra.Command, _ []string) error {
-	env := runtime.GetGateway(viper.GetViper())
-	certDB, err := certsdb.OpenOrCreate(env)
+	vip := viper.GetViper()
+
+	certDB, err := certsdb.OpenOrCreate(vip)
 	if err != nil {
 		return err
 	}
@@ -35,6 +35,7 @@ func listCerts(cmd *cobra.Command, _ []string) error {
 			{Align: simpletable.AlignCenter, Text: "środowisko"},
 			{Align: simpletable.AlignCenter, Text: "funkcja"},
 			{Align: simpletable.AlignCenter, Text: "nip"},
+			{Align: simpletable.AlignCenter, Text: "profil"},
 			{Align: simpletable.AlignCenter, Text: "samopodpisany"},
 		},
 	}
@@ -52,6 +53,9 @@ func listCerts(cmd *cobra.Command, _ []string) error {
 			},
 			{
 				Text: cert.NIP,
+			},
+			{
+				Text: cert.ProfileName,
 			},
 			{
 				Text: fmt.Sprintf("%t", cert.SelfSigned),

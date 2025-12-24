@@ -23,9 +23,10 @@ func init() {
 }
 
 func downloadKSeFCerts(cmd *cobra.Command, _ []string) error {
-	var env = runtime.GetGateway(viper.GetViper())
+	vip := viper.GetViper()
+	env := runtime.GetGateway(vip)
 
-	certsDB, err := certsdb.OpenOrCreate(env)
+	certsDB, err := certsdb.OpenOrCreate(vip)
 	if err != nil {
 		return err
 	}
