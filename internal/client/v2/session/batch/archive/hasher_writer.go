@@ -2,13 +2,15 @@ package archive
 
 import (
 	"crypto/sha256"
-	"encoding/hex"
+	"encoding/base64"
 	"hash"
 	"io"
 )
 
-type getWriterFunc = func() (io.Writer, error)
-type chunkWrittenFunc = func(hash string, bytesWritten int)
+type (
+	getWriterFunc    = func() (io.Writer, error)
+	chunkWrittenFunc = func(hash string, bytesWritten int)
+)
 
 // this type is a convenience wrapper so that we can both add files to archive
 // and calculate their checksum at the same time.
@@ -40,13 +42,13 @@ func NewHasherWriter(input io.Reader, sizeLimit int, getWriter getWriterFunc, ch
 }
 
 func (h *HasherWriter) sendHash() {
-	hash := hex.EncodeToString(h.hasher.Sum(nil))
+	hash := base64.StdEncoding.EncodeToString(h.hasher.Sum(nil))
 	h.chunkWritten(hash, h.bytesWritten)
 	h.hasher.Reset()
 }
 
 func (h *HasherWriter) Write(p []byte) (int, error) {
-	var bytesRemaining = len(p)
+	bytesRemaining := len(p)
 	// offset in p from which we're starting the read
 	var offset int = 0
 	var err error
@@ -58,7 +60,7 @@ func (h *HasherWriter) Write(p []byte) (int, error) {
 	}
 
 	// let's loop until there are no more bytes to be written and hashed.
-	var replaceWriter = false
+	replaceWriter := false
 	for bytesRemaining > 0 {
 		if replaceWriter {
 			if h.targetBuffer, err = h.getWriter(); err != nil {

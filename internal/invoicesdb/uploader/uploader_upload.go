@@ -32,7 +32,9 @@ func (u *Uploader) uploadInvoices(ctx context.Context) ([]*sessionTypes.UploadSe
 	if !u.config.BatchSession {
 		uploadSession, err = u.ksefClient.InteractiveSession()
 	} else {
-		uploadSession, err = u.ksefClient.BatchSession("/tmp")
+		uploadSession, err = u.ksefClient.BatchSession(
+			u.config.BatchWorkdir,
+		)
 	}
 
 	if err != nil {

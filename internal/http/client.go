@@ -23,6 +23,7 @@ var (
 const (
 	JSON = "application/json"
 	XML  = "application/xml"
+	BIN  = "application/octet-stream"
 )
 
 type RequestConfig struct {
@@ -72,7 +73,7 @@ func (rb *Client) Request(ctx context.Context, config RequestConfig, endpoint st
 	}
 
 	var body io.Reader
-	var logger = logging.HTTPLogger.With("method", config.Method, "url", fullUrl.String())
+	logger := logging.HTTPLogger.With("method", config.Method, "url", fullUrl.String())
 
 	if config.Body != nil {
 		var isReader bool
@@ -179,7 +180,7 @@ func (rb *Client) Download(ctx context.Context, url string, dest io.Writer) erro
 
 func jsonBodyReader(body any) (*bytes.Buffer, error) {
 	var buffer bytes.Buffer
-	var encoder = json.NewEncoder(&buffer)
+	encoder := json.NewEncoder(&buffer)
 	err := encoder.Encode(body)
 	return &buffer, err
 }

@@ -73,6 +73,8 @@ func doOpen(regFilename string) (*Registry, error) {
 
 		if len(reg.SavedOrdNums) == 0 {
 			reg.assignOrdNums()
+		} else {
+			reg.OrdNums = reg.SavedOrdNums.ToMap()
 		}
 
 		for index, invoice := range reg.Invoices {

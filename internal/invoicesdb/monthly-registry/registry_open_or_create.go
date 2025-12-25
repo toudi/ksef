@@ -37,6 +37,8 @@ func OpenOrCreate(dir string, certsDB *certsdb.CertificatesDB, vip *viper.Viper)
 
 		if len(reg.SavedOrdNums) == 0 {
 			reg.assignOrdNums()
+		} else {
+			reg.OrdNums = reg.SavedOrdNums.ToMap()
 		}
 
 		for index, invoice := range reg.Invoices {

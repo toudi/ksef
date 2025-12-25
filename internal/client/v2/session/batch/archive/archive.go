@@ -2,9 +2,12 @@ package archive
 
 import (
 	"archive/zip"
+	"ksef/internal/logging"
 	"ksef/internal/utils"
 	"os"
 	"path/filepath"
+
+	"github.com/jaevor/go-nanoid"
 )
 
 type Archive struct {
@@ -20,12 +23,26 @@ type Archive struct {
 	// base name of the file, without .zip extension
 	// this will serve as a template for creating archive parts
 	basename   string
-	Parts      []ArchivePart
+	Parts      []*ArchivePart
 	partWriter *os.File
 }
 
-func New(basename string, maxFileSize int64) (*Archive, error) {
-	outputFilename := basename + ".zip"
+func New(workDir string, maxFileSize int64) (*Archive, error) {
+	// first, create a subdirectory in workDir
+	generator, err := nanoid.Standard(10)
+	if err != nil {
+		return nil, err
+	}
+	randomPart := generator()
+
+	outputDir := filepath.Join(workDir, randomPart)
+	if err = os.MkdirAll(outputDir, 0775); err != nil {
+		return nil, err
+	}
+
+	logging.UploadLogger.Debug("batch session workdir", "dir", outputDir)
+
+	outputFilename := filepath.Join(outputDir, "batch-payload.zip")
 	output, err := os.Create(outputFilename)
 	if err != nil {
 		return nil, err
@@ -42,5 +59,5 @@ func New(basename string, maxFileSize int64) (*Archive, error) {
 }
 
 func (a *Archive) Metadata() (*utils.FilesizeAndHash, error) {
-	return utils.FileSizeAndSha256Hash(a.outputPath)
+	return utils.FileSizeAndSha256HashBase64(a.outputPath)
 }

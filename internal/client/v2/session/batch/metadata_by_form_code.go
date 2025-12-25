@@ -1,11 +1,9 @@
 package batch
 
 import (
-	"fmt"
 	"ksef/internal/client/v2/session/batch/archive"
 	"ksef/internal/client/v2/session/types"
-	"path"
-	"path/filepath"
+	"ksef/internal/encryption"
 )
 
 const (
@@ -16,17 +14,20 @@ const (
 func (b *Session) generateMetadataByFormCode(
 	formCode types.InvoiceFormCode,
 	files []types.Invoice,
+	cipher *encryption.Cipher,
 ) (*batchSessionInitRequest, error) {
 	var err error
-	var batchMetadataRequest = &batchSessionInitRequest{
+	batchMetadataRequest := &batchSessionInitRequest{
 		FormCode: formCode,
 	}
 
-	var randomPart = "abcdef" // it is actually going to be random, just trying to figure out where to initiate it
-	var basename = fmt.Sprintf("%s-batch-%s", formCode.SchemaVersion, randomPart)
-	_archive, err := archive.New(path.Join(b.workDir, basename), maxArchiveSize)
+	_archive, err := archive.New(b.workDir, maxArchiveSize)
 	if err != nil {
 		return nil, err
+	}
+
+	batchPayload := &BatchSessionPayload{
+		Archive: _archive,
 	}
 
 	for _, file := range files {
@@ -38,6 +39,7 @@ func (b *Session) generateMetadataByFormCode(
 				break
 			}
 		}
+		batchPayload.InvoiceChecksums = append(batchPayload.InvoiceChecksums, file.Checksum)
 		// yeah, that's a bit of a problem with using batch sessions.
 		// I mean theoretically if we'd like to be super pure about it,
 		// we should split the payload into separate sessions - these marked
@@ -61,16 +63,20 @@ func (b *Session) generateMetadataByFormCode(
 	batchMetadataRequest.BatchFile.FileHash = archiveMeta.Hash
 
 	for partNo, part := range _archive.Parts {
+		if err = part.Encrypt(cipher); err != nil {
+			return nil, err
+		}
 		batchMetadataRequest.BatchFile.FileParts = append(
 			batchMetadataRequest.BatchFile.FileParts,
 			batchArchivePart{
-				OrdNo:    uint32(partNo),
-				FileName: filepath.Base(part.FileName),
+				OrdNo:    uint32(partNo + 1),
 				FileSize: uint64(part.FileSize),
 				FileHash: part.Hash,
 			},
 		)
 	}
+
+	batchMetadataRequest.Payload = batchPayload
 
 	return batchMetadataRequest, nil
 }

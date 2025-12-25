@@ -30,7 +30,7 @@ func Sha256File(filename string) (int64, []byte, error) {
 func FileSizeAndSha256Hash(input string) (*FilesizeAndHash, error) {
 	var err error
 	var hashBytes []byte
-	var output = &FilesizeAndHash{}
+	output := &FilesizeAndHash{}
 	if output.FileSize, hashBytes, err = Sha256File(input); err != nil {
 		return nil, err
 	}
@@ -38,8 +38,19 @@ func FileSizeAndSha256Hash(input string) (*FilesizeAndHash, error) {
 	return output, nil
 }
 
+func FileSizeAndSha256HashBase64(input string) (*FilesizeAndHash, error) {
+	var err error
+	var hashBytes []byte
+	output := &FilesizeAndHash{}
+	if output.FileSize, hashBytes, err = Sha256File(input); err != nil {
+		return nil, err
+	}
+	output.Hash = base64.StdEncoding.EncodeToString(hashBytes)
+	return output, nil
+}
+
 func Sha256Base64(input []byte) (string, error) {
-	var base64Encoder = base64.StdEncoding
+	base64Encoder := base64.StdEncoding
 
 	hash := sha256.New()
 	if _, err := hash.Write(input); err != nil {
