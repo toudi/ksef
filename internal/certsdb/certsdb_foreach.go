@@ -4,7 +4,7 @@ func (cdb *CertificatesDB) ForEach(
 	lookup func(cert Certificate) bool,
 	update func(cert *Certificate) error,
 ) error {
-	var found = 0
+	found := 0
 	var err error
 
 	for _, cert := range cdb.certs {
@@ -21,4 +21,14 @@ func (cdb *CertificatesDB) ForEach(
 	}
 
 	return nil
+}
+
+func (cdb *CertificatesDB) FetchUIDsByNIP(nip string) (uids []string) {
+	for _, cert := range cdb.certs {
+		if cert.NIP == nip {
+			uids = append(uids, cert.UID)
+		}
+	}
+
+	return uids
 }

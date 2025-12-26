@@ -24,21 +24,24 @@ func defaultLogger() *slog.Logger {
 	)
 }
 
-var AuthLogger *slog.Logger = defaultLogger()
-var InvoicesDBLogger *slog.Logger = defaultLogger().With("module", "invoicesDB")
-var RegistryLogger *slog.Logger = defaultLogger()
-var CertsDBLogger *slog.Logger = defaultLogger().With("module", "certsDB")
-var KeyringLogger *slog.Logger = defaultLogger()
-var SeiLogger *slog.Logger = defaultLogger()
-var GenerateLogger *slog.Logger = defaultLogger()
-var UploadLogger *slog.Logger = defaultLogger()
-var HTTPLogger *slog.Logger = defaultLogger()
-var InteractiveLogger *slog.Logger = defaultLogger()
-var BatchLogger *slog.Logger = defaultLogger()
-var DownloadLogger *slog.Logger = defaultLogger()
-var UPOLogger *slog.Logger = defaultLogger()
-var ParserLogger *slog.Logger = defaultLogger()
-var PDFRendererLogger *slog.Logger = defaultLogger()
+var (
+	AuthLogger        *slog.Logger = defaultLogger()
+	BackupLogger      *slog.Logger = defaultLogger().With("module", "backup")
+	InvoicesDBLogger  *slog.Logger = defaultLogger().With("module", "invoicesDB")
+	RegistryLogger    *slog.Logger = defaultLogger()
+	CertsDBLogger     *slog.Logger = defaultLogger().With("module", "certsDB")
+	KeyringLogger     *slog.Logger = defaultLogger()
+	SeiLogger         *slog.Logger = defaultLogger()
+	GenerateLogger    *slog.Logger = defaultLogger()
+	UploadLogger      *slog.Logger = defaultLogger()
+	HTTPLogger        *slog.Logger = defaultLogger()
+	InteractiveLogger *slog.Logger = defaultLogger()
+	BatchLogger       *slog.Logger = defaultLogger()
+	DownloadLogger    *slog.Logger = defaultLogger()
+	UPOLogger         *slog.Logger = defaultLogger()
+	ParserLogger      *slog.Logger = defaultLogger()
+	PDFRendererLogger *slog.Logger = defaultLogger()
+)
 
 var logLevels = map[string]slog.Level{}
 
@@ -47,6 +50,7 @@ func init() {
 	// is read.
 	loggers = map[string]*slog.Logger{
 		"main":         SeiLogger,
+		"backup":       BackupLogger,
 		"invoicesdb":   InvoicesDBLogger,
 		"regitry":      RegistryLogger,
 		"certsdb":      CertsDBLogger,
@@ -63,7 +67,7 @@ func init() {
 		"pdf-renderer": PDFRendererLogger,
 	}
 
-	for loggerName, _ := range loggers {
+	for loggerName := range loggers {
 		logLevels[loggerName] = defaultLevel
 	}
 }

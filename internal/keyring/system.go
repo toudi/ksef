@@ -9,7 +9,7 @@ import (
 type SystemKeyring struct{}
 
 func serviceName(bucket string, key string) string {
-	return appPrefix + "-" + bucket + "-" + key
+	return AppPrefix + "-" + bucket + "-" + key
 }
 
 func NewSystemKeyring() *SystemKeyring {

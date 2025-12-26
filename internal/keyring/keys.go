@@ -1,8 +1,9 @@
 package keyring
 
 const (
-	appPrefix        = "github.com/toudi/ksef"
-	keySessionTokens = "sessionTokens"
+	AppPrefix         = "github.com/toudi/ksef"
+	keySessionTokens  = "sessionTokens"
+	KeyBackupPassword = "backup-password"
 )
 
 func SessionTokensKey(certId string) string {

@@ -52,13 +52,11 @@ func init() {
 
 	RootCommand.AddCommand(authorization.AuthCommand)
 	RootCommand.AddCommand(certificates.CertificatesCommand)
-	// RootCommand.AddCommand(syncInvoicesCommand)
 	RootCommand.AddCommand(download.DownloadCommand)
-	RootCommand.AddCommand(uploadCommand)
-	RootCommand.AddCommand(statusCommand)
 	RootCommand.AddCommand(renderPDFCommand)
 	RootCommand.AddCommand(keyring.KeyringCommand)
 	RootCommand.AddCommand(invoices.InvoicesCommand)
+	RootCommand.AddCommand(backupCommand)
 	config.KeyringFlags(RootCommand.PersistentFlags())
 	RootCommand.CompletionOptions = cobra.CompletionOptions{DisableDefaultCmd: true}
 }

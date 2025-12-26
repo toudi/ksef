@@ -6,6 +6,7 @@ toolchain go1.24.2
 
 require (
 	github.com/alexeyco/simpletable v1.0.0
+	github.com/alexmullins/zip v0.0.0-20180717182244-4affb64b04d0
 	github.com/beevik/etree v1.5.0
 	github.com/fxamacker/cbor/v2 v2.9.0
 	github.com/goccy/go-yaml v1.18.0

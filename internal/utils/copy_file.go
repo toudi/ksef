@@ -8,9 +8,7 @@ import (
 	"path/filepath"
 )
 
-var (
-	errUnableToCreateDir = errors.New("unable to create directory")
-)
+var errUnableToCreateDir = errors.New("unable to create directory")
 
 func CopyFile(srcPath string, destPath string) error {
 	src, err := os.Open(srcPath)
@@ -27,6 +25,17 @@ func CopyFile(srcPath string, destPath string) error {
 
 	_, err = io.Copy(dest, src)
 
+	return err
+}
+
+func CopyFileToWriter(srcPath string, writer io.Writer) error {
+	reader, err := os.Open(srcPath)
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+
+	_, err = io.Copy(writer, reader)
 	return err
 }
 
