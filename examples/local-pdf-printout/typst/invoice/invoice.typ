@@ -6,28 +6,53 @@
 #import "./components/qr-codes.typ": qr-codes
 #import "./components/header.typ": invoice-header
 
+#let header-or-footer(config) = {
+  let content = (
+    left: [#h(1fr)],
+    center: [#h(1fr)],
+    right: [#h(1fr)],
+  )
+
+  if config != none {
+    if "left" in config {
+      content.insert("left", [#{ config.left }])
+    }
+    if "center" in config {
+      content.insert("center", [#{ config.center }])
+    }
+    if "right" in config {
+      content.insert("right", [#{ config.right }])
+    }
+  }
+
+  return content
+}
+
 #let page-header(meta) = {
-  if "page" in meta and "header" in meta.at("page") {
-    let header = meta.at("page").at("header")
-    let left = [#h(1fr)]
-    let middle = [#h(1fr)]
-    let right = [#h(1fr)]
-    if "left" in header and header.left.len() > 0 {
-      left = [#{ header.left }]
-    }
-    if "center" in header and header.center.len() > 0 {
-      middle = [#{ header.center }]
-    }
-    if "right" in header and header.right.len() > 0 {
-      right = [#{ header.right }]
-    }
+  if "header" in meta {
+    let content = header-or-footer(meta.at("header"))
     grid(
       grid(
         columns: 3,
-        left, middle, right,
+        content.left, content.center, content.right,
       ),
       [#v(0.5em)],
       [#line(length: 100%)],
+    )
+  }
+}
+
+#let page-footer(meta) = {
+  if "footer" in meta {
+    let content = header-or-footer(meta.at("footer"))
+
+    grid(
+      [#line(length: 100%)],
+      [#v(0.5em)],
+      grid(
+        columns: 3,
+        content.left, content.center, content.right,
+      ),
     )
   }
 }
@@ -36,6 +61,7 @@
 #set page(
   margin: (x: 1cm, bottom: 1cm, top: 2cm),
   header: page-header(meta),
+  footer: page-footer(meta),
 )
 
 #grid(
