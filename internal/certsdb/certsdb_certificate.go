@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"ksef/internal/runtime"
 	"os"
@@ -17,6 +18,8 @@ import (
 
 	"github.com/samber/lo"
 )
+
+var errUnsupportedPrivateKeyType = errors.New("unsupported private key type (not EC PRIVATE KEY)")
 
 type CertificateHash struct {
 	Environment runtime.Gateway `yaml:"environment"`
@@ -98,9 +101,13 @@ func (c *Certificate) SignContent(content []byte) ([]byte, error) {
 		return nil, err
 	}
 	privKeyBlock, _ := pem.Decode(privKeyBytes)
-	ecPrivKey, err := x509.ParseECPrivateKey(privKeyBlock.Bytes)
+	ecPrivKeyAny, err := x509.ParsePKCS8PrivateKey(privKeyBlock.Bytes)
 	if err != nil {
 		return nil, err
+	}
+	ecPrivKey, ok := ecPrivKeyAny.(*ecdsa.PrivateKey)
+	if !ok {
+		return nil, errUnsupportedPrivateKeyType
 	}
 
 	contentHash := sha256.Sum256(content)

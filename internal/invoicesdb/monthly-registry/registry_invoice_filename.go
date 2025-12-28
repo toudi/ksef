@@ -8,10 +8,7 @@ type InvoiceFilename struct {
 }
 
 func (r *Registry) InvoiceFilename(i *Invoice) InvoiceFilename {
-	sourceFilename := r.getIssuedInvoiceFilename(
-		i.RefNo,
-		i.OrdNum,
-	)
+	var sourceFilename string = r.getInvoiceFilename(i)
 
 	return InvoiceFilename{
 		XML: sourceFilename,

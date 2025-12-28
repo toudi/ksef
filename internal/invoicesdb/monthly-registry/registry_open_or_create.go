@@ -35,16 +35,11 @@ func OpenOrCreate(dir string, certsDB *certsdb.CertificatesDB, vip *viper.Viper)
 			return nil, errors.Join(errReadingRegistryContents, err)
 		}
 
-		if len(reg.SavedOrdNums) == 0 {
-			reg.assignOrdNums()
-		} else {
+		if len(reg.SavedOrdNums) > 0 {
 			reg.OrdNums = reg.SavedOrdNums.ToMap()
 		}
 
-		for index, invoice := range reg.Invoices {
-			reg.checksumIndex[invoice.Checksum] = index
-		}
-
+		reg.postOpenHook()
 	}
 
 	return reg, nil

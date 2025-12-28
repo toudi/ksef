@@ -71,15 +71,11 @@ func doOpen(regFilename string) (*Registry, error) {
 		pathParts := strings.Split(reg.dir, string(filepath.Separator))
 		pathLength := len(pathParts)
 
-		if len(reg.SavedOrdNums) == 0 {
-			reg.assignOrdNums()
-		} else {
+		if len(reg.SavedOrdNums) > 0 {
 			reg.OrdNums = reg.SavedOrdNums.ToMap()
 		}
 
-		for index, invoice := range reg.Invoices {
-			reg.checksumIndex[invoice.Checksum] = index
-		}
+		reg.postOpenHook()
 
 		month, err := strconv.Atoi(pathParts[pathLength-1])
 		if err != nil {

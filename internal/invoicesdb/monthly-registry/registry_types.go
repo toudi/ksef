@@ -31,6 +31,11 @@ type InvoiceQRCodes struct {
 	Offline string `yaml:"offline,omitempty"`
 }
 
+type InvoiceIssuer struct {
+	NIP  string `yaml:"nip"`
+	Name string `yaml:"name"`
+}
+
 type Invoice struct {
 	RefNo        string         `yaml:"ref-no"`
 	KSeFRefNo    string         `yaml:"ksef-ref-no,omitempty"`
@@ -40,6 +45,7 @@ type Invoice struct {
 	Type         InvoiceType    `yaml:"type,omitzero"`
 	UploadErrors []string       `yaml:"upload-errors,omitempty"`
 	PrintoutData map[string]any `yaml:"printout-data,omitempty"`
+	Issuer       *InvoiceIssuer `yaml:"issuer,omitempty"`
 	OrdNum       int            `yaml:"ord-num"`
 }
 

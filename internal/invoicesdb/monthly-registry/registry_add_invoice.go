@@ -105,6 +105,10 @@ func (r *Registry) AddReceivedInvoice(ksefInvoice invoices.InvoiceMetadata, subj
 		},
 		Type:   invoiceType,
 		OrdNum: r.countInvoicesByType(invoiceType) + 1,
+		Issuer: &InvoiceIssuer{
+			Name: ksefInvoice.Seller.Name,
+			NIP:  ksefInvoice.Seller.NIP,
+		},
 	}
 
 	r.Invoices = append(

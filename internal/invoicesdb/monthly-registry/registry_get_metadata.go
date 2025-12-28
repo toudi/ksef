@@ -19,6 +19,9 @@ type XMLInvoice struct {
 	HeaderFormCode sessionTypes.InvoiceFormCode `xml:"Naglowek>KodFormularza"`
 	GeneratedTime  time.Time                    `xml:"Naglowek>DataWytworzeniaFa"`
 	Issuer         string                       `xml:"Podmiot1>DaneIdentyfikacyjne>NIP"`
+	IssuerName     string                       `xml:"Podmiot1>DaneIdentyfikacyjne>Nazwa"`
+	Recipient      string                       `xml:"Podmiot2>DaneIdentyfikacyjne>NIP"`
+	RecipientName  string                       `xml:"Podmiot2>DaneIdentyfikacyjne>Nazwa"`
 	Issued         string                       `xml:"Fa>P_1"`
 	InvoiceNumber  string                       `xml:"Fa>P_2"`
 }

@@ -31,6 +31,21 @@ func (r *Registry) getIssuedInvoiceFilename(invoiceNumber string, ordNo int) str
 	)
 }
 
+func (r *Registry) getInvoiceFilename(invoice *Invoice) string {
+	if invoice.Type == InvoiceTypeIssued {
+		return r.getIssuedInvoiceFilename(invoice.RefNo, invoice.OrdNum)
+	}
+
+	return fmt.Sprintf(
+		"%s/%s/%04d-%s-%s.xml",
+		r.dir,
+		dirnameByType[invoice.Type],
+		invoice.OrdNum,
+		slugify.Slugify(invoice.Issuer.Name),
+		slugify.Slugify(invoice.RefNo),
+	)
+}
+
 func (r *Registry) GetDestFileName(inv *sei.ParsedInvoice, invoiceType InvoiceType) string {
 	numInvoices := r.countInvoicesByType(invoiceType)
 
