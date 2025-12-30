@@ -16,6 +16,7 @@ var renderPDFCommand = &cobra.Command{
 	Use:   "pdf",
 	Short: "drukuje PDF dla wskazanego dokumentu",
 	RunE:  renderPDF,
+	Args:  cobra.ExactArgs(1),
 }
 
 const (
