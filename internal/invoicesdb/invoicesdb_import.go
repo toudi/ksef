@@ -9,6 +9,7 @@ import (
 	uploaderconfig "ksef/internal/invoicesdb/uploader/config"
 	"ksef/internal/logging"
 	"ksef/internal/pdf"
+	"ksef/internal/pdf/printer"
 	"ksef/internal/runtime"
 	"ksef/internal/sei"
 	"path/filepath"
@@ -61,21 +62,33 @@ func (idb *InvoicesDB) Import(
 	// save the database before uploading
 	var nip string
 
+	if len(idb.newInvoices) == 0 {
+		logging.InvoicesDBLogger.Info("brak nowo zaimportowanych faktur")
+		return nil
+	}
+
 	if confirm {
 		affectedRegistries := make(map[*monthlyregistry.Registry]bool)
 
-		printer, err := pdf.GetInvoicePrinter(vip, "invoice:issued")
+		var printer printer.PDFPrinter
+
+		printer, err = pdf.GetInvoicePrinter(vip, "invoice:issued")
 		if err != nil {
 			logging.PDFRendererLogger.Error("błąd inicjalizacji silnika PDF", "err", err)
-		} else {
-			for _, newInvoice := range idb.newInvoices {
-				affectedRegistries[newInvoice.registry] = true
-				if nip == "" {
-					nip = newInvoice.registry.GetNIP()
-				}
-				if !newInvoice.invoice.Offline {
-					continue
-				}
+		}
+
+		for _, newInvoice := range idb.newInvoices {
+			affectedRegistries[newInvoice.registry] = true
+			if nip == "" {
+				nip = newInvoice.registry.GetNIP()
+			}
+			if !newInvoice.invoice.Offline {
+				// if the invoice isn't issued in the offline mode we cannot print it (yet) - we
+				// have to wait for the reference no obtained from KSeF
+				continue
+			}
+			// let's try to print the offline invoice - though only if the engine has been selected
+			if printer != nil {
 				invoiceFilename := newInvoice.registry.InvoiceFilename(newInvoice.invoice)
 				if err = printer.PrintInvoice(
 					invoiceFilename.XML,
@@ -84,9 +97,12 @@ func (idb *InvoicesDB) Import(
 				); err != nil {
 					return err
 				}
+			} else {
+				logging.InvoicesDBLogger.Warn("wybrano opcję wydruku faktury do PDF ale nie udało się zainicjować silnika wydruku - pomijam wydruk faktury")
 			}
 		}
-		if err := idb.Save(); err != nil {
+
+		if err = idb.Save(); err != nil {
 			logging.InvoicesDBLogger.Error("błąd zapisu rejestru faktur", "err", err)
 			return err
 		}
