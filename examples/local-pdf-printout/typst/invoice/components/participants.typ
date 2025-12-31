@@ -1,13 +1,24 @@
-#import "../../common/xml-utils.typ": children, extract
+#import "../../common/xml-utils.typ": children, contains, extract
 #import "../../common/colors.typ": light-gray, table-border
 
 #let light-table-border = 0.5pt + table-border;
 
 #let address-data(p) = {
   let data = ()
+  let ident = extract(p, "DaneIdentyfikacyjne")
+
   data.push([#{ extract(p, "Adres.AdresL1") }])
   data.push([#{ extract(p, "Adres.AdresL2") }])
-  data.push([NIP: #{ extract(p, "DaneIdentyfikacyjne.NIP") }])
+
+  let nip = ""
+  if contains(ident, "NIP") {
+    nip = extract(ident, "NIP")
+  } else if contains(ident, "NrVatUE") {
+    nip = extract(ident, "NrVatUE")
+  } else if contains(ident, "NrID") {
+    nip = extract(ident, "NrID")
+  }
+  data.push([NIP: #{ nip }])
 
   return grid.cell(
     stroke: (top: none, left: light-table-border, bottom: light-table-border, right: light-table-border),

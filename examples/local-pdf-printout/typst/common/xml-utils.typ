@@ -28,3 +28,29 @@
   return node.children.filter(e => "tag" in e and e.tag == tag)
 }
 
+#let contains(elem, path) = {
+  if path == "" {
+    if elem != none {
+      return true
+    }
+  }
+
+  let children
+  if type(elem) == array {
+    children = elem.filter(e => "tag" in e)
+  } else {
+    children = elem.children.filter(e => "tag" in e)
+  }
+
+  let path_elements = path.split(".")
+  let child_name = path_elements.remove(0)
+
+  let new_path = path_elements.join(".", default: "")
+
+  let child_nodes = children.filter(e => e.tag == child_name)
+  if child_nodes.len() == 0 {
+    return false
+  }
+
+  return contains(child_nodes.first().children, new_path)
+}
