@@ -12,7 +12,7 @@
   let vat-field = extract(item, "P_12")
   let vat-divisor = decimal(0)
 
-  if vat-field.contains(regex("[0-9]+")) {
+  if vat-field.match(regex("^[0-9]+$")) != none {
     vat-multiplier = decimal(vat-field)
     vat-divisor = (100 + vat-multiplier) / decimal(100)
   }
@@ -41,4 +41,12 @@
       vat: calc.round(vat-amount, digits: 2),
     ),
   )
+}
+
+#let add-percent-if-numeric-rate(value) = {
+  if value.match(regex("^[0-9]+$")) != none {
+    return value + " %"
+  }
+
+  return value
 }

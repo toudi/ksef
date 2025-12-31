@@ -1,26 +1,32 @@
 #import "../../common/xml-utils.typ": children, extract
 #import "../../common/colors.typ": light-gray, table-border
 
+#let light-table-border = 0.5pt + table-border;
+
 #let address-data(p) = {
-  let data = (v(0.5em),)
+  let data = ()
   data.push([#{ extract(p, "Adres.AdresL1") }])
   data.push([#{ extract(p, "Adres.AdresL2") }])
   data.push([NIP: #{ extract(p, "DaneIdentyfikacyjne.NIP") }])
 
-  return data
+  return grid.cell(
+    stroke: (top: none, left: light-table-border, bottom: light-table-border, right: light-table-border),
+    inset: 4pt,
+    align: bottom,
+    grid(..data.flatten()),
+  )
 }
 
 #let participant(p, role) = {
-  block(
-    stroke: 0.5pt + table-border,
-    table(
+  grid.cell(
+    stroke: (left: light-table-border, top: light-table-border, right: light-table-border, bottom: none),
+    grid(
       columns: 1fr,
-      row-gutter: -4pt,
+      inset: 4pt,
       fill: (_, y) => if y == 0 { light-gray },
-      stroke: 0pt,
+
       [#{ role }],
       [#text({ extract(p, "DaneIdentyfikacyjne.Nazwa") }, weight: "bold")],
-      ..address-data(p),
     ),
   )
 }
@@ -37,12 +43,27 @@
   }
 
   grid(
-    columns: columns,
-    column-gutter: 3pt,
-    [#{ participant(podmiot1, "SPRZEDAWCA") }],
-    [#{ participant(podmiot2, "NABYWCA") }],
-    if podmiot3.len() > 0 {
-      [#{ participant(podmiot3, "ODBIORCA") }]
-    }
+    grid(
+      columns: columns,
+      column-gutter: 3pt,
+      [#{ participant(podmiot1, "SPRZEDAWCA") }],
+      [#{ participant(podmiot2, "NABYWCA") }],
+      if podmiot3.len() > 0 {
+        [#{ participant(podmiot3, "ODBIORCA") }]
+      }
+    ),
+    // this looks really weird, but I simply could not force
+    // typst to align the address data to the bottom of the cell
+    // so instead of wasting more time I decided to add the second
+    // grid just for that.
+    grid(
+      columns: columns,
+      column-gutter: 3pt,
+      [#{ address-data(podmiot1) }],
+      [#{ address-data(podmiot2) }],
+      if podmiot3.len() > 0 {
+        [#{ address-data(podmiot3) }]
+      }
+    ),
   )
 }

@@ -1,6 +1,14 @@
-#import "../../common/xml-utils.typ": extract
+#import "../../common/xml-utils.typ": contains, extract
 
 #let invoice-header(invoice) = {
+  let header_items = ()
+  header_items.push([Data wystawienia])
+  header_items.push([#{ extract(invoice, "Fa.P_1") }])
+
+  if contains(invoice, "Fa.P_6") {
+    header_items.push([Data sprzedaży])
+    header_items.push([#{ extract(invoice, "Fa.P_6") }])
+  }
   grid(
     columns: 1,
     align: horizon,
@@ -13,8 +21,7 @@
         columns: 2,
         stroke: 0em,
         gutter: -0.5em,
-        [Data wystawienia], [#{ extract(invoice, "Fa.P_1") }],
-        [Data sprzedaży], [#{ extract(invoice, "Fa.P_6") }],
+        ..header_items.flatten(),
       )
     }],
   )

@@ -12,11 +12,18 @@
   for item in items {
     let vat-rate = extract(item, "P_12")
     let amounts = item-price(item)
-    let vat-rate-description = ""
-    if vat-rate.contains(regex("[0-9]+")) {
+    // initialize the description to vat rate itself
+    let vat-rate-description = vat-rate
+    if vat-rate.match(regex("^[0-9]+$")) != none {
+      // if it's a number, let's add the percentage sign and let it be
+      // the description
       vat-rate-description = vat-rate + " %"
     } else {
-      vat-rate-description = vat-rate-descriptions.at(vat-rate)
+      // it's not a number - let's check if we have some special
+      // rendering for it
+      if vat-rate in vat-rate-descriptions {
+        vat-rate-description = vat-rate-descriptions.at(vat-rate)
+      }
     }
 
     if vat-rate-description not in vat-rate-buckets {

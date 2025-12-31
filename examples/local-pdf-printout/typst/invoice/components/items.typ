@@ -1,6 +1,6 @@
 #import "../../common/colors.typ": light-gray, table-border
 #import "../../common/xml-utils.typ": children, extract
-#import "./items/item-price.typ": item-price
+#import "./items/item-price.typ": add-percent-if-numeric-rate, item-price
 #import "./items/total-amounts.typ": calc-total-amounts
 #import "./items/total-by-vat-rate.typ": aggregage-by-vat-rate
 
@@ -15,7 +15,7 @@
     item_row.push([#{ extract(row, "P_8B") }])
     item_row.push([#{ item-amounts.net }])
     item_row.push([#{ item-amounts.gross }])
-    item_row.push([#{ extract(row, "P_12") }])
+    item_row.push([#{ add-percent-if-numeric-rate(extract(row, "P_12")) }])
     item_row.push([#{ item-amounts.amount.net }])
     item_row.push([#{ item-amounts.amount.vat }])
     item_row.push([#{ item-amounts.amount.gross }])
