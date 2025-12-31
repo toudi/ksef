@@ -4,15 +4,19 @@ func (r *Registry) ContainsHash(checksum string) bool {
 	return r.GetInvoiceByChecksum(checksum) != nil
 }
 
-func (r *Registry) getInvoiceByRefNo(refNo string) *Invoice {
+func (r *Registry) getInvoiceByRefNo(refNo string) (*Invoice, int) {
 	// TODO: implement index. for now - just don't bother.
-	for _, invoice := range r.Invoices {
+	for index, invoice := range r.Invoices {
+		if invoice.Type != InvoiceTypeIssued {
+			continue
+		}
+
 		if invoice.RefNo == refNo {
-			return invoice
+			return invoice, index
 		}
 	}
 
-	return nil
+	return nil, -1
 }
 
 func (r *Registry) GetInvoiceByChecksum(checksum string) *Invoice {

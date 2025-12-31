@@ -50,7 +50,16 @@ func (r *Registry) GetDestFileName(inv *sei.ParsedInvoice, invoiceType InvoiceTy
 	numInvoices := r.countInvoicesByType(invoiceType)
 
 	if invoiceType == InvoiceTypeIssued {
-		return r.getIssuedInvoiceFilename(inv.Invoice.Number, numInvoices+1)
+		ordNo := numInvoices + 1
+		// it's a slightly convoluted way of figuring out if we can reuse the filename
+		// let's try to locate the invoice by the ref no. if it does not have
+		// KSeFRefNo then we can reuse it's ord no and thus the filename
+		existingInvoice, _ := r.getInvoiceByRefNo(inv.Invoice.Number)
+		if existingInvoice != nil && existingInvoice.KSeFRefNo == "" {
+			ordNo = existingInvoice.OrdNum
+		}
+
+		return r.getIssuedInvoiceFilename(inv.Invoice.Number, ordNo)
 	}
 
 	return fmt.Sprintf(

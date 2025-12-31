@@ -28,24 +28,29 @@ func (r *Registry) AddInvoice(
 
 	gateway := runtime.GetGateway(r.vip)
 
+	ordNum := r.countInvoicesByType(invoiceType) + 1
+
 	// ok, so the invoice with the given checksum does not exist. let's check if
 	// the invoice with the given number exists. if so - is the user trying to
 	// overwrite it ?
-	if invoice := r.getInvoiceByRefNo(inv.Invoice.Number); invoice != nil {
+	invoice, existingIndex := r.getInvoiceByRefNo(inv.Invoice.Number)
+	if invoice != nil {
 		// this is indeed the case. we can only allow it if the original invoice
 		// was not pushed to KSeF yet:
 		if invoice.KSeFRefNo != "" {
 			return errTryingToOverwritePushedInvoice
 		}
+		// reuse ord num
+		ordNum = invoice.OrdNum
 	}
 
 	// we seem to be in the clear.
-	invoice := &Invoice{
+	invoice = &Invoice{
 		RefNo:    inv.Invoice.Number,
 		Checksum: checksum,
 		Offline:  inv.Invoice.KSeFFlags.Offline,
 		Type:     invoiceType,
-		OrdNum:   r.countInvoicesByType(invoiceType) + 1,
+		OrdNum:   ordNum,
 	}
 	var err error
 
@@ -72,12 +77,17 @@ func (r *Registry) AddInvoice(
 		}
 	}
 
-	r.Invoices = append(
-		r.Invoices,
-		invoice,
-	)
-	r.OrdNums[invoice.Type] += 1
-	r.checksumIndex[checksum] = len(r.Invoices) - 1
+	if existingIndex > 0 {
+		r.Invoices[existingIndex] = invoice
+		r.checksumIndex[checksum] = existingIndex
+	} else {
+		r.Invoices = append(
+			r.Invoices,
+			invoice,
+		)
+		r.OrdNums[invoice.Type] += 1
+		r.checksumIndex[checksum] = len(r.Invoices) - 1
+	}
 
 	return nil
 }
