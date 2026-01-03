@@ -45,7 +45,7 @@ func (r *Registry) processUploadResult(
 			// represents invoice original ref no, extracted from the registry
 			if err := registry.UpdateInvoiceByChecksum(
 				invoiceChecksum,
-				func(invoice *monthlyregistry.Invoice) {
+				func(invoice *monthlyregistry.Invoice) error {
 					// basically, the reference number is assigned during the interactive session even
 					// before the invoice is processed and therefore it's essential to know
 					// if it was processed succesfully to update the reference number in the registry.
@@ -57,6 +57,8 @@ func (r *Registry) processUploadResult(
 							invoice.UploadErrors = invoiceUploadStatus.Status.Details
 						}
 					}
+
+					return nil
 				},
 			); err != nil {
 				return err

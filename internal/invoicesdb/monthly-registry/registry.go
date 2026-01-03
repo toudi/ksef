@@ -21,3 +21,7 @@ func (r *Registry) Save() error {
 	r.SavedOrdNums = r.OrdNums.ToSlice()
 	return utils.SaveYAML(r, path.Join(r.dir, registryName))
 }
+
+func (r *Registry) Dir() string {
+	return r.dir
+}

@@ -46,6 +46,10 @@ func Open(path string) (*Registry, error) {
 	return doOpen(regFilename)
 }
 
+func OpenFromInvoiceFile(filename string) (*Registry, error) {
+	return Open(filepath.Join(filepath.Dir(filename), ".."))
+}
+
 func doOpen(regFilename string) (*Registry, error) {
 	regFile, exists, err := utils.FileExists(regFilename)
 	if err != nil && !os.IsNotExist(err) || !exists {

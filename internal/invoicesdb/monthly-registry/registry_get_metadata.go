@@ -14,6 +14,17 @@ var (
 	errUnableToParseXML = errors.New("unable to parse XML")
 )
 
+type Item struct {
+	OrdNo   string `xml:"NrWierszaFa"`
+	Name    string `xml:"P_7"`
+	Index   string `xml:"Indeks"`
+	GTIN    string `xml:"GTIN"`
+	PKWiU   string `xml:"PKWiU"`
+	CN      string `xml:"CN"`
+	PKOB    string `xml:"PKOB"`
+	VATRate string `xml:"P_12"`
+}
+
 type XMLInvoice struct {
 	XMLName        xml.Name                     `xml:"Faktura"`
 	HeaderFormCode sessionTypes.InvoiceFormCode `xml:"Naglowek>KodFormularza"`
@@ -24,6 +35,7 @@ type XMLInvoice struct {
 	RecipientName  string                       `xml:"Podmiot2>DaneIdentyfikacyjne>Nazwa"`
 	Issued         string                       `xml:"Fa>P_1"`
 	InvoiceNumber  string                       `xml:"Fa>P_2"`
+	Items          []Item                       `xml:"Fa>FaWiersz"`
 }
 
 func (r *Registry) getInvoiceMetadata(input *Invoice, ordNo int) (*InvoiceMetadata, error) {

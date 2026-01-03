@@ -3,6 +3,7 @@ package monthlyregistry
 import (
 	"ksef/internal/certsdb"
 	"ksef/internal/client/v2/types/invoices"
+	"ksef/internal/invoicesdb/shared"
 	"time"
 
 	sessionTypes "ksef/internal/client/v2/session/types"
@@ -36,6 +37,10 @@ type InvoiceIssuer struct {
 	Name string `yaml:"name"`
 }
 
+type JPKProps struct {
+	ItemRules []shared.JPKItemRule `yaml:"item-rules,omitempty"`
+}
+
 type Invoice struct {
 	RefNo        string         `yaml:"ref-no"`
 	KSeFRefNo    string         `yaml:"ksef-ref-no,omitempty"`
@@ -47,6 +52,7 @@ type Invoice struct {
 	PrintoutData map[string]any `yaml:"printout-data,omitempty"`
 	Issuer       *InvoiceIssuer `yaml:"issuer,omitempty"`
 	OrdNum       int            `yaml:"ord-num"`
+	JPK          *JPKProps      `yaml:"jpk,omitempty"`
 }
 
 type InvoiceMetadata struct {
