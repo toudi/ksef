@@ -5,11 +5,10 @@ import (
 	"ksef/internal/sei/parser"
 	"os"
 
-	"gopkg.in/yaml.v3"
+	"github.com/goccy/go-yaml"
 )
 
-type YAMLDecoder struct {
-}
+type YAMLDecoder struct{}
 
 func YAMLDecoder_Init() *YAMLDecoder {
 	return &YAMLDecoder{}
@@ -17,7 +16,7 @@ func YAMLDecoder_Init() *YAMLDecoder {
 
 func (y *YAMLDecoder) Process(sourceFile string, parser *parser.Parser) error {
 	var err error
-	var serializedInvoice map[string]interface{}
+	var serializedInvoice map[string]any
 
 	file, err := os.Open(sourceFile)
 	if err != nil {
@@ -37,16 +36,16 @@ func (y *YAMLDecoder) Process(sourceFile string, parser *parser.Parser) error {
 	}
 }
 
-func (y *YAMLDecoder) processSingleInvoiceSource(invoice map[string]interface{}, parser *parser.Parser) error {
+func (y *YAMLDecoder) processSingleInvoiceSource(invoice map[string]any, parser *parser.Parser) error {
 	if err := processRecurse("", invoice, parser); err != nil {
 		return fmt.Errorf("error running processRecurse: %v", err)
 	}
 	return parser.InvoiceReady()
 }
 
-func (y *YAMLDecoder) processBatchSource(source map[string]interface{}, parser *parser.Parser) error {
+func (y *YAMLDecoder) processBatchSource(source map[string]any, parser *parser.Parser) error {
 	commonInvoiceData := source["common"]
-	invoices := source["invoices"].([]interface{})
+	invoices := source["invoices"].([]any)
 	var err error
 
 	for _, invoice := range invoices {

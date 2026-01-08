@@ -132,3 +132,11 @@ func (p *Parser) ClearInvoiceData() error {
 	p.invoice.Clear()
 	return nil
 }
+
+func (p *Parser) SetInvoiceMetadata(data map[string]any) {
+	if p.invoice == nil {
+		p.invoice = &invoice.Invoice{}
+		p.invoice.Clear()
+	}
+	p.invoice.Meta = data
+}

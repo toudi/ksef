@@ -20,6 +20,12 @@ func GeneratorFactory() interfaces.Generator {
 			"Faktura.Naglowek.SystemInfo":                 "WSI Pegasus",
 			"Faktura.Podmiot2.JST":                        "2",
 			"Faktura.Podmiot2.GV":                         "2",
+			"Faktura.Podmiot2.Adres.KodKraju":             "PL",
+			"Faktura.Fa.Adnotacje.P_16":                   "2", // metoda kasowa
+			"Faktura.Fa.Adnotacje.P_17":                   "2", // samofakturowanie
+			"Faktura.Fa.Adnotacje.P_18":                   "2", // odwrotne obciążenie
+			"Faktura.Fa.Adnotacje.P_18A":                  "2", // mechanizm podzielonej płatności
+			"Faktura.Fa.Adnotacje.P_23":                   "2", // trójstronna faktura uproszczona
 		}),
 		fa.WithElementOrdering(FA_3_1ChildrenOrder),
 	)

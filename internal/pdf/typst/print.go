@@ -12,6 +12,11 @@ import (
 )
 
 func (tp *typstPrinter) prepareWorkdir() error {
+	if tp.cfg.Workdir == "" {
+		logging.PDFRendererLogger.Debug("typst workdir disabled")
+		tp.cfg.Workdir = tp.cfg.Templates
+		return nil
+	}
 	if err := os.MkdirAll(tp.cfg.Workdir, 0775); err != nil {
 		return err
 	}

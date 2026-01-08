@@ -42,6 +42,10 @@ type UploadSession struct {
 	UPO       []upo.UPODownloadPage  `yaml:"upo,omitempty,omitzero"`
 }
 
+func (us *UploadSession) IsPending() bool {
+	return us.Status == nil || us.Status.Status.Code < 200
+}
+
 type Registry struct {
 	sessions []*UploadSession `yaml:"sessions"`
 
@@ -62,7 +66,7 @@ func OpenOrCreate(dirName string) (*Registry, error) {
 		return nil, errors.Join(errOpeningRegistryFile, err)
 	}
 
-	var reg = &Registry{
+	reg := &Registry{
 		sessions: make([]*UploadSession, 0),
 		dir:      dirName,
 		logger:   logging.RegistryLogger.With("path", path.Join(dirName, registryFilename)),
@@ -103,5 +107,8 @@ func OpenForMonth(vip *viper.Viper, month time.Time) (*Registry, error) {
 	}
 
 	return OpenOrCreate(path)
+}
 
+func (r *Registry) Dir() string {
+	return r.dir
 }

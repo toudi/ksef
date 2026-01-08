@@ -19,7 +19,7 @@ type InvoiceMetadata struct {
 	Buyer             InvoiceSubjectMetadata `json:"buyer"`
 	InvoiceHashBase64 string                 `json:"invoiceHash"`
 	Offline           bool
-	Metadata          map[string]string
+	Metadata          map[string]any
 }
 
 func (im InvoiceMetadata) Checksum() string {

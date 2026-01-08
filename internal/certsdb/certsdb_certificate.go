@@ -73,11 +73,11 @@ func (c *Certificate) SavePKey(privateKey *ecdsa.PrivateKey) error {
 		return err
 	}
 	defer privateKeyFile.Close()
-	privateKeyBytes, err := x509.MarshalECPrivateKey(privateKey)
+	privateKeyBytes, err := x509.MarshalPKCS8PrivateKey(privateKey)
 	if err != nil {
 		return err
 	}
-	return pem.Encode(privateKeyFile, &pem.Block{Type: "EC PRIVATE KEY", Bytes: privateKeyBytes})
+	return pem.Encode(privateKeyFile, &pem.Block{Type: "PRIVATE KEY", Bytes: privateKeyBytes})
 }
 
 func (c *Certificate) SaveCert(derBytes []byte) error {
@@ -101,13 +101,23 @@ func (c *Certificate) SignContent(content []byte) ([]byte, error) {
 		return nil, err
 	}
 	privKeyBlock, _ := pem.Decode(privKeyBytes)
+	var ecPrivKey *ecdsa.PrivateKey
 	ecPrivKeyAny, err := x509.ParsePKCS8PrivateKey(privKeyBlock.Bytes)
 	if err != nil {
-		return nil, err
-	}
-	ecPrivKey, ok := ecPrivKeyAny.(*ecdsa.PrivateKey)
-	if !ok {
-		return nil, errUnsupportedPrivateKeyType
+		if strings.Contains(err.Error(), "use ParseECPrivateKey") {
+			ecPrivKey, err = x509.ParseECPrivateKey(privKeyBlock.Bytes)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
+	} else {
+		var ok bool
+		ecPrivKey, ok = ecPrivKeyAny.(*ecdsa.PrivateKey)
+		if !ok {
+			return nil, errUnsupportedPrivateKeyType
+		}
 	}
 
 	contentHash := sha256.Sum256(content)

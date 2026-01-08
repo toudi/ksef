@@ -7,8 +7,12 @@
   let data = ()
   let ident = extract(p, "DaneIdentyfikacyjne")
 
-  data.push([#{ extract(p, "Adres.AdresL1") }])
-  data.push([#{ extract(p, "Adres.AdresL2") }])
+  if contains(p, "Adres.AdresL1") {
+    data.push([#{ extract(p, "Adres.AdresL1") }])
+  }
+  if contains(p, "Adres.AdresL2") {
+    data.push([#{ extract(p, "Adres.AdresL2") }])
+  }
 
   let nip = ""
   if contains(ident, "NIP") {

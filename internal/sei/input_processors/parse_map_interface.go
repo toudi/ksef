@@ -2,6 +2,7 @@ package inputprocessors
 
 import (
 	"fmt"
+	"ksef/internal/logging"
 	"ksef/internal/money"
 	"ksef/internal/sei/parser"
 	"strconv"
@@ -11,11 +12,11 @@ import (
 // processRecurse takes the input node (which can be a part of map) and then it constructs
 // invoice properties and provides them to the parser. Thanks to this approach, we can use
 // the same function to process both yaml and json with the same parser
-func processRecurse(section string, data interface{}, parser *parser.Parser) error {
+func processRecurse(section string, data any, parser *parser.Parser) error {
 	var err error
 	var fullSection string
 	var hasScalarData bool = false
-	var sectionData map[string]interface{}
+	var sectionData map[string]any
 	// because # is used to denote namespace attributes it would mean that a yaml key
 	// would start with a hash, but that's not a valid YAML. therefore instead of
 	// writing
@@ -37,16 +38,25 @@ func processRecurse(section string, data interface{}, parser *parser.Parser) err
 	//
 	var keyNameReplacer *strings.Replacer = strings.NewReplacer("\\#", "#", "\\:", ":")
 
-	if keyData, is_a_map := data.(map[string]interface{}); is_a_map {
-		sectionData = make(map[string]interface{})
+	if keyData, is_a_map := data.(map[string]any); is_a_map {
+		sectionData = make(map[string]any)
 
 		for keyName, keyDataItem := range keyData {
+			if section == "" && strings.ToLower(keyName) == "meta" {
+				if tmpMap, ok := keyDataItem.(map[string]any); ok {
+					parser.SetInvoiceMetadata(tmpMap)
+				} else {
+					logging.ParserLogger.Error("Meta is expected to be a key-value map")
+				}
+				continue
+			}
+
 			fullSection = keyName
 			if section != "" {
 				fullSection = section + "." + keyName
 			}
 			// let's check if this data is also an interface
-			if _tmpData, is_a_map := keyDataItem.(map[string]interface{}); is_a_map {
+			if _tmpData, is_a_map := keyDataItem.(map[string]any); is_a_map {
 				parsed_number, is_serialized_number, err := money.ParseMonetaryValue(_tmpData)
 				if err != nil {
 					return fmt.Errorf("error during parseSerializedNumber(): %v; tmpData=%+v", err, _tmpData)
@@ -59,8 +69,8 @@ func processRecurse(section string, data interface{}, parser *parser.Parser) err
 				if err = processRecurse(fullSection, keyDataItem, parser); err != nil {
 					return fmt.Errorf("error in recursing to processRecurse(): %v", err)
 				}
-			} else if _, is_an_array := keyDataItem.([]interface{}); is_an_array {
-				for _, arrayElement := range keyDataItem.([]interface{}) {
+			} else if _, is_an_array := keyDataItem.([]any); is_an_array {
+				for _, arrayElement := range keyDataItem.([]any) {
 					if err = processRecurse(fullSection, arrayElement, parser); err != nil {
 						return fmt.Errorf("error in recursing to processRecurse() for an array item: %v", err)
 					}
@@ -94,6 +104,8 @@ func processRecurse(section string, data interface{}, parser *parser.Parser) err
 
 			if scalarValueString, is_a_string := scalarValue.(string); is_a_string {
 				sectionDataValues[fieldIndex] = scalarValueString
+			} else if scalarValueUInt64, is_an_uint64 := scalarValue.(uint64); is_an_uint64 {
+				sectionDataValues[fieldIndex] = strconv.FormatUint(scalarValueUInt64, 10)
 			} else if scalarValueInt, is_an_int := scalarValue.(int); is_an_int {
 				sectionDataValues[fieldIndex] = strconv.Itoa(scalarValueInt)
 			} else if scalarValueFloat, is_a_float := scalarValue.(float64); is_a_float {

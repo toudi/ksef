@@ -46,11 +46,12 @@ func (r *Registry) AddInvoice(
 
 	// we seem to be in the clear.
 	invoice = &Invoice{
-		RefNo:    inv.Invoice.Number,
-		Checksum: checksum,
-		Offline:  inv.Invoice.KSeFFlags.Offline,
-		Type:     invoiceType,
-		OrdNum:   ordNum,
+		RefNo:        inv.Invoice.Number,
+		Checksum:     checksum,
+		Offline:      inv.Invoice.KSeFFlags.Offline,
+		Type:         invoiceType,
+		OrdNum:       ordNum,
+		PrintoutData: inv.Invoice.Meta,
 	}
 	var err error
 

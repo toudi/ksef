@@ -26,12 +26,15 @@ func (c *StatusChecker) DiscoverPendingSessions() error {
 				return errors.Join(errOpeningSessionRegistry, err)
 			}
 		} else {
+			logging.InvoicesDBLogger.Debug("discovered upload sessions registry", "dir", sessionRegistryForMonth.Dir())
 			for _, session := range sessionRegistryForMonth.PendingUploadSessions() {
+				logging.InvoicesDBLogger.Debug("discovered upload session", "ref-no", session.RefNo)
 				c.sessionIdToSessionRegistry[session.RefNo] = sessionRegistryForMonth
 				// now that we have the session, we can iterate over invoice hashes so that
 				// later we can bind them to monthly registries
 				for _, invoice := range session.Invoices {
 					// initialize to empty hash
+					logging.InvoicesDBLogger.Debug("set monthly registry to nil ptr", "invoice", invoice.Checksum)
 					c.invoiceHashToMonthlyRegistry[invoice.Checksum] = nil
 				}
 			}
@@ -45,12 +48,19 @@ func (c *StatusChecker) DiscoverPendingSessions() error {
 				}
 				return errors.Join(errOpeningMonthlyRegistry, err)
 			}
+			logging.InvoicesDBLogger.Debug("opened monthly registry", "path", monthlyRegistry.Dir())
 			for invoiceHash := range c.invoiceHashToMonthlyRegistry {
 				if monthlyRegistry.ContainsHash(invoiceHash) {
+					logging.InvoicesDBLogger.Debug("override monthly registry for invoice", "invoice", invoiceHash)
 					c.invoiceHashToMonthlyRegistry[invoiceHash] = monthlyRegistry
 				}
 			}
 		}
+	}
+
+	// TODO: remove after done with debugging
+	for invoiceHash, registry := range c.invoiceHashToMonthlyRegistry {
+		logging.InvoicesDBLogger.Debug("invoice to registry mapping", "invoice", invoiceHash, "registry", registry.Dir())
 	}
 
 	return nil

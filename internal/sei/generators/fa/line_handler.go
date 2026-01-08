@@ -25,11 +25,6 @@ func (fg *FAGenerator) LineHandler(
 ) error {
 	var err error
 
-	if strings.ToLower(section) == invoiceMetaSection {
-		inv.Meta = data
-		return nil
-	}
-
 	if strings.ToLower(section) == ksefSection {
 		inv.KSeFFlags.Load(data)
 		return nil

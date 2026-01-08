@@ -22,10 +22,10 @@ type PageSettings struct {
 }
 
 type InvoicePrintingMeta struct {
-	Usage   string         `yaml:"-"` // entry in the config usage slice
-	Invoice InvoiceMeta    `yaml:"invoice"`
-	Page    PageSettings   `yaml:"page"`
-	Extra   map[string]any `yaml:"extra"`
+	Usage    string         `yaml:"-"` // entry in the config usage slice
+	Invoice  InvoiceMeta    `yaml:"invoice"`
+	Page     PageSettings   `yaml:"page"`
+	Printout map[string]any `yaml:"printout"`
 }
 
 func GetInvoicePrintingMeta(srcFile string) (*InvoicePrintingMeta, error) {
@@ -52,6 +52,6 @@ func GetInvoicePrintingMeta(srcFile string) (*InvoicePrintingMeta, error) {
 			KSeFRefNo: invoice.KSeFRefNo,
 			QRCodes:   invoice.QRCodes,
 		},
-		Extra: invoice.PrintoutData,
+		Printout: invoice.PrintoutData,
 	}, nil
 }

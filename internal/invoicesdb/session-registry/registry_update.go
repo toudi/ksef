@@ -32,7 +32,7 @@ func (r *Registry) processUploadResult(
 		}
 	}
 
-	if uploadSessionStatus.Status != nil && entry.Status == nil {
+	if uploadSessionStatus.IsProcessed() && entry.IsPending() {
 		entry.Status = uploadSessionStatus.Status
 	}
 
