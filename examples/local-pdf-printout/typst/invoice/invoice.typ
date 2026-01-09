@@ -5,63 +5,22 @@
 
 #import "./components/qr-codes.typ": qr-codes
 #import "./components/header.typ": invoice-header
-
-#let header-or-footer(config) = {
-  let content = (
-    left: [#h(1fr)],
-    center: [#h(1fr)],
-    right: [#h(1fr)],
-  )
-
-  if config != none {
-    if "left" in config {
-      content.insert("left", [#{ config.left }])
-    }
-    if "center" in config {
-      content.insert("center", [#{ config.center }])
-    }
-    if "right" in config {
-      content.insert("right", [#{ config.right }])
-    }
-  }
-
-  return content
-}
-
-#let page-header(meta) = {
-  if "header" in meta {
-    let content = header-or-footer(meta.at("header"))
-    grid(
-      grid(
-        columns: 3,
-        content.left, content.center, content.right,
-      ),
-      [#v(0.5em)],
-      [#line(length: 100%)],
-    )
-  }
-}
-
-#let page-footer(meta) = {
-  if "footer" in meta {
-    let content = header-or-footer(meta.at("footer"))
-
-    grid(
-      [#line(length: 100%)],
-      [#v(0.5em)],
-      grid(
-        columns: 3,
-        content.left, content.center, content.right,
-      ),
-    )
-  }
-}
+#import "./settings/page.typ": default-header-footer, header-or-footer, page-footer, page-header
 
 #set text(font: "CMU Sans Serif")
+#let page-settings = meta.at("page", default: (:))
+#let header-content = header-or-footer(page-settings.at("header", default: (:)))
+#let footer-content = header-or-footer(page-settings.at("footer", default: (:)))
+
+#let top-margin = 1cm
+#if header-content != default-header-footer {
+  top-margin = 2cm
+}
+
 #set page(
-  margin: (x: 1cm, bottom: 1cm, top: 2cm),
-  header: page-header(meta),
-  footer: page-footer(meta),
+  margin: (x: 1cm, bottom: 1cm, top: top-margin),
+  header: page-header(header-content),
+  footer: page-footer(footer-content),
 )
 
 #grid(
