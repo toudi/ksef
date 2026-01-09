@@ -43,9 +43,10 @@ func bindNipRun(cmd *cobra.Command, _ []string) error {
 	if env != runtime.Gateway(environment.Test) {
 		return errTestModeNotSelected
 	}
-	nip, err := cmd.Flags().GetString("nip")
+
+	nip, err := runtime.GetNIP(vip)
 	if err != nil || nip == "" {
-		return errNipIsRequired
+		return errors.Join(errNipIsRequired, err)
 	}
 
 	cli, err := v2.NewClient(cmd.Context(), viper.GetViper())
