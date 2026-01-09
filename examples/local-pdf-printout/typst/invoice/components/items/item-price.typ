@@ -26,8 +26,11 @@
     }
   } else {
     // we have to calculate gross -> net
-    gross-price = decimal(gross-price-node).first().children.first()
-    net-price = decimal(gross-price / vat-divisor)
+    gross-price = decimal(gross-price-node.first().children.first())
+    net-price = gross-price
+    if vat-divisor > 0 {
+      net-price = decimal(gross-price / vat-divisor)
+    }
   }
   let gross-amount = gross-price * quantity
   let net-amount = net-price * quantity
