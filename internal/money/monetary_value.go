@@ -104,6 +104,10 @@ func (m *MonetaryValue) LoadFromString(value string) error {
 }
 
 func parseDecimal(input any) (result int, err error) {
+	// is it coming from CSV ? if so, it's a text
+	if tmpString, ok := input.(string); ok {
+		return strconv.Atoi(tmpString)
+	}
 	// let's start with uint64
 	if tmpUint64, ok := input.(uint64); ok {
 		// that went well..
@@ -124,5 +128,5 @@ func parseDecimal(input any) (result int, err error) {
 		return int(tmpFloat64), nil
 	}
 
-	return -1, errors.New("cannot recognize any of the types")
+	return -1, errors.Join(fmt.Errorf("%v", input), errors.New("cannot recognize any of the types"))
 }

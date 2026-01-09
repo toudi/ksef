@@ -1,9 +1,11 @@
 package fa
 
 import (
+	"errors"
 	"fmt"
 	"ksef/internal/invoice"
 	"ksef/internal/sei/generators/fa/mnemonics"
+	"ksef/internal/utils"
 	"strconv"
 	"strings"
 	"time"
@@ -24,6 +26,15 @@ func (fg *FAGenerator) LineHandler(
 	invoiceReady func() error,
 ) error {
 	var err error
+
+	if strings.ToLower(section) == invoiceMetaSection {
+		decodedMeta, err := utils.ReconstructMapFromDottedNotation(data)
+		if err != nil {
+			return errors.Join(errors.New("error reconstructing map from dotted notation"), err)
+		}
+		inv.Meta = decodedMeta
+		return nil
+	}
 
 	if strings.ToLower(section) == ksefSection {
 		inv.KSeFFlags.Load(data)
