@@ -42,6 +42,10 @@ func (r *Registry) processUploadResult(
 		if invoiceUploadStatus.Status.Code > 0 {
 			invoiceChecksum := invoiceUploadStatus.Checksum
 			registry := invoiceChecksumToRegistry[invoiceChecksum]
+			if registry == nil {
+				r.logger.Warn("cannot update invoice because it's not bound to any registry", "checksum", invoiceChecksum)
+				continue
+			}
 			// represents invoice original ref no, extracted from the registry
 			if err := registry.UpdateInvoiceByChecksum(
 				invoiceChecksum,

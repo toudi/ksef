@@ -6,6 +6,7 @@ import (
 	sessionregistry "ksef/internal/invoicesdb/session-registry"
 	"ksef/internal/logging"
 	"os"
+	"slices"
 )
 
 var (
@@ -17,7 +18,15 @@ func (c *StatusChecker) DiscoverPendingSessions() error {
 	c.sessionIdToSessionRegistry = make(map[string]*sessionregistry.Registry)
 	c.invoiceHashToMonthlyRegistry = make(map[string]*monthlyregistry.Registry)
 
-	for _, month := range c.monthsRange {
+	// here's the thing: we have our months range starting from previous month and ending with
+	// current month. So what would happen is if we have invoices from previous month being
+	// sent in the current month ? we would first iterate over the previous month, find the
+	// checksums but because they would not be sent in previous month - we would not register
+	// them in invoiceHashToMonthlyRegistry.
+	// solution is quite simple - start from current month and end in previous month. this way,
+	// we will make sure to visit all sessions and invoices.
+	// fixes #25
+	for _, month := range slices.Backward(c.monthsRange) {
 		sessionRegistryForMonth, err := sessionregistry.OpenForMonth(c.vip, month)
 		if err != nil {
 			if os.IsNotExist(err) {
@@ -33,6 +42,10 @@ func (c *StatusChecker) DiscoverPendingSessions() error {
 				// now that we have the session, we can iterate over invoice hashes so that
 				// later we can bind them to monthly registries
 				for _, invoice := range session.Invoices {
+					if _, exists := c.invoiceHashToMonthlyRegistry[invoice.Checksum]; exists {
+						logging.InvoicesDBLogger.Debug("invoice already bound to monthly registry and/or nil ptr")
+						continue
+					}
 					// initialize to empty hash
 					logging.InvoicesDBLogger.Debug("set monthly registry to nil ptr", "invoice", invoice.Checksum)
 					c.invoiceHashToMonthlyRegistry[invoice.Checksum] = nil
@@ -60,7 +73,11 @@ func (c *StatusChecker) DiscoverPendingSessions() error {
 
 	// TODO: remove after done with debugging
 	for invoiceHash, registry := range c.invoiceHashToMonthlyRegistry {
-		logging.InvoicesDBLogger.Debug("invoice to registry mapping", "invoice", invoiceHash, "registry", registry.Dir())
+		registryPath := "nil"
+		if registry != nil {
+			registryPath = registry.Dir()
+		}
+		logging.InvoicesDBLogger.Debug("invoice to registry mapping", "invoice", invoiceHash, "registry", registryPath)
 	}
 
 	return nil
