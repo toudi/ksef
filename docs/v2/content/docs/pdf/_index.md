@@ -12,9 +12,46 @@ Na ten projekt natknąłem się przez kompletny przypadek, natomiast muszę szcz
 
 W repozytorium z programem zamieszczam przykładowe implementacje wizualizacji (`examples/local-pdf-printout/typst`)
 
-### działanie silnika
+### konfiguracja silnika
 
-W konfiguracji (patrz poniżej) definiujesz katalog roboczy (`workdir`). Do tego katalogu zostaną skopiowane szablony. Zalecam stworzenie tego katalogu w ramdysku (np. `/tmp`), ponieważ kopiowane tam będą tymczasowo pliki faktur oraz UPO.
+| opcja              | znaczenie                                                                                                                                                                                                                                                                                                        |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `debug`            | Jeśli ustawisz opcję na `true`, to program podczas napotkanych błędów skopiuje standardowe wyjście programu `typst` do pliku z nazwą pliku konwertowanego i końcówką `-error.txt`, co pozwoli na szybszą diagnozę                                                                                                |
+| `templates-dir`    | Katalog zawierający szablony typst dla renderowanych faktur oraz UPO                                                                                                                                                                                                                                             |
+| `workdir`          | Jeśli wskażesz tu katalog, program skopiuje szablony z katalogu `templates` do tego katalogu. Podczas pracy, program będzie kopiować tu pliki XML UPO oraz faktur. Jeśli pozostawisz opcję niezdefiniowaną (lub ustawisz wartość na pusty string) - wtedy program będzie kopiować pliki do katalogu z szablonami |
+| `upo.template`     | Nazwa szablonu do renderowania UPO                                                                                                                                                                                                                                                                               |
+| `invoice.template` | Nazwa szablonu do renderowania faktury                                                                                                                                                                                                                                                                           |
+| `invoice.header`   | Ustawienia nagłówka (dostępne podklucze: `left`, `center`, `right`)                                                                                                                                                                                                                                              |
+| `invoice.footer`   | Ustawienia stopki (dostępne podklucze: `left`, `center`, `right`)                                                                                                                                                                                                                                                |
+| `invoice.printout` | Dodatkowe zmienne które zostaną przekazane do wydruku                                                                                                                                                                                                                                                            |
+
+#### przykładowe ustawienia
+
+```yaml
+pdf:
+  - usage:
+      - upo
+    typst:
+      debug: true
+      templates-dir: examples/local-pdf-printout/typst
+      upo:
+        template: upo/upo.typ
+  - usage:
+      - invoice:issued
+    typst:
+      debug: true
+      templates-dir: examples/local-pdf-printout/typst
+      invoice:
+        template: invoice/invoice.typ
+        header:
+          left: Lewa strona nagłówka
+          center: środek nagłówka
+          right: prawa strona nagłówka
+        footer:
+          right: WSI Pegasus
+```
+
+### działanie silnika
 
 W trybie renderowania UPO program skopiuje upo pod nazwą `upo.xml`
 
@@ -34,7 +71,77 @@ invoice:
   qr-codes:
     invoice: https://ksef-test.mf.gov.pl/client-app/invoice/1111111111/17-12-2025/aabbccddeeffgghhiijjkkllmmnnooppqqrr_112233=
     #offline: https://ksef-test.mf.gov.pl/client-app/certificate/Nip/1111111111/1111111111/0011223344556677/ ....
+
+printout:
+  wszystkie:
+    dodatkowe: ["wartości", "które", "przekażesz"]
+    a: ["które", "nie są", "przewidziane"]
+    przez: ["format", "FA(3)"]
+
+  bank-account:
+    account-no: PL 1111 2222 0000 ( ... )
+    name: Nazwa banku
 ```
+
+### Spersonalizowane szablony
+
+Opiszę dwa poziomy personalizacji. Pierwszy poziom polega na dodaniu warunków do ustawień silnika. Zacznijmy od przykładu bo on chyba najprościej pokaże do czego służy opcja personalizacji
+
+```yaml
+pdf:
+  - usage: "*"
+    cirfmf:
+      templates-dir: examples/local-pdf-printout/cirfmf
+      workdir: /Users/toudi/printout/cirfmf
+      node-bin: /opt/homebrew/bin/node
+  - usage:
+      - upo
+    typst:
+      templates-dir: examples/local-pdf-printout/typst
+      upo:
+        template: upo/upo.typ
+  - usage:
+      - invoice:issued
+    typst:
+      templates-dir: examples/local-pdf-printout/typst
+      invoice:
+        template: invoice/invoice.typ
+        footer:
+          right: WSI Pegasus
+        printout: {}
+  - usage:
+      - invoice:issued
+    if: '{{ eq .buyer.nr_vat_ue "112233445566" }}'
+    typst:
+      debug: true
+      templates-dir: /Users/toudi/projects/invoice-templates-git/typst
+      invoice:
+        template: invoice/invoice-dual-lang-np.typ
+        printout: { no-qrcodes: true }
+```
+
+Podczas wyboru szablonu do wydruku faktury wystawionej (`invoice:issued`) program ma do wyboru trzy szablony (patrząc na tablicę powyżej - pierwszy (`usage: *`), trzeci oraz czwarty). Jeśli do renderowania zostanie wybrana faktura w której stroną kupującą jest podmiot identyfikowany przez `nr_vat_ue` o wartości `112233445566` - wówczas program wybierze ten szablon. Jeśli nie - zostanie użyty szablon numer 3, ponieważ jego zastosowanie (`usage`) jest bardziej szczegółowe niż ogólne (`*`)
+
+Pola dostępne przy ewaluacji warunku:
+
+| pole              | opis                                   |
+| ----------------- | -------------------------------------- |
+| `seller.nip`      | numer NIP wystawcy                     |
+| `buyer.nip`       | Numer NIP kupującego                   |
+| `buyer.nr_vat_ue` | Numer NIP kupującego z UE              |
+| `buyer.nr_id`     | Numer NIP kupującego z poza obszaru UE |
+
+Jeśli Twoja lista ustawień silnika stanie się zbyt długa, możesz rozważyć rozbicie ustawień per podmiot wystawiający. W tym celu:
+
+1. Skorzystaj z komendy kopiowania ustawień:
+
+   ```
+   ./ksef subject-settings copy-pdf-config -n 1111111111
+   ```
+
+   Oczywiście powyższa komenda również reaguje na flagi odpowiedzialne za środowisko (`-t` / `--demo-gateway`). Spowoduje to skopiowanie ustawień z pliku konfiguracyjnego do ustawień podmiotu (`data/<środowisko>/<nip>/settings.yaml`).
+
+1. Zmodyfikuj ustawienia w obrębie pojedynczego podmiotu
 
 ## `cirfmf` (biblioteka Ministerstwa Finansów)
 

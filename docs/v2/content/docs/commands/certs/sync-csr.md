@@ -11,7 +11,7 @@ Komenda wysyła oczekujące wnioski do KSeF i/lub pobiera listę gotowych certyf
 Przykładowe wywołanie
 
 ```
-./ksef certs push-csr
+./ksef certs sync-csr
 ```
 
 {{< callout type="important" >}}
