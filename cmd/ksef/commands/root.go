@@ -7,6 +7,7 @@ import (
 	"ksef/cmd/ksef/commands/download"
 	"ksef/cmd/ksef/commands/invoices"
 	"ksef/cmd/ksef/commands/keyring"
+	subjectsettings "ksef/cmd/ksef/commands/subject-settings"
 	"ksef/internal/config"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
@@ -57,6 +58,7 @@ func init() {
 	RootCommand.AddCommand(keyring.KeyringCommand)
 	RootCommand.AddCommand(invoices.InvoicesCommand)
 	RootCommand.AddCommand(backupCommand)
+	RootCommand.AddCommand(subjectsettings.SubjectSettings)
 	config.KeyringFlags(RootCommand.PersistentFlags())
 	RootCommand.CompletionOptions = cobra.CompletionOptions{DisableDefaultCmd: true}
 }

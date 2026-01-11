@@ -2,7 +2,7 @@ package subjectsettings
 
 import (
 	"errors"
-	"ksef/internal/config"
+	pdfConfig "ksef/internal/pdf/config"
 	"ksef/internal/utils"
 	"os"
 	"path"
@@ -19,10 +19,10 @@ var (
 )
 
 type SubjectSettings struct {
-	PrinterSetup config.PDFPrinterConfig `yaml:"printer-config,omitempty"`
-	JPK          *JPKSettings            `yaml:"jpk,omitempty"`
-	dir          string
-	dirty        bool
+	PDF   []pdfConfig.PDFEngineConfig `yaml:"pdf,omitempty"`
+	JPK   *JPKSettings                `yaml:"jpk,omitempty"`
+	dir   string
+	dirty bool
 }
 
 func OpenOrCreate(dir string) (*SubjectSettings, error) {

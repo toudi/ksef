@@ -22,3 +22,7 @@ func GetInvoicesDBConfig(vip *viper.Viper) InvoicesDBConfig {
 		Root: viper.GetString(cfgKeyDataDir),
 	}
 }
+
+func SetDataDir(vip *viper.Viper, dataDir string) {
+	vip.Set(cfgKeyDataDir, dataDir)
+}

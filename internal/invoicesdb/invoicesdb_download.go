@@ -9,6 +9,7 @@ import (
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	"ksef/internal/logging"
 	"ksef/internal/pdf"
+	pdfconfig "ksef/internal/pdf/config"
 	"ksef/internal/runtime"
 	"ksef/internal/utils"
 	"os"
@@ -77,7 +78,9 @@ func (i *InvoicesDB) downloadInvoices(
 					regInvoice := registry.GetInvoiceByChecksum(invoice.Checksum())
 					printMeta := regInvoice.GetPrintingMeta()
 
-					printer, err := pdf.GetInvoicePrinter(i.vip, printMeta.Usage)
+					printer, err := pdf.GetInvoicePrinter(i.vip, pdfconfig.UsageSelector{
+						Usage: printMeta.Usage,
+					})
 					if err != nil {
 						return err
 					}

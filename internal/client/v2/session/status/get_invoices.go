@@ -10,6 +10,12 @@ import (
 
 const endpointSessionInvoices = "/api/v2/sessions/%s/invoices"
 
+const (
+	BuyerTypeNIP      = "Nip"
+	BuyerTypeVatEU    = "VatUe"
+	BuyerTypeVatNonUe = "Other"
+)
+
 type InvoiceStatus struct {
 	Code        int      `json:"code"`
 	Description string   `json:"description"`
@@ -20,6 +26,19 @@ func (is InvoiceStatus) Successful() bool {
 	return is.Code == 200
 }
 
+type SellerInfo struct {
+	NIP string `json:"nip"`
+}
+
+type BuyerIdentifier struct {
+	Type  string `json:"type"`
+	Value string `json:"value"`
+}
+
+type BuyerInfo struct {
+	Identifier BuyerIdentifier
+}
+
 type InvoiceInfo struct {
 	OrdinalNumber  int           `json:"ordinalNumber"`
 	ChecksumBase64 string        `json:"invoiceHash"` // checksum as returned by KSeF gateway, i.e. raw bytes of sha256sum encoded with base64
@@ -27,6 +46,34 @@ type InvoiceInfo struct {
 	InvoiceNumber  string        `json:"invoiceNumber"`
 	KSeFRefNo      string        `json:"ksefNumber"`
 	Status         InvoiceStatus `json:"status"`
+	Seller         SellerInfo    `json:"seller"`
+	Buyer          BuyerInfo     `json:"buyer"`
+}
+
+func (ii InvoiceInfo) Participants() map[string]any {
+	participants := map[string]any{
+		"seller": map[string]any{
+			"nip": ii.Seller.NIP,
+		},
+	}
+
+	buyerId := ii.Buyer.Identifier.Value
+	switch ii.Buyer.Identifier.Type {
+	case BuyerTypeNIP:
+		participants["buyer"] = map[string]string{
+			"nip": buyerId,
+		}
+	case BuyerTypeVatEU:
+		participants["buyer"] = map[string]string{
+			"nr_vat_ue": buyerId,
+		}
+	case BuyerTypeVatNonUe:
+		participants["buyer"] = map[string]string{
+			"nr_id": buyerId,
+		}
+	}
+
+	return participants
 }
 
 type SessionInvoicesResponse struct {
@@ -47,7 +94,7 @@ func (sc *SessionStatusChecker) GetInvoiceList(
 	var continuationToken string
 
 	for !finished {
-		var headers = map[string]string{}
+		headers := map[string]string{}
 		if continuationToken != "" {
 			headers["x-continuation-token"] = continuationToken
 		}
@@ -64,7 +111,6 @@ func (sc *SessionStatusChecker) GetInvoiceList(
 			},
 			fmt.Sprintf(endpointSessionInvoices, uploadSessionId),
 		)
-
 		if err != nil {
 			return nil, err
 		}

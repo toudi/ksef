@@ -26,16 +26,36 @@ type Item struct {
 }
 
 type XMLInvoice struct {
-	XMLName        xml.Name                     `xml:"Faktura"`
-	HeaderFormCode sessionTypes.InvoiceFormCode `xml:"Naglowek>KodFormularza"`
-	GeneratedTime  time.Time                    `xml:"Naglowek>DataWytworzeniaFa"`
-	Issuer         string                       `xml:"Podmiot1>DaneIdentyfikacyjne>NIP"`
-	IssuerName     string                       `xml:"Podmiot1>DaneIdentyfikacyjne>Nazwa"`
-	Recipient      string                       `xml:"Podmiot2>DaneIdentyfikacyjne>NIP"`
-	RecipientName  string                       `xml:"Podmiot2>DaneIdentyfikacyjne>Nazwa"`
-	Issued         string                       `xml:"Fa>P_1"`
-	InvoiceNumber  string                       `xml:"Fa>P_2"`
-	Items          []Item                       `xml:"Fa>FaWiersz"`
+	XMLName             xml.Name                     `xml:"Faktura"`
+	HeaderFormCode      sessionTypes.InvoiceFormCode `xml:"Naglowek>KodFormularza"`
+	GeneratedTime       time.Time                    `xml:"Naglowek>DataWytworzeniaFa"`
+	Issuer              string                       `xml:"Podmiot1>DaneIdentyfikacyjne>NIP"`
+	IssuerName          string                       `xml:"Podmiot1>DaneIdentyfikacyjne>Nazwa"`
+	RecipientName       string                       `xml:"Podmiot2>DaneIdentyfikacyjne>Nazwa"`
+	Recipient           string                       `xml:"Podmiot2>DaneIdentyfikacyjne>NIP"`
+	RecipientVatIdEU    string                       `xml:"Podmiot2>DaneIdentyfikacyjne>NrVatUE"`
+	RecipientVatIdNonEU string                       `xml:"Podmiot2>DaneIdentyfikacyjne>NrID"`
+	Issued              string                       `xml:"Fa>P_1"`
+	InvoiceNumber       string                       `xml:"Fa>P_2"`
+	Items               []Item                       `xml:"Fa>FaWiersz"`
+}
+
+func (xi *XMLInvoice) Participants() map[string]any {
+	sellerMap := map[string]string{
+		"nip": xi.Issuer,
+	}
+	buyerMap := map[string]any{}
+	if xi.Recipient != "" {
+		buyerMap["nip"] = xi.Recipient
+	} else if xi.RecipientVatIdEU != "" {
+		buyerMap["nr_vat_ue"] = xi.RecipientVatIdEU
+	} else if xi.RecipientVatIdNonEU != "" {
+		buyerMap["nr_id"] = xi.RecipientVatIdNonEU
+	}
+	return map[string]any{
+		"seller": sellerMap,
+		"buyer":  buyerMap,
+	}
 }
 
 func (r *Registry) getInvoiceMetadata(input *Invoice, ordNo int) (*InvoiceMetadata, error) {
@@ -63,4 +83,12 @@ func ParseInvoice(sourceFile string) (*XMLInvoice, string, error) {
 	}
 
 	return &invoice, utils.Sha256Hex(xmlContents), nil
+}
+
+func InvoiceParticipants(sourceFile string) (map[string]any, error) {
+	inv, _, err := ParseInvoice(sourceFile)
+	if err != nil {
+		return nil, err
+	}
+	return inv.Participants(), nil
 }

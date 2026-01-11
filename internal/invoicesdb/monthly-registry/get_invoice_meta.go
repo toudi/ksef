@@ -1,7 +1,6 @@
 package monthlyregistry
 
 import (
-	"ksef/internal/utils"
 	"path/filepath"
 )
 
@@ -22,10 +21,11 @@ type PageSettings struct {
 }
 
 type InvoicePrintingMeta struct {
-	Usage    string         `yaml:"-"` // entry in the config usage slice
-	Invoice  InvoiceMeta    `yaml:"invoice"`
-	Page     PageSettings   `yaml:"page"`
-	Printout map[string]any `yaml:"printout"`
+	Usage        string         `yaml:"-"` // entry in the config usage slice
+	Invoice      InvoiceMeta    `yaml:"invoice"`
+	Page         PageSettings   `yaml:"page"`
+	Printout     map[string]any `yaml:"printout"`
+	Participants map[string]any `yaml:"-"`
 }
 
 func GetInvoicePrintingMeta(srcFile string) (*InvoicePrintingMeta, error) {
@@ -35,11 +35,11 @@ func GetInvoicePrintingMeta(srcFile string) (*InvoicePrintingMeta, error) {
 	if err != nil {
 		return nil, err
 	}
-	checksum, err := utils.FileSizeAndSha256Hash(srcFile)
+	xmlInvoice, checksum, err := ParseInvoice(srcFile)
 	if err != nil {
 		return nil, err
 	}
-	invoice := monthlyRegistry.GetInvoiceByChecksum(checksum.Hash)
+	invoice := monthlyRegistry.GetInvoiceByChecksum(checksum)
 	if invoice == nil {
 		return nil, errUnableToFindInvoice
 	}
@@ -52,6 +52,7 @@ func GetInvoicePrintingMeta(srcFile string) (*InvoicePrintingMeta, error) {
 			KSeFRefNo: invoice.KSeFRefNo,
 			QRCodes:   invoice.QRCodes,
 		},
-		Printout: invoice.PrintoutData,
+		Printout:     invoice.PrintoutData,
+		Participants: xmlInvoice.Participants(),
 	}, nil
 }

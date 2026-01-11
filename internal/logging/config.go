@@ -1,4 +1,4 @@
-package config
+package logging
 
 import (
 	"github.com/spf13/viper"

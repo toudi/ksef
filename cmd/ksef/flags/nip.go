@@ -9,6 +9,7 @@ const (
 	FlagNameNIP = "nip"
 )
 
+// NIP registers a nip parameter that binds to viper instance
 func NIP(flagSet *pflag.FlagSet) {
 	flagSet.FuncP(FlagNameNIP, "n", "numer NIP podmiotu", func(value string) error {
 		if value != "" {

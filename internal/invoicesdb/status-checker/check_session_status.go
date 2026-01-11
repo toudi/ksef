@@ -7,6 +7,7 @@ import (
 	"ksef/internal/client/v2/session/types"
 	"ksef/internal/logging"
 	"ksef/internal/pdf"
+	pdfconfig "ksef/internal/pdf/config"
 	"time"
 )
 
@@ -35,11 +36,6 @@ func (c *StatusChecker) CheckSessions(ctx context.Context) error {
 		// if the session is processed we can (conditionally) download UPO
 		if sessionStatus.IsProcessed() {
 			if c.cfg.InvoicePDF {
-				printer, err := pdf.GetInvoicePrinter(c.vip, "invoice:issued")
-				if err != nil {
-					return errors.Join(errUnableToGetPrinter, err)
-				}
-
 				for invoiceHash, registry := range c.invoiceHashToMonthlyRegistry {
 					invoice := registry.GetInvoiceByChecksum(
 						invoiceHash,
@@ -50,6 +46,19 @@ func (c *StatusChecker) CheckSessions(ctx context.Context) error {
 					if invoice.Offline {
 						// offline invoice was rendered to PDF during import - no need to re-render
 						continue
+					}
+
+					sessionInvoice, err := sessionStatus.GetInvoiceByChecksum(invoiceHash)
+					if err != nil {
+						return err
+					}
+
+					printer, err := pdf.GetInvoicePrinter(c.vip, pdfconfig.UsageSelector{
+						Usage:        "invoice:issued",
+						Participants: sessionInvoice.Participants(),
+					})
+					if err != nil {
+						return errors.Join(errUnableToGetPrinter, err)
 					}
 
 					invoiceFilename := registry.InvoiceFilename(invoice)

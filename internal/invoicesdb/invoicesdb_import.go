@@ -9,6 +9,7 @@ import (
 	uploaderconfig "ksef/internal/invoicesdb/uploader/config"
 	"ksef/internal/logging"
 	"ksef/internal/pdf"
+	pdfconfig "ksef/internal/pdf/config"
 	"ksef/internal/pdf/printer"
 	"ksef/internal/runtime"
 	"ksef/internal/sei"
@@ -72,11 +73,6 @@ func (idb *InvoicesDB) Import(
 
 		var printer printer.PDFPrinter
 
-		printer, err = pdf.GetInvoicePrinter(vip, "invoice:issued")
-		if err != nil {
-			logging.PDFRendererLogger.Error("błąd inicjalizacji silnika PDF", "err", err)
-		}
-
 		for _, newInvoice := range idb.newInvoices {
 			affectedRegistries[newInvoice.registry] = true
 			if nip == "" {
@@ -88,8 +84,21 @@ func (idb *InvoicesDB) Import(
 				continue
 			}
 			// let's try to print the offline invoice - though only if the engine has been selected
+			invoiceFilename := newInvoice.registry.InvoiceFilename(newInvoice.invoice)
+			participants, err := monthlyregistry.InvoiceParticipants(invoiceFilename.XML)
+			if err != nil {
+				logging.PDFRendererLogger.Error("nie udało się pobrać stron faktury", "err", err)
+			}
+
+			printer, err = pdf.GetInvoicePrinter(vip, pdfconfig.UsageSelector{
+				Usage:        "invoice:issued",
+				Participants: participants,
+			})
+			if err != nil {
+				logging.PDFRendererLogger.Error("błąd inicjalizacji silnika PDF", "err", err)
+			}
+
 			if printer != nil {
-				invoiceFilename := newInvoice.registry.InvoiceFilename(newInvoice.invoice)
 				if err = printer.PrintInvoice(
 					invoiceFilename.XML,
 					invoiceFilename.PDF,

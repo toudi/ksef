@@ -11,8 +11,13 @@ func Base64ToHex(input string) string {
 	return hex.EncodeToString(bytes)
 }
 
+func HexToBase64(input string) string {
+	bytes, _ := hex.DecodeString(input)
+	return base64.StdEncoding.EncodeToString(bytes)
+}
+
 func Base64ChunkedString(input []byte, chunkLength int) string {
-	var inputBase64 = base64.StdEncoding.EncodeToString(input)
+	inputBase64 := base64.StdEncoding.EncodeToString(input)
 	if len(inputBase64) < chunkLength {
 		return inputBase64
 	}

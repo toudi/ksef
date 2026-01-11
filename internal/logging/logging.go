@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"ksef/internal/config"
 	"log/slog"
 	"os"
 
@@ -17,10 +16,12 @@ import (
 // logger.
 var loggers = map[string]*slog.Logger{}
 
-var errUnknownLogger = errors.New("Unknown logger")
-var outputWriter io.Writer
-var outputFile *os.File
-var Verbose bool = false
+var (
+	errUnknownLogger = errors.New("Unknown logger")
+	outputWriter     io.Writer
+	outputFile       *os.File
+	Verbose          bool = false
+)
 
 func parseLevel(logLevel string) slog.Level {
 	switch logLevel {
@@ -39,7 +40,7 @@ func InitLogging(output string) error {
 	}
 
 	var err error
-	var loggingConfig = config.LoggingConfig(viper.GetViper())
+	loggingConfig := LoggingConfig(viper.GetViper())
 
 	if output == "-" {
 		outputWriter = os.Stdout
@@ -56,7 +57,7 @@ func InitLogging(output string) error {
 	var loggerName string
 
 	for loggerName, logger = range loggers {
-		var logLevel = logLevels[loggerName]
+		logLevel := logLevels[loggerName]
 
 		if Verbose {
 			logLevel = slog.LevelDebug
