@@ -3,7 +3,6 @@ package config
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	invoicesdbconfig "ksef/internal/invoicesdb/config"
 	subjectsettings "ksef/internal/invoicesdb/subject-settings"
 	"ksef/internal/logging"
@@ -96,12 +95,10 @@ func GetPDFPrinterConfig(vip *viper.Viper) (config PDFPrinterConfig, err error) 
 	// and then decode it from memory to a ready structs.
 	var buffer bytes.Buffer
 	if err = yaml.NewEncoder(&buffer).Encode(rawEngines); err != nil {
-		fmt.Printf("unable to encode raw engines: %v", err)
 		return config, err
 	}
 	var engines []pdfConfig.PDFEngineConfig
 	if err = yaml.NewDecoder(&buffer).Decode(&engines); err != nil {
-		fmt.Printf("unable to decode raw engines back into slice: %v", err)
 		return config, err
 	}
 	// now let's check if we can override the engines with the ones from
@@ -111,7 +108,6 @@ func GetPDFPrinterConfig(vip *viper.Viper) (config PDFPrinterConfig, err error) 
 		logging.PDFRendererLogger.Debug("overwrite pdf config with the one from subject settings")
 		engines = subjectEngines
 	} else {
-		fmt.Printf("subject engines: %#v; err: %v\n", subjectEngines, err)
 		if err != nil {
 			logging.PDFRendererLogger.Error("error loading subject settings", "err", err)
 		}
@@ -129,9 +125,6 @@ func loadSubjectEngines(vip *viper.Viper) ([]pdfConfig.PDFEngineConfig, error) {
 		return nil, err
 	}
 
-	fmt.Printf("data = %s\n", filepath.Join(
-		cfg.Root, string(runtime.GetGateway(vip)), nip,
-	))
 	ss, err := subjectsettings.OpenOrCreate(
 		filepath.Join(
 			cfg.Root, string(runtime.GetGateway(vip)), nip,
