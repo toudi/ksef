@@ -16,6 +16,7 @@ const (
 type DateRange struct {
 	DateType DateRangeType `json:"dateType"`
 	From     time.Time     `json:"from"`
+	To       *time.Time    `json:"to,omitzero"`
 }
 
 type InvoiceMetadataRequest struct {

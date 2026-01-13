@@ -10,9 +10,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var (
-	errInvalidRegistry = errors.New("specified invoices registry does not exist")
-)
+var errInvalidRegistry = errors.New("specified invoices registry does not exist")
 
 func OpenForNIP(nip string, vip *viper.Viper, initializers ...func(*InvoicesDB)) (*InvoicesDB, error) {
 	cfg := config.GetInvoicesDBConfig(vip)
@@ -20,11 +18,15 @@ func OpenForNIP(nip string, vip *viper.Viper, initializers ...func(*InvoicesDB))
 
 	// this prefix does not contain months yet - it is the entrypoint for further processing
 	// (like uploading invoices)
-	var prefix = path.Join(
+	prefix := path.Join(
 		cfg.Root,
 		string(gateway),
 		nip,
 	)
+
+	if err := os.MkdirAll(prefix, 0755); err != nil {
+		return nil, err
+	}
 
 	if _, err := os.Stat(prefix); err != nil && os.IsNotExist(err) {
 		return nil, errors.Join(errInvalidRegistry, err)

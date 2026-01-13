@@ -7,12 +7,10 @@ import (
 	"ksef/internal/client/v2/types/invoices"
 	invoiceTypes "ksef/internal/client/v2/types/invoices"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
-	"ksef/internal/logging"
 	"ksef/internal/pdf"
 	pdfconfig "ksef/internal/pdf/config"
 	"ksef/internal/runtime"
 	"ksef/internal/utils"
-	"os"
 	"strings"
 	"time"
 
@@ -42,14 +40,30 @@ func (i *InvoicesDB) downloadInvoices(
 	lastTimestampPerRegistry := make(map[*monthlyregistry.Registry]time.Time)
 	// just to be on the safe side - let's always try to download invoices for the
 	// last month as well.
-	for _, month := range i.monthsRange {
-		registry, err := monthlyregistry.OpenForMonth(vip, month)
+	monthsRange := i.monthsRange
+
+	if !cfg.StartDate.IsZero() {
+		monthsRange = generateMonthsRange(cfg.StartDate)
+	}
+
+	for idx, month := range monthsRange {
+		registry, err := monthlyregistry.OpenOrCreateForMonth(
+			vip,
+			month,
+		)
 		if err != nil {
-			if os.IsNotExist(err) {
-				logging.DownloadLogger.Debug("monthly registry does not exist", "month", month.Format("2006/01"))
-				continue
-			}
 			return err
+		}
+
+		// initialize starting cutoff for downloading invoices
+		tmpDownloadParams.StartDate = registry.SyncParams.LastTimestamp
+		// get rid of end range initially ..
+		tmpDownloadParams.EndDate = nil
+
+		if idx < len(monthsRange)-2 {
+			// unless there's a next month waiting to be processed - then we can easily determine
+			// the end of the range.
+			tmpDownloadParams.EndDate = &monthsRange[idx+1]
 		}
 
 		lastTimestampPerRegistry[registry] = registry.SyncParams.LastTimestamp
@@ -116,4 +130,16 @@ func (i *InvoicesDB) downloadInvoices(
 	}
 
 	return nil
+}
+
+func generateMonthsRange(startDate time.Time) []time.Time {
+	today := time.Now().Local()
+
+	var monthsRange []time.Time
+	for startDate.Before(today) {
+		monthsRange = append(monthsRange, startDate)
+		startDate = startDate.AddDate(0, 1, 0)
+	}
+
+	return monthsRange
 }

@@ -3,9 +3,12 @@ package monthlyregistry
 import (
 	"errors"
 	"ksef/internal/certsdb"
+	"ksef/internal/invoicesdb/config"
+	"ksef/internal/runtime"
 	"ksef/internal/utils"
 	"os"
 	"path"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -43,4 +46,33 @@ func OpenOrCreate(dir string, certsDB *certsdb.CertificatesDB, vip *viper.Viper)
 	}
 
 	return reg, nil
+}
+
+func OpenOrCreateForMonth(vip *viper.Viper, month time.Time) (*Registry, error) {
+	nip, err := runtime.GetNIP(vip)
+	if err != nil {
+		return nil, err
+	}
+
+	gateway := runtime.GetGateway(vip)
+	invoicesDBConfig := config.GetInvoicesDBConfig(vip)
+
+	registryPath := path.Join(
+		invoicesDBConfig.Root,
+		string(gateway),
+		nip,
+		month.Format("2006"),
+		month.Format("01"),
+	)
+
+	// note: this function does *NOT* set certsDB since it's only used for
+	// downloading invoices
+	registry, err := OpenOrCreate(registryPath, nil, vip)
+	if err != nil {
+		return nil, err
+	}
+	if registry.SyncParams.LastTimestamp.IsZero() {
+		registry.SyncParams.LastTimestamp = month
+	}
+	return registry, nil
 }

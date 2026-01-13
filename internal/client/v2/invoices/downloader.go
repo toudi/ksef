@@ -10,9 +10,7 @@ import (
 	"ksef/internal/logging"
 )
 
-var (
-	errFetchingInvoices = errors.New("error fetching invoices")
-)
+var errFetchingInvoices = errors.New("error fetching invoices")
 
 type InvoiceDownloader struct {
 	httpClient *http.Client
@@ -36,17 +34,18 @@ func (d *InvoiceDownloader) Download(
 	ctx context.Context,
 	invoiceReady func(subjectType invoices.SubjectType, invoice invoices.InvoiceMetadata, content bytes.Buffer) error,
 ) (err error) {
-	var startTimestamp = d.registry.SyncParams.LastTimestamp
+	// startTimestamp := d.registry.SyncParams.LastTimestamp
 	var req InvoiceMetadataRequest
 
 	for _, subject := range d.params.SubjectTypes {
-		var logger = logging.DownloadLogger.With("subjectType", subject)
-		logger.Debug("fetch invoices list", "start timestamp", startTimestamp)
+		logger := logging.DownloadLogger.With("subjectType", subject)
+		logger.Debug("fetch invoices list", "start timestamp", d.params.StartDate)
 		req = InvoiceMetadataRequest{
 			SubjectType: subject,
 			DateRange: DateRange{
 				DateType: DateRangeStorage,
-				From:     startTimestamp,
+				From:     d.params.StartDate,
+				To:       d.params.EndDate,
 			},
 		}
 
