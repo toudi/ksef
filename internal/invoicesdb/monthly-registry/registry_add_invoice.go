@@ -7,7 +7,6 @@ import (
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/runtime"
 	"ksef/internal/sei"
-	"ksef/internal/utils"
 )
 
 var (
@@ -105,7 +104,7 @@ func (r *Registry) AddReceivedInvoice(ksefInvoice invoices.InvoiceMetadata, subj
 	invoice := &Invoice{
 		RefNo:     ksefInvoice.InvoiceNumber,
 		KSeFRefNo: ksefInvoice.KSeFNumber,
-		Checksum:  utils.Base64ToHex(ksefInvoice.Checksum()),
+		Checksum:  ksefInvoice.Checksum(),
 		QRCodes: InvoiceQRCodes{
 			Invoice: generateInvoiceQRCodeInner(
 				string(gateway),
