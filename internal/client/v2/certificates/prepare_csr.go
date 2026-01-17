@@ -14,7 +14,7 @@ import (
 type EnrollmentType string
 
 func (m *Manager) PrepareEnrollmentCSR(data *EnrollmentsData, usage certsdb.Usage, nip string) error {
-	var template = &x509.CertificateRequest{
+	template := &x509.CertificateRequest{
 		Subject: pkix.Name{
 			CommonName: data.CommonName,
 			Country:    []string{data.CountryName},
@@ -61,7 +61,7 @@ func (m *Manager) PrepareEnrollmentCSR(data *EnrollmentsData, usage certsdb.Usag
 		if err = newCert.SavePKey(private); err != nil {
 			return err
 		}
-		newCert.NIP = nip
+		newCert.NIP = []string{nip}
 		newCert.CSRData = base64.StdEncoding.EncodeToString(csrDerBytes)
 		newCert.Usage = append(newCert.Usage, usage)
 		return nil

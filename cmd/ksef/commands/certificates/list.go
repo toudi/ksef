@@ -3,8 +3,10 @@ package certificates
 import (
 	"fmt"
 	"ksef/internal/certsdb"
+	"strings"
 
 	"github.com/alexeyco/simpletable"
+	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -26,6 +28,7 @@ func listCerts(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
+	defer certDB.Save()
 
 	table := simpletable.New()
 
@@ -37,6 +40,7 @@ func listCerts(cmd *cobra.Command, _ []string) error {
 			{Align: simpletable.AlignCenter, Text: "nip"},
 			{Align: simpletable.AlignCenter, Text: "profil"},
 			{Align: simpletable.AlignCenter, Text: "samopodpisany"},
+			{Align: simpletable.AlignCenter, Text: "podmiot"},
 		},
 	}
 
@@ -52,13 +56,16 @@ func listCerts(cmd *cobra.Command, _ []string) error {
 				Text: cert.UsageAsString(),
 			},
 			{
-				Text: cert.NIP,
+				Text: strings.Join(cert.NIP, ", "),
 			},
 			{
 				Text: cert.ProfileName,
 			},
 			{
 				Text: fmt.Sprintf("%t", cert.SelfSigned),
+			},
+			{
+				Text: lo.FromPtrOr(cert.CN, "-"),
 			},
 		})
 	}

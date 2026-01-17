@@ -1,5 +1,7 @@
 package certsdb
 
+import "slices"
+
 func (cdb *CertificatesDB) ForEach(
 	lookup func(cert Certificate) bool,
 	update func(cert *Certificate) error,
@@ -25,7 +27,7 @@ func (cdb *CertificatesDB) ForEach(
 
 func (cdb *CertificatesDB) FetchUIDsByNIP(nip string) (uids []string) {
 	for _, cert := range cdb.certs {
-		if cert.NIP == nip {
+		if slices.Contains(cert.NIP, nip) {
 			uids = append(uids, cert.UID)
 		}
 	}

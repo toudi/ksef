@@ -1,13 +1,17 @@
 package runtime
 
 import (
+	"errors"
 	"ksef/cmd/ksef/flags"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
 
-var cfgKeyNip = "nip"
+var (
+	cfgKeyNip        = "nip"
+	errValidatingNIP = errors.New("błąd walidacji numeru NIP")
+)
 
 func GetNIP(vip *viper.Viper) (string, error) {
 	nipValidator, err := GetNIPValidator(vip)
@@ -35,4 +39,24 @@ func SetNIPFromFlags(vip *viper.Viper, _flags *pflag.FlagSet) error {
 	}
 	SetNIP(vip, nipValue)
 	return nil
+}
+
+func NIPSlice(flagSet *pflag.FlagSet) {
+	flagSet.StringSliceP(cfgKeyNip, "n", nil, "numery NIP podmiotów")
+}
+
+func GetNIPSlice(vip *viper.Viper) ([]string, error) {
+	var nipSlice []string
+	nipValidator, err := GetNIPValidator(vip)
+	if err != nil {
+		return nil, err
+	}
+	for _, nip := range vip.GetStringSlice(cfgKeyNip) {
+		if err := nipValidator(nip); err != nil {
+			return nil, errors.Join(errValidatingNIP, errors.New(nip))
+		}
+		nipSlice = append(nipSlice, nip)
+	}
+
+	return nipSlice, nil
 }

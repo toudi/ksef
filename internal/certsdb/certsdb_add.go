@@ -11,7 +11,7 @@ func init() {
 }
 
 func (cdb *CertificatesDB) AddCert(handler func(newCert *Certificate) error) error {
-	var collision = true
+	collision := true
 	var uid string
 	for collision {
 		uid = uidFactory()
@@ -53,10 +53,12 @@ func (cdb *CertificatesDB) Upsert(
 			if err = modify(cert); err != nil {
 				return err
 			}
+			cdb.dirty = true
 			return nil
 		}
 	}
 
 	// cert is not found - let's create a new one
+	cdb.dirty = true
 	return cdb.AddCert(modify)
 }

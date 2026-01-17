@@ -41,14 +41,16 @@ type Certificate struct {
 	CertificateHash `yaml:",inline"`
 	available       bool
 	removed         bool
-	UID             string `yaml:"uid"`
-	SelfSigned      bool   `yaml:"self-signed,omitempty"`
-	NIP             string `yaml:"nip,omitempty"`
+	UID             string   `yaml:"uid"`
+	SelfSigned      bool     `yaml:"self-signed,omitempty"`
+	NIPRaw          any      `yaml:"nip,omitempty"`
+	NIP             []string `yaml:"-"`
 	// only applicable to ksef-issued certs
-	ReferenceNumber string `yaml:"ref-no,omitempty"`
-	SerialNumber    string `yaml:"serial-number,omitempty"`
-	CSRData         string `yaml:"csr-data,omitempty"`
-	ProfileName     string `yaml:"profile,omitempty"`
+	ReferenceNumber string  `yaml:"ref-no,omitempty"`
+	SerialNumber    string  `yaml:"serial-number,omitempty"`
+	CSRData         string  `yaml:"csr-data,omitempty"`
+	ProfileName     string  `yaml:"profile,omitempty"`
+	CN              *string `yaml:"cn"`
 }
 
 func (c Certificate) Filename() string {

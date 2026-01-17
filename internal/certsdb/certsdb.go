@@ -56,14 +56,15 @@ func (cdb *CertificatesDB) Certs() []*Certificate {
 }
 
 func (cdb *CertificatesDB) Save() error {
-	for _, cert := range cdb.certs {
-		if cert.Expired() {
-			// logging.CertsDBLogger.With("id", cert.UID).Warn("certyfikat stracił ważność - usuwam plik")
-			os.Remove(cert.Filename())
-			cert.removed = true
-			cdb.dirty = true
-		}
-	}
+	// TODO: move this functionality to a separate function, ideally with a confirm flag
+	// for _, cert := range cdb.certs {
+	// 	if cert.Expired() {
+	// 		// logging.CertsDBLogger.With("id", cert.UID).Warn("certyfikat stracił ważność - usuwam plik")
+	// 		os.Remove(cert.Filename())
+	// 		cert.removed = true
+	// 		cdb.dirty = true
+	// 	}
+	// }
 
 	if !cdb.dirty {
 		return nil
@@ -72,6 +73,11 @@ func (cdb *CertificatesDB) Save() error {
 	cdb.certs = lo.Filter(cdb.certs, func(item *Certificate, _ int) bool {
 		return !item.removed
 	})
+
+	// just in case we altered NIP's assigned to certs
+	for _, cert := range cdb.certs {
+		cert.NIPRaw = cert.NIP
+	}
 
 	targetFile, err := os.Create(certificatesDBFile)
 	if err != nil {
@@ -116,8 +122,9 @@ func OpenOrCreate(vip *viper.Viper) (*CertificatesDB, error) {
 		certificatesDB.certs = certificates
 
 		for index, cert := range certificates {
-			// load up only the certificates that belong to the selected environment
-			cert.available = cert.Environment == environment
+			if cert.postReadHook(environment) {
+				certificatesDB.dirty = true
+			}
 			certificatesDB.index[cert.Hash()] = index
 			certificatesDB.uidIndex[cert.UID] = index
 		}

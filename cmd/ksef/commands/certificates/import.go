@@ -44,7 +44,7 @@ func init() {
 	flagSet.String(flagNameSerial, "", "numer seryjny certyfikatu")
 	flagSet.String(flagNameUsage, "", "przeznaczenie certyfikatu")
 	flagSet.String(flagNameProfile, "", "nazwa profilu")
-	flags.NIP(flagSet)
+	runtime.NIPSlice(flagSet)
 
 	flagSet.SortFlags = false
 
@@ -99,7 +99,7 @@ func importCertificateRun(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-	nip, err := runtime.GetNIP(vip)
+	nipSlice, err := runtime.GetNIPSlice(vip)
 	if err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ func importCertificateRun(cmd *cobra.Command, _ []string) error {
 			return errCopyingCertFile
 		}
 
-		newCert.NIP = nip
+		newCert.NIP = nipSlice
 		newCert.SerialNumber = serialNumber
 		newCert.Usage = []certsdb.Usage{usage}
 		newCert.ValidFrom = certificate.NotBefore
