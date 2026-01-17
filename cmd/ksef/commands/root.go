@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"crypto/tls"
 	"fmt"
 	"ksef/cmd/ksef/commands/authorization"
 	"ksef/cmd/ksef/commands/certificates"
@@ -11,6 +12,7 @@ import (
 	"ksef/internal/config"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
+	"net/http"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -49,6 +51,7 @@ func init() {
 		runtime.SetGateway(viper.GetViper(), runtime.DemoGateway)
 		return nil
 	})
+	runtime.FlagIgnoreSSLErrors(RootCommand.PersistentFlags())
 	RootCommand.PersistentFlags().SortFlags = false
 
 	RootCommand.AddCommand(authorization.AuthCommand)
@@ -88,6 +91,18 @@ func setContext(cmd *cobra.Command, _ []string) error {
 
 	logging.SeiLogger.Info("start programu")
 	logging.SeiLogger.Info("wybrane środowisko", "env", runtime.GetGateway(viper.GetViper()))
+
+	vip := viper.GetViper()
+	if runtime.IgnoreSSLErrors(vip) {
+		logging.SeiLogger.Warn("włączam ignorowanie błędów TLS")
+		transport := http.DefaultTransport.(*http.Transport)
+		if transport.TLSClientConfig == nil {
+			transport.TLSClientConfig = &tls.Config{}
+		}
+		transport.TLSClientConfig.InsecureSkipVerify = true
+
+		http.DefaultTransport = transport
+	}
 
 	return nil
 }
