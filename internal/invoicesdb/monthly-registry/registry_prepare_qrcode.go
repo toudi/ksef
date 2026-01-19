@@ -7,6 +7,7 @@ import (
 	"ksef/internal/certsdb"
 	"ksef/internal/sei"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -17,7 +18,6 @@ const (
 func generateInvoiceQRCodeInner(qrcodeURL string, issuerNIP string, issued time.Time, checksumBytes []byte) string {
 	qrcode, _ := url.JoinPath(
 		qrcodeURL,
-		"client-app",
 		"invoice",
 		issuerNIP,
 		issued.Format("02-01-2006"),
@@ -35,7 +35,6 @@ func (i *Invoice) generateInvoiceQRCode(qrcodeURL string, parsed *sei.ParsedInvo
 	}
 	qrcode, _ := url.JoinPath(
 		qrcodeURL,
-		"client-app",
 		"invoice",
 		parsed.Invoice.Issuer.NIP,
 		parsed.Invoice.Issued.Format("02-01-2006"),
@@ -58,8 +57,7 @@ func (i *Invoice) generateCertificateQRCode(
 	issuerNIP := parsed.Invoice.Issuer.NIP
 	// note: here we do *not* use the leading https://
 	signingContent, _ := url.JoinPath(
-		qrcodeURL,
-		"client-app",
+		strings.TrimPrefix(qrcodeURL, "https://"),
 		"certificate",
 		contextIdentifierNIP,
 		ctxIdentValue,
