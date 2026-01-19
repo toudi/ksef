@@ -12,14 +12,15 @@ const (
 )
 
 var closeSession = &cobra.Command{
-	Use:   "close",
-	Short: "kończy wybraną sesję",
-	Args:  cobra.MaximumNArgs(1),
-	RunE:  runCloseSession,
+	Use:     "close",
+	Short:   "kończy wybraną sesję",
+	Args:    cobra.MaximumNArgs(1),
+	PreRunE: getSessions,
+	RunE:    runCloseSession,
 }
 
 func runCloseSession(cmd *cobra.Command, ids []string) error {
-	var sessionToClose = nonCurrentSessions
+	sessionToClose := nonCurrentSessions
 	if len(ids) > 0 {
 		sessionToClose = ids[0]
 	}

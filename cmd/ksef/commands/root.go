@@ -36,7 +36,7 @@ var (
 )
 
 func init() {
-	runtime.SetGateway(viper.GetViper(), runtime.ProdGateway)
+	runtime.SetEnvironment(viper.GetViper(), runtime.ProdEnvironmentId)
 	RootCommand.PersistentFlags().StringVarP(&logOutput, "log", "l", "-", "wyjście logowania (wartość - oznacza wyjście standardowe)")
 	RootCommand.PersistentFlags().StringVarP(&configFile, "config", "c", "config.yaml", "lokalizacja pliku konfiguracyjnego")
 	RootCommand.PersistentFlags().BoolFuncP("verbose", "v", "tryb verbose", func(s string) error {
@@ -44,11 +44,11 @@ func init() {
 		return nil
 	})
 	RootCommand.PersistentFlags().BoolFuncP(flagTestGateway, "t", "Użyj bramki testowej", func(s string) error {
-		runtime.SetGateway(viper.GetViper(), runtime.TestGateway)
+		runtime.SetEnvironment(viper.GetViper(), runtime.TestEnvironmentId)
 		return nil
 	})
 	RootCommand.PersistentFlags().BoolFuncP(flagDemoGateway, "", "Użyj bramki przedprodukcyjnej (demo)", func(s string) error {
-		runtime.SetGateway(viper.GetViper(), runtime.DemoGateway)
+		runtime.SetEnvironment(viper.GetViper(), runtime.DemoEnvironmentId)
 		return nil
 	})
 	runtime.FlagIgnoreSSLErrors(RootCommand.PersistentFlags())
@@ -90,7 +90,7 @@ func setContext(cmd *cobra.Command, _ []string) error {
 	}
 
 	logging.SeiLogger.Info("start programu")
-	logging.SeiLogger.Info("wybrane środowisko", "env", runtime.GetGateway(viper.GetViper()))
+	logging.SeiLogger.Info("wybrane środowisko", "env", runtime.GetEnvironmentId(viper.GetViper()))
 
 	vip := viper.GetViper()
 	if runtime.IgnoreSSLErrors(vip) {

@@ -46,7 +46,7 @@ func setKeyringKeys(cmd *cobra.Command, _ []string) error {
 func dumpKeyringToFileRun(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
 
-	gateway := runtime.GetGateway(vip)
+	environmentId := runtime.GetEnvironmentId(vip)
 	nip, err := runtime.GetNIP(vip)
 	if err != nil {
 		return err
@@ -65,11 +65,11 @@ func dumpKeyringToFileRun(cmd *cobra.Command, _ []string) error {
 	systemKeyring := keyring.NewSystemKeyring()
 
 	for _, key := range allKeyringKeys {
-		systemKeyringValue, err := systemKeyring.Get(string(gateway), nip, key)
+		systemKeyringValue, err := systemKeyring.Get(environmentId, nip, key)
 		if err != nil {
 			return err
 		}
-		if err = fileKeyring.Set(string(gateway), nip, key, systemKeyringValue); err != nil {
+		if err = fileKeyring.Set(environmentId, nip, key, systemKeyringValue); err != nil {
 			return err
 		}
 	}

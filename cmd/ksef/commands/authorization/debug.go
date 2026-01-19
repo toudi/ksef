@@ -9,6 +9,7 @@ import (
 	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/token"
 	"ksef/internal/client/v2/auth/validator"
+	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -54,7 +55,7 @@ func authSessionDebug(cmd *cobra.Command, _ []string) error {
 		initializerFuncs = append(initializerFuncs, token.WithSignedChallengeFile(signedFile))
 	} else if useCert {
 		// 2. if the user passed path to the certificate - we will do everything automatically
-		nip, err = cmd.Flags().GetString("nip")
+		nip, err = runtime.GetNIP(vip)
 		if nip == "" || err != nil {
 			return errors.New("brak numeru NIP")
 		}

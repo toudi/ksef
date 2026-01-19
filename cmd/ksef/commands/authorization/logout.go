@@ -3,8 +3,10 @@ package authorization
 import (
 	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
+	"ksef/internal/client/v2/auth"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var logoutCommand = &cobra.Command{
@@ -20,8 +22,14 @@ func init() {
 }
 
 func logout(cmd *cobra.Command, _ []string) error {
+	vip := viper.GetViper()
+	vip.Set(auth.FlagExitAfterPersistingToken, "true")
+
 	cli, err := client.InitClient(cmd)
 	if err != nil {
+		return err
+	}
+	if err := cli.ObtainToken(); err != nil {
 		return err
 	}
 	if err = cli.WaitForTokenManagerLoop(); err != nil {

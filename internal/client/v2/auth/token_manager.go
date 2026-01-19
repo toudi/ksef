@@ -54,8 +54,8 @@ type TokenManager struct {
 }
 
 func NewTokenManager(ctx context.Context, vip *viper.Viper, challengeValidator validator.AuthChallengeValidator) (*TokenManager, error) {
-	gateway := runtime.GetGateway(vip)
-	httpClient := http.NewClient(string(gateway))
+	environment := runtime.GetEnvironment(vip)
+	httpClient := http.NewClient(environment.API)
 
 	if challengeValidator != nil {
 		if err := challengeValidator.Initialize(ctx, httpClient); err != nil {

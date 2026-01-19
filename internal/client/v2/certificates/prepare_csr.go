@@ -56,7 +56,7 @@ func (m *Manager) PrepareEnrollmentCSR(data *EnrollmentsData, usage certsdb.Usag
 	}
 
 	return m.certsDB.AddCert(func(newCert *certsdb.Certificate) error {
-		newCert.Environment = m.env
+		newCert.EnvironmentId = m.env
 		var err error
 		if err = newCert.SavePKey(private); err != nil {
 			return err

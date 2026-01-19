@@ -12,12 +12,10 @@ import (
 	"time"
 )
 
-var (
-	errUnableToCreateRegistryDir = errors.New("unable to create registry directory")
-)
+var errUnableToCreateRegistryDir = errors.New("unable to create registry directory")
 
 func (idb *InvoicesDB) getMonthlyRegistryPrefix() (string, error) {
-	gateway := runtime.GetGateway(idb.vip)
+	environmentId := runtime.GetEnvironmentId(idb.vip)
 	nip, err := runtime.GetNIP(idb.vip)
 	if err != nil {
 		return "", err
@@ -25,7 +23,7 @@ func (idb *InvoicesDB) getMonthlyRegistryPrefix() (string, error) {
 
 	return path.Join(
 		idb.cfg.Root,
-		string(gateway),
+		environmentId,
 		nip,
 	), nil
 }
@@ -35,12 +33,12 @@ func (idb *InvoicesDB) getMonthlyRegistryForInvoice(inv *sei.ParsedInvoice) (*mo
 		return idb.monthlyRegistry, nil
 	}
 
-	gateway := runtime.GetGateway(idb.vip)
+	environmentId := runtime.GetEnvironmentId(idb.vip)
 
 	// there is no active registry - let's try to create it.
 	path := path.Join(
 		idb.cfg.Root,
-		string(gateway),
+		environmentId,
 		inv.Invoice.Issuer.NIP,
 		inv.Invoice.Issued.Format("2006"),
 		inv.Invoice.Issued.Format("01"),
@@ -63,12 +61,12 @@ func (idb *InvoicesDB) getAnnualRegistryForInvoice(inv *sei.ParsedInvoice) (*ann
 		return idb.annualRegistry, nil
 	}
 
-	gateway := runtime.GetGateway(idb.vip)
+	environmentId := runtime.GetEnvironmentId(idb.vip)
 
 	// there is no active registry - let's try to create it.
 	prefix := path.Join(
 		idb.cfg.Root,
-		string(gateway),
+		environmentId,
 		inv.Invoice.Issuer.NIP,
 		inv.Invoice.Issued.Format("2006"),
 	)
@@ -91,12 +89,12 @@ func (idb *InvoicesDB) getUploadSessionRegistry(month time.Time) (*sessionregist
 		return nil, err
 	}
 
-	gateway := runtime.GetGateway(idb.vip)
+	environmentId := runtime.GetEnvironmentId(idb.vip)
 
 	// there is no active registry - let's try to create it.
 	path := path.Join(
 		idb.cfg.Root,
-		string(gateway),
+		environmentId,
 		nip,
 		month.Format("2006"),
 		month.Format("01"),

@@ -50,7 +50,7 @@ func listCerts(cmd *cobra.Command, _ []string) error {
 				Text: cert.UID,
 			},
 			{
-				Text: string(cert.Environment),
+				Text: string(cert.EnvironmentId),
 			},
 			{
 				Text: cert.UsageAsString(),

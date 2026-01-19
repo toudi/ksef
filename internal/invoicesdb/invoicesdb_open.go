@@ -14,13 +14,13 @@ var errInvalidRegistry = errors.New("specified invoices registry does not exist"
 
 func OpenForNIP(nip string, vip *viper.Viper, initializers ...func(*InvoicesDB)) (*InvoicesDB, error) {
 	cfg := config.GetInvoicesDBConfig(vip)
-	gateway := runtime.GetGateway(vip)
+	environmentId := runtime.GetEnvironmentId(vip)
 
 	// this prefix does not contain months yet - it is the entrypoint for further processing
 	// (like uploading invoices)
 	prefix := path.Join(
 		cfg.Root,
-		string(gateway),
+		environmentId,
 		nip,
 	)
 

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"ksef/cmd/ksef/flags"
 	"ksef/internal/client/v2/auth"
-	"ksef/internal/runtime"
 
 	"github.com/alexeyco/simpletable"
 	"github.com/spf13/cobra"
@@ -12,10 +11,10 @@ import (
 )
 
 var GetAuthSessions = &cobra.Command{
-	Use:               "sessions",
-	Short:             "wyświetla listę sesji dla aktualnego tokenu sesyjnego",
-	PersistentPreRunE: getSessions,
-	RunE:              runGetAuthSessions,
+	Use:     "sessions",
+	Short:   "wyświetla listę sesji dla aktualnego tokenu sesyjnego",
+	PreRunE: getSessions,
+	RunE:    runGetAuthSessions,
 }
 
 func init() {
@@ -23,18 +22,15 @@ func init() {
 	GetAuthSessions.AddCommand(closeSession)
 }
 
-var activeSessions *auth.AuthSessionsResponse
-var tokenManager *auth.TokenManager
+var (
+	activeSessions *auth.AuthSessionsResponse
+	tokenManager   *auth.TokenManager
+)
 
 func getSessions(cmd *cobra.Command, _ []string) error {
 	var err error
 
 	vip := viper.GetViper()
-	nip, err := cmd.Flags().GetString(flags.FlagNameNIP)
-	if err != nil {
-		return err
-	}
-	runtime.SetNIP(vip, nip)
 
 	tokenManager, err = auth.NewTokenManager(
 		cmd.Context(),

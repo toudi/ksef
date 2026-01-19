@@ -3,16 +3,15 @@ package certificates
 import (
 	"ksef/internal/certsdb"
 	"ksef/internal/http"
-	"ksef/internal/runtime"
 )
 
 type Manager struct {
 	httpClient *http.Client
 	certsDB    *certsdb.CertificatesDB
-	env        runtime.Gateway
+	env        string
 }
 
-func NewManager(httpClient *http.Client, certsDB *certsdb.CertificatesDB, env runtime.Gateway) *Manager {
+func NewManager(httpClient *http.Client, certsDB *certsdb.CertificatesDB, env string) *Manager {
 	return &Manager{
 		httpClient: httpClient,
 		certsDB:    certsDB,

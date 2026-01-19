@@ -43,8 +43,8 @@ func (tm *TokenManager) getAuthSessionsForToken(
 	if sessionTokens == nil {
 		return nil, errNoTokens
 	}
-	var now = time.Now()
-	var token = sessionTokens.AuthorizationToken
+	now := time.Now()
+	token := sessionTokens.AuthorizationToken
 	if token.ExpiresAt.Before(now) {
 		return nil, errAuthTokenExpired
 	}
@@ -55,7 +55,6 @@ func (tm *TokenManager) getAuthSessionsForToken(
 		DestContentType: http.JSON,
 		Dest:            &sessions,
 	}, endpointAuthSessions)
-
 	if err != nil {
 		return nil, err
 	}
@@ -71,5 +70,8 @@ func (tm *TokenManager) getAuthSessionsForToken(
 func (tm *TokenManager) GetAuthSessions(ctx context.Context) (
 	sessions *AuthSessionsResponse, err error,
 ) {
+	if err := tm.restoreTokens(ctx); err != nil {
+		return nil, err
+	}
 	return tm.getAuthSessionsForToken(ctx, tm.sessionTokens)
 }

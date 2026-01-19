@@ -127,7 +127,7 @@ func loadSubjectEngines(vip *viper.Viper) ([]pdfConfig.PDFEngineConfig, error) {
 
 	ss, err := subjectsettings.OpenOrCreate(
 		filepath.Join(
-			cfg.Root, string(runtime.GetGateway(vip)), nip,
+			cfg.Root, runtime.GetEnvironmentId(vip), nip,
 		),
 	)
 

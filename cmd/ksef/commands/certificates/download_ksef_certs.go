@@ -24,14 +24,14 @@ func init() {
 
 func downloadKSeFCerts(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
-	env := runtime.GetGateway(vip)
+	env := runtime.GetEnvironment(vip)
 
 	certsDB, err := certsdb.OpenOrCreate(vip)
 	if err != nil {
 		return err
 	}
 
-	httpClient := http.NewClient(string(runtime.GetGateway(viper.GetViper())))
+	httpClient := http.NewClient(env.API)
 
 	certificates, err := security.DownloadCertificates(cmd.Context(), httpClient)
 	if err != nil {
@@ -40,10 +40,10 @@ func downloadKSeFCerts(cmd *cobra.Command, _ []string) error {
 
 	for _, cert := range certificates {
 		certHash := certsdb.CertificateHash{
-			Usage:       cert.Usage,
-			Environment: env,
-			ValidFrom:   cert.ValidFrom,
-			ValidTo:     cert.ValidTo,
+			Usage:         cert.Usage,
+			EnvironmentId: env.ID,
+			ValidFrom:     cert.ValidFrom,
+			ValidTo:       cert.ValidTo,
 		}
 
 		if err = certsDB.AddIfHashNotFound(certHash, func(newCert *certsdb.Certificate) error {
@@ -53,7 +53,7 @@ func downloadKSeFCerts(cmd *cobra.Command, _ []string) error {
 			if derBytes, err = base64.StdEncoding.DecodeString(cert.Certificate); err != nil {
 				return err
 			}
-			newCert.Environment = env
+			newCert.EnvironmentId = env.ID
 			newCert.CertificateHash = certHash
 			if err = newCert.SaveCert(derBytes); err != nil {
 				return err

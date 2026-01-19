@@ -32,9 +32,9 @@ func init() {
 }
 
 func validateParams(cmd *cobra.Command, _ []string) error {
-	env := runtime.GetGateway(viper.GetViper())
+	env := runtime.GetEnvironment(viper.GetViper())
 
-	if env != runtime.TestGateway {
+	if env.ID != runtime.TestEnvironmentId {
 		return errTestGatewayNotSelected
 	}
 

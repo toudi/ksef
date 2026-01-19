@@ -45,12 +45,7 @@ type Client struct {
 }
 
 func NewClient(host string) *Client {
-	var base string = host
-	if host != "" {
-		base = "https://" + host
-	}
-
-	return &Client{Base: base}
+	return &Client{Base: host}
 }
 
 func (rb *Client) Request(ctx context.Context, config RequestConfig, endpoint string) (*http.Response, error) {

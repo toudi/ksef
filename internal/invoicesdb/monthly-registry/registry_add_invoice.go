@@ -25,7 +25,7 @@ func (r *Registry) AddInvoice(
 		return nil
 	}
 
-	gateway := runtime.GetGateway(r.vip)
+	environment := runtime.GetEnvironment(r.vip)
 
 	ordNum := r.countInvoicesByType(invoiceType) + 1
 
@@ -54,7 +54,7 @@ func (r *Registry) AddInvoice(
 	}
 	var err error
 
-	if invoice.QRCodes.Invoice, err = invoice.generateInvoiceQRCode(gateway, inv); err != nil {
+	if invoice.QRCodes.Invoice, err = invoice.generateInvoiceQRCode(environment.QRCode, inv); err != nil {
 		return errors.Join(errUnableToGenerateQRCode, err)
 	}
 
@@ -69,7 +69,7 @@ func (r *Registry) AddInvoice(
 		}
 
 		if invoice.QRCodes.Offline, err = invoice.generateCertificateQRCode(
-			gateway,
+			environment.QRCode,
 			inv,
 			certificate,
 		); err != nil {
@@ -92,7 +92,7 @@ func (r *Registry) AddInvoice(
 	return nil
 }
 
-func (r *Registry) AddReceivedInvoice(ksefInvoice invoices.InvoiceMetadata, subjectType invoices.SubjectType, gateway runtime.Gateway) (err error) {
+func (r *Registry) AddReceivedInvoice(ksefInvoice invoices.InvoiceMetadata, subjectType invoices.SubjectType, environment runtime.Environment) (err error) {
 	var checksumBytes []byte
 	checksumBytes, err = base64.StdEncoding.DecodeString(ksefInvoice.InvoiceHashBase64)
 	if err != nil {
@@ -107,7 +107,7 @@ func (r *Registry) AddReceivedInvoice(ksefInvoice invoices.InvoiceMetadata, subj
 		Checksum:  ksefInvoice.Checksum(),
 		QRCodes: InvoiceQRCodes{
 			Invoice: generateInvoiceQRCodeInner(
-				string(gateway),
+				environment.QRCode,
 				ksefInvoice.Seller.NIP,
 				ksefInvoice.IssueTime(),
 				checksumBytes,

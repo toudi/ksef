@@ -46,7 +46,7 @@ type CertificatesDB struct {
 	// map between certificate UID and it's position in the array - required only for adding new certificates
 	uidIndex map[string]int
 	// used during opening so that all of the certs inserted inherit this value
-	env runtime.Gateway
+	env string
 	// pointer to viper so that we can read preferred cert ID
 	vip *viper.Viper
 }
@@ -92,7 +92,7 @@ func (cdb *CertificatesDB) Save() error {
 }
 
 func OpenOrCreate(vip *viper.Viper) (*CertificatesDB, error) {
-	environment := runtime.GetGateway(vip)
+	environment := runtime.GetEnvironmentId(vip)
 
 	certificatesDB := CertificatesDB{
 		index:    make(map[string]int),

@@ -22,12 +22,12 @@ func OpenForMonth(vip *viper.Viper, month time.Time) (*Registry, error) {
 		return nil, err
 	}
 
-	gateway := runtime.GetGateway(vip)
+	environmentId := runtime.GetEnvironmentId(vip)
 	invoicesDBConfig := config.GetInvoicesDBConfig(vip)
 
 	registryPath := path.Join(
 		invoicesDBConfig.Root,
-		string(gateway),
+		environmentId,
 		nip,
 		month.Format("2006"),
 		month.Format("01"),

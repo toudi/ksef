@@ -23,12 +23,12 @@ func getUPODownloadPath(vip *viper.Viper, month time.Time) (string, error) {
 		return "", err
 	}
 
-	gateway := runtime.GetGateway(vip)
+	environmentId := runtime.GetEnvironmentId(vip)
 	invoicesDBConfig := config.GetInvoicesDBConfig(vip)
 
 	return path.Join(
 		invoicesDBConfig.Root,
-		string(gateway),
+		environmentId,
 		nip,
 		month.Format("2006"),
 		month.Format("01"),

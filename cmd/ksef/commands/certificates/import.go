@@ -59,7 +59,7 @@ func init() {
 
 func importCertificateRun(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
-	env := runtime.GetGateway(vip)
+	envId := runtime.GetEnvironmentId(vip)
 
 	certsDB, err := certsdb.OpenOrCreate(vip)
 	if err != nil {
@@ -107,10 +107,10 @@ func importCertificateRun(cmd *cobra.Command, _ []string) error {
 
 	// prepare certificate hash
 	certificateHash := certsdb.CertificateHash{
-		Environment: env,
-		Usage:       []certsdb.Usage{usage},
-		ValidFrom:   certificate.NotBefore,
-		ValidTo:     certificate.NotAfter,
+		EnvironmentId: envId,
+		Usage:         []certsdb.Usage{usage},
+		ValidFrom:     certificate.NotBefore,
+		ValidTo:       certificate.NotAfter,
 	}
 
 	if err = certsDB.AddIfHashNotFound(certificateHash, func(newCert *certsdb.Certificate) (err error) {

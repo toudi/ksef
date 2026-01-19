@@ -55,7 +55,7 @@ func NewFileBasedKeyring(config *config.FileBasedKeyringConfig) (*FileBasedKeyri
 }
 
 func (f *FileBasedKeyring) Delete(bucket string, nip string, key string) error {
-	var keyName = keyName(bucket, nip, key)
+	keyName := keyName(bucket, nip, key)
 	if f.cfg.Buffered {
 		delete(f.contents, keyName)
 		return nil
@@ -67,7 +67,7 @@ func (f *FileBasedKeyring) Delete(bucket string, nip string, key string) error {
 }
 
 func (f *FileBasedKeyring) Get(bucket string, nip string, key string) (string, error) {
-	var keyName = keyName(bucket, nip, key)
+	keyName := keyName(bucket, nip, key)
 	if f.cfg.Buffered {
 		if value, exists := f.contents[keyName]; exists {
 			return value, nil
@@ -78,7 +78,7 @@ func (f *FileBasedKeyring) Get(bucket string, nip string, key string) (string, e
 }
 
 func (f *FileBasedKeyring) Set(bucket string, nip string, key string, contents string) error {
-	var keyName = keyName(bucket, nip, key)
+	keyName := keyName(bucket, nip, key)
 	logging.KeyringLogger.Debug("set key", "keyName", keyName)
 	if f.cfg.Buffered {
 		f.contents[keyName] = contents
@@ -156,7 +156,7 @@ func (f *FileBasedKeyring) loadKeyring() (map[string]string, error) {
 	if err != nil {
 		return nil, errors.Join(errDecryption, err)
 	}
-	var keyringContents = make(map[string]string)
+	keyringContents := make(map[string]string)
 	if err = yaml.NewDecoder(bytes.NewReader(plaintext)).Decode(&keyringContents); err != nil {
 		return nil, errors.Join(errReading, err)
 	}

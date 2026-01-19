@@ -8,7 +8,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"ksef/internal/runtime"
 	"os"
 	"path"
 	"path/filepath"
@@ -22,10 +21,10 @@ import (
 var errUnsupportedPrivateKeyType = errors.New("unsupported private key type (not EC PRIVATE KEY)")
 
 type CertificateHash struct {
-	Environment runtime.Gateway `yaml:"environment"`
-	Usage       []Usage         `yaml:"usage"`
-	ValidFrom   time.Time       `yaml:"valid-from,omitempty"`
-	ValidTo     time.Time       `yaml:"valid-to,omitempty"`
+	EnvironmentId string    `yaml:"environment"`
+	Usage         []Usage   `yaml:"usage"`
+	ValidFrom     time.Time `yaml:"valid-from,omitempty"`
+	ValidTo       time.Time `yaml:"valid-to,omitempty"`
 }
 
 func (ch CertificateHash) UsageAsString() string {
@@ -34,7 +33,7 @@ func (ch CertificateHash) UsageAsString() string {
 
 func (ch CertificateHash) Hash() string {
 	slices.Sort(ch.Usage)
-	return fmt.Sprintf("%s:%s:%d:%d", string(ch.Environment), ch.UsageAsString(), ch.ValidFrom.Unix(), ch.ValidTo.Unix())
+	return fmt.Sprintf("%s:%s:%d:%d", ch.EnvironmentId, ch.UsageAsString(), ch.ValidFrom.Unix(), ch.ValidTo.Unix())
 }
 
 type Certificate struct {
@@ -54,11 +53,11 @@ type Certificate struct {
 }
 
 func (c Certificate) Filename() string {
-	return filepath.Join(path.Dir(certificatesDBFile), string(c.Environment)+"-"+c.UID+".pem")
+	return filepath.Join(path.Dir(certificatesDBFile), c.EnvironmentId+"-"+c.UID+".pem")
 }
 
 func (c Certificate) PrivateKeyFilename() string {
-	return filepath.Join(filepath.Dir(certificatesDBFile), string(c.Environment)+"-"+c.UID+"-pkey.pem")
+	return filepath.Join(filepath.Dir(certificatesDBFile), c.EnvironmentId+"-"+c.UID+"-pkey.pem")
 }
 
 func (c Certificate) Expired() bool {

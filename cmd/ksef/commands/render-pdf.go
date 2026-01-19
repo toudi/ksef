@@ -54,10 +54,10 @@ func detectRuntimeProperties(cmd *cobra.Command, args []string) error {
 	// gateway  (-5'th index)
 	// nip      (-4'th index)
 	nip := filenameParts[len(filenameParts)-4]
-	gateway := filenameParts[len(filenameParts)-5]
+	environmentId := filenameParts[len(filenameParts)-5]
 	dataDir := filenameParts[len(filenameParts)-6]
 	runtime.SetNIP(vip, nip)
-	runtime.SetGateway(vip, runtime.Gateway(gateway))
+	runtime.SetEnvironment(vip, environmentId)
 	invoicesdbconfig.SetDataDir(vip, dataDir)
 	return nil
 }

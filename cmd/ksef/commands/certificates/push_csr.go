@@ -26,7 +26,7 @@ func syncEnrollments(cmd *cobra.Command, _ []string) error {
 	if cli, err = client.InitClient(cmd); err != nil {
 		return err
 	}
-	certsManager, err := cli.Certificates(runtime.GetGateway(viper.GetViper()))
+	certsManager, err := cli.Certificates(runtime.GetEnvironmentId(viper.GetViper()))
 	if err != nil {
 		return err
 	}

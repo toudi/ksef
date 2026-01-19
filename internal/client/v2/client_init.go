@@ -9,7 +9,6 @@ import (
 	"ksef/internal/http"
 	httpClient "ksef/internal/http"
 	"ksef/internal/logging"
-	registryPkg "ksef/internal/registry"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/viper"
@@ -21,7 +20,6 @@ type APIClient struct {
 	httpClient             *httpClient.Client
 	ctx                    context.Context
 	// for uploading sessions
-	registry     *registryPkg.InvoiceRegistry
 	certificates *certificates.Manager
 	certsDB      *certsdb.CertificatesDB
 	// init options
@@ -33,8 +31,9 @@ type InitializerFunc func(c *APIClient)
 
 func NewClient(ctx context.Context, vip *viper.Viper, options ...InitializerFunc) (*APIClient, error) {
 	logging.SeiLogger.Info("klient KSeF v2 - start programu")
+	environment := runtime.GetEnvironment(vip)
 
-	httpClient := http.NewClient(string(runtime.GetGateway(vip)))
+	httpClient := http.NewClient(environment.API)
 
 	client := &APIClient{
 		ctx:             ctx,
@@ -71,12 +70,6 @@ func (c *APIClient) authenticatedHTTPClient() *httpClient.Client {
 
 func (c *APIClient) Close() {
 	c.tokenManager.Stop()
-}
-
-func WithRegistry(registry *registryPkg.InvoiceRegistry) func(client *APIClient) {
-	return func(client *APIClient) {
-		client.registry = registry
-	}
 }
 
 func WithAuthValidator(validator validator.AuthChallengeValidator) func(client *APIClient) {

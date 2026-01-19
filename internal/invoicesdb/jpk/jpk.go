@@ -34,7 +34,7 @@ func NewJPK(month time.Time, vip *viper.Viper) (*JPK, error) {
 
 	path := filepath.Join(
 		invoicesDBConfig.Root,
-		string(runtime.GetGateway(vip)),
+		runtime.GetEnvironmentId(vip),
 		nip,
 		month.Format("2006"),
 		month.Format("01"),

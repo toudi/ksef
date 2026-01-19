@@ -83,7 +83,7 @@ func (i *InvoicesDB) downloadInvoices(
 				if err = registry.AddReceivedInvoice(
 					invoice,
 					subjectType,
-					runtime.GetGateway(i.vip),
+					runtime.GetEnvironment(i.vip),
 				); err != nil {
 					return err
 				}

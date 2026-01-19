@@ -38,7 +38,7 @@ func (tm *TokenManager) persistTokens() error {
 		logger.Error("nie udało się odczytać certyfikatu", "err", err)
 	}
 
-	err = tm.keyring.Set(string(runtime.GetGateway(tm.vip)), nip, keyring.SessionTokensKey(authCert.UID), buffer.String())
+	err = tm.keyring.Set(string(runtime.GetEnvironmentId(tm.vip)), nip, keyring.SessionTokensKey(authCert.UID), buffer.String())
 
 	logger.Debug("rezultat zapisywania tokenów do keyringu", "err", err)
 	return err
@@ -61,7 +61,7 @@ func (tm *TokenManager) clearSessionTokens() error {
 		logger.Error("nie udało się odczytać certyfikatu", "err", err)
 	}
 
-	return tm.keyring.Delete(string(runtime.GetGateway(tm.vip)), nip, keyring.SessionTokensKey(authCert.UID))
+	return tm.keyring.Delete(string(runtime.GetEnvironmentId(tm.vip)), nip, keyring.SessionTokensKey(authCert.UID))
 }
 
 func (tm *TokenManager) restoreTokens(ctx context.Context) error {
@@ -72,7 +72,7 @@ func (tm *TokenManager) restoreTokens(ctx context.Context) error {
 		logger.Error("błąd odczytu numeru NIP", "err", err)
 		return err
 	}
-	gateway := runtime.GetGateway(tm.vip)
+	gateway := runtime.GetEnvironmentId(tm.vip)
 	logger.Debug("próba odczytania certyfikatu odpowiedzialnego za autoryzację")
 	authCert, err := tm.certsDB.GetByUsage(certsdb.UsageAuthentication, nip)
 	if err != nil {

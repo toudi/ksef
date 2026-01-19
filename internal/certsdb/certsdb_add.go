@@ -20,7 +20,7 @@ func (cdb *CertificatesDB) AddCert(handler func(newCert *Certificate) error) err
 	newCert := &Certificate{
 		UID: uid,
 	}
-	newCert.Environment = cdb.env
+	newCert.EnvironmentId = cdb.env
 
 	if err := handler(newCert); err != nil {
 		return err

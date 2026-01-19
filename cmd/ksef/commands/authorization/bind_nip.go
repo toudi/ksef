@@ -4,7 +4,6 @@ import (
 	"errors"
 	"ksef/cmd/ksef/flags"
 	v2 "ksef/internal/client/v2"
-	"ksef/internal/environment"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
@@ -39,8 +38,8 @@ func init() {
 
 func bindNipRun(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
-	env := runtime.GetGateway(vip)
-	if env != runtime.Gateway(environment.Test) {
+	env := runtime.GetEnvironmentId(vip)
+	if env != runtime.TestEnvironmentId {
 		return errTestModeNotSelected
 	}
 
