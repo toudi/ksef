@@ -93,13 +93,38 @@ func (m *MonetaryValue) LoadFromString(value string) error {
 
 	value = ensureHasDot(value)
 
-	unitPriceFloat, err := strconv.ParseFloat(value, 64)
-	if err != nil {
-		return fmt.Errorf("cannot parse amount: %v", err)
-	}
+	// let's parse the decimal part and fractional part separately.
+	// reason is that float64 is only an approximation.
+	// let's take this as an example:
+	// input string: 39.91
+	// unitPriceFloat: 39.91
+	// everything seems correct, right ?
+	// up until you multiply the float by 100:
+	// unitPriceFloat * 100 = 3990.99999995
 
-	m.DecimalPlaces = len(value) - strings.Index(value, ".") - 1
-	m.Amount = int(unitPriceFloat * math.Pow10(m.DecimalPlaces))
+	numberParts := strings.SplitN(value, ".", 2)
+	var decimalPart int = 0
+	numberParts[1] = strings.TrimLeft(numberParts[1], "0")
+	if numberParts[0] != "" {
+		decimalPart, err = strconv.Atoi(numberParts[0])
+		if err != nil {
+			return errors.Join(errors.New("error parsing decimal part"), err)
+		}
+	}
+	m.DecimalPlaces = 0
+	// cut out insignificant zeroes so that we don't end up with artificially high
+	// decimal places which are meaningless
+	numberParts[1] = strings.TrimRight(numberParts[1], "0")
+	m.DecimalPlaces = len(numberParts[1])
+	m.Amount = decimalPart * int(math.Pow10(m.DecimalPlaces))
+	if numberParts[1] != "" {
+		// there is a fractional part which we can simply add to the base
+		fractionalPart, err := strconv.Atoi(numberParts[1])
+		if err != nil {
+			return errors.Join(errors.New("error parsing fractional part"), err)
+		}
+		m.Amount += fractionalPart
+	}
 	return nil
 }
 
