@@ -10,8 +10,15 @@ type JPKRuleWithNIP struct {
 	Rule shared.JPKItemRule `yaml:"rule"`
 }
 
+type JPKFormMeta struct {
+	IRSCode    int            `yaml:"irs-code,omitempty"`
+	SystemName string         `yaml:"system-name,omitempty"`
+	Subject    map[string]any `yaml:"subject,omitempty"`
+}
+
 type JPKSettings struct {
 	ItemRules []JPKRuleWithNIP `yaml:"item-rules,omitempty"`
+	FormMeta  JPKFormMeta      `yaml:"form,omitempty"`
 }
 
 func (j *JPKSettings) IsItemExcluded(invoice *monthlyregistry.Invoice, itemHash shared.ItemHash) bool {

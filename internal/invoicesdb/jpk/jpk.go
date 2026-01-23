@@ -3,6 +3,7 @@ package jpk
 import (
 	"ksef/internal/invoicesdb/config"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
+	subjectsettings "ksef/internal/invoicesdb/subject-settings"
 	"ksef/internal/money"
 	"ksef/internal/runtime"
 	"path/filepath"
@@ -19,6 +20,7 @@ type Amounts struct {
 
 type JPK struct {
 	registry *monthlyregistry.Registry
+	sjs      *subjectsettings.JPKSettings
 	vip      *viper.Viper
 	path     string
 	amounts  *Amounts
@@ -40,6 +42,17 @@ func NewJPK(month time.Time, vip *viper.Viper) (*JPK, error) {
 		month.Format("01"),
 	)
 
+	ss, err := subjectsettings.OpenOrCreate(
+		filepath.Join(
+			invoicesDBConfig.Root,
+			runtime.GetEnvironmentId(vip),
+			nip,
+		),
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	return &JPK{
 		registry: monthlyRegistry,
 		vip:      vip,
@@ -48,6 +61,7 @@ func NewJPK(month time.Time, vip *viper.Viper) (*JPK, error) {
 			base: make(map[Extractor]money.MonetaryValue),
 			vat:  make(map[Extractor]money.MonetaryValue),
 		},
+		sjs: ss.JPK,
 	}, nil
 }
 
