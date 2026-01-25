@@ -19,7 +19,7 @@ def schema_nodes(schema: xmlschema.XMLSchema):
     nodes = defaultdict(list)
     # dict where the keys are full paths to the node
     # and values are types of the node (e.g. TKwotaC)
-    required = {}
+    required: dict[str, str] = {}
     # list of full paths to the array nodes
     array_nodes = set()
 
@@ -142,9 +142,9 @@ if __name__ == "__main__":
                     for node_name, node_type in required_fields.items():
                         # so basically we're only interested in a subset of
                         # required fields since we're populating some of them knowingly
-                        if not filter(
-                            lambda prefix: node_name.hasprefix(prefix),
-                            JPK_REQUIRED_FIELDS["prefixes"],
+                        if not any(
+                            node_name.startswith(prefix)
+                            for prefix in JPK_REQUIRED_FIELDS["prefixes"]
                         ):
                             continue
                         if node_type not in JPK_REQUIRED_FIELDS["defaults"]:
