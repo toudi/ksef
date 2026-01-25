@@ -70,13 +70,12 @@ func dumpInvoiceItems(cmd *cobra.Command, args []string) error {
 			{Align: simpletable.AlignCenter, Text: "stawka VAT"},
 			{Align: simpletable.AlignCenter, Text: "wyłącz z raportu"},
 			{Align: simpletable.AlignCenter, Text: "raportuj VAT 50%"},
+			{Align: simpletable.AlignCenter, Text: "środki trwałe"},
 		},
 	}
 
 	for _, item := range xmlInvoice.Items {
-		itemHash := shared.ItemHash{
-			Name: item.Name,
-		}
+		itemHash := item.Hash()
 
 		table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
 			{
@@ -89,10 +88,13 @@ func dumpInvoiceItems(cmd *cobra.Command, args []string) error {
 				Text: item.VATRate,
 			},
 			{
-				Text: fmt.Sprintf("%t", jpkManager.ItemIsExcluded(invoice, itemHash)),
+				Text: fmt.Sprintf("%t", jpkManager.ItemHasRule(invoice, itemHash, func(jr shared.JPKItemRule) bool { return jr.Exclude })),
 			},
 			{
-				Text: fmt.Sprintf("%t", jpkManager.ItemHasVat50PercentFlag(invoice, itemHash)),
+				Text: fmt.Sprintf("%t", jpkManager.ItemHasRule(invoice, itemHash, func(jr shared.JPKItemRule) bool { return jr.Vat50Percent })),
+			},
+			{
+				Text: fmt.Sprintf("%t", jpkManager.ItemHasRule(invoice, itemHash, func(jr shared.JPKItemRule) bool { return jr.FixedAsset })),
 			},
 		})
 	}

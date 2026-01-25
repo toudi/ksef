@@ -26,6 +26,7 @@ type JPKItemRule struct {
 	Hash         ItemHash `yaml:"hash"`
 	Exclude      bool     `yaml:"exclude,omitempty"`
 	Vat50Percent bool     `yaml:"vat-50-percent,omitempty"`
+	FixedAsset   bool     `yaml:"fixed-asset,omitempty"`
 }
 
 func compare(value1, value2 string) bool {

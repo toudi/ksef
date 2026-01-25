@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"errors"
 	sessionTypes "ksef/internal/client/v2/session/types"
+	"ksef/internal/invoicesdb/shared"
 	"ksef/internal/utils"
 	"os"
 	"time"
@@ -23,6 +24,15 @@ type Item struct {
 	CN      string `xml:"CN"`
 	PKOB    string `xml:"PKOB"`
 	VATRate string `xml:"P_12"`
+}
+
+func (i *Item) Hash() shared.ItemHash {
+	return shared.ItemHash{
+		Name:  i.Name,
+		Index: i.Index,
+		GTIN:  i.GTIN,
+		PKWiU: i.PKWiU,
+	}
 }
 
 type XMLInvoice struct {

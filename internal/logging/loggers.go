@@ -41,6 +41,7 @@ var (
 	UPOLogger         *slog.Logger = defaultLogger()
 	ParserLogger      *slog.Logger = defaultLogger()
 	PDFRendererLogger *slog.Logger = defaultLogger()
+	JPKLogger         *slog.Logger = defaultLogger()
 )
 
 var logLevels = map[string]slog.Level{}
@@ -65,6 +66,7 @@ func init() {
 		"upo":          UPOLogger,
 		"parser":       ParserLogger,
 		"pdf-renderer": PDFRendererLogger,
+		"jpk":          JPKLogger,
 	}
 
 	for loggerName := range loggers {

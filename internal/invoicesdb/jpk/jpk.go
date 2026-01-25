@@ -2,28 +2,34 @@ package jpk
 
 import (
 	"ksef/internal/invoicesdb/config"
+	"ksef/internal/invoicesdb/jpk/types"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	subjectsettings "ksef/internal/invoicesdb/subject-settings"
 	"ksef/internal/money"
 	"ksef/internal/runtime"
+	"os"
 	"path/filepath"
 	"slices"
 	"time"
 
+	"github.com/beevik/etree"
 	"github.com/spf13/viper"
 )
 
-type Amounts struct {
-	base map[Extractor]money.MonetaryValue
-	vat  map[Extractor]money.MonetaryValue
+type ControlRow struct {
+	VAT money.MonetaryValue
 }
 
 type JPK struct {
-	registry *monthlyregistry.Registry
-	sjs      *subjectsettings.JPKSettings
-	vip      *viper.Viper
-	path     string
-	amounts  *Amounts
+	manager      *JPKManager
+	registry     *monthlyregistry.Registry
+	sjs          *subjectsettings.JPKSettings
+	vip          *viper.Viper
+	path         string
+	Income       []*types.Invoice
+	IncomeCtrl   *ControlRow
+	Purchase     []*types.Invoice
+	PurchaseCtrl *ControlRow
 }
 
 func NewJPK(month time.Time, vip *viper.Viper) (*JPK, error) {
@@ -53,15 +59,19 @@ func NewJPK(month time.Time, vip *viper.Viper) (*JPK, error) {
 		return nil, err
 	}
 
+	manager, err := Manager(vip, WithMonthlyRegistry(monthlyRegistry))
+	if err != nil {
+		return nil, err
+	}
+
 	return &JPK{
-		registry: monthlyRegistry,
-		vip:      vip,
-		path:     path,
-		amounts: &Amounts{
-			base: make(map[Extractor]money.MonetaryValue),
-			vat:  make(map[Extractor]money.MonetaryValue),
-		},
-		sjs: ss.JPK,
+		registry:     monthlyRegistry,
+		manager:      manager,
+		vip:          vip,
+		path:         path,
+		sjs:          ss.JPK,
+		IncomeCtrl:   &ControlRow{},
+		PurchaseCtrl: &ControlRow{},
 	}, nil
 }
 
@@ -76,21 +86,10 @@ func (j *JPK) Generate() error {
 			continue
 		}
 
-		fileName := j.registry.InvoiceFilename(invoice)
+		fileName := j.registry.InvoiceFilename(invoice).XML
 
-		xmlInvoice, _, err := monthlyregistry.ParseInvoice(fileName.XML)
-		if err != nil {
+		if err := j.processInvoiceFile(fileName, invoice); err != nil {
 			return err
-		}
-
-		if invoice.Type == monthlyregistry.InvoiceTypeIssued {
-			if err = j.AddIncome(xmlInvoice); err != nil {
-				return err
-			}
-		} else {
-			if err = j.AddReceived(xmlInvoice); err != nil {
-				return err
-			}
 		}
 	}
 
@@ -98,7 +97,32 @@ func (j *JPK) Generate() error {
 		filepath.Join(
 			j.path,
 			"jpk",
-			"jpk-v7m.xml",
 		),
 	)
+}
+
+func (j *JPK) processInvoiceFile(fileName string, invoice *monthlyregistry.Invoice) error {
+	invoiceFile, err := os.Open(fileName)
+	if err != nil {
+		return err
+	}
+
+	defer invoiceFile.Close()
+
+	xmlInvoice := etree.NewDocument()
+	if _, err = xmlInvoice.ReadFrom(invoiceFile); err != nil {
+		return err
+	}
+
+	if invoice.Type == monthlyregistry.InvoiceTypeIssued {
+		if err = j.AddIncome(xmlInvoice, invoice); err != nil {
+			return err
+		}
+	} else {
+		if err = j.AddReceived(xmlInvoice, invoice); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

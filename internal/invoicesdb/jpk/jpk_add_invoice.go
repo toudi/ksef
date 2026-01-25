@@ -1,71 +1,84 @@
 package jpk
 
 import (
-	"fmt"
-	"ksef/internal/invoicesdb/jpk/generators/jpk_v7m_3"
+	"ksef/internal/invoicesdb/jpk/interfaces"
+	"ksef/internal/invoicesdb/jpk/processors/income"
+	"ksef/internal/invoicesdb/jpk/processors/purchase"
+	"ksef/internal/invoicesdb/jpk/types"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
-	"os"
-	"path/filepath"
+	"ksef/internal/money"
 	"strconv"
-	"strings"
+
+	"github.com/beevik/etree"
 )
 
-func (j *JPK) AddIncome(invoice *monthlyregistry.XMLInvoice) error {
-	// fmt.Printf("invoice: %+v\n", invoice)
-	return nil
+const (
+	xpathPreamble = "//Faktura/Fa"
+	xpathItems    = xpathPreamble + "/FaWiersz"
+)
+
+var incomeInvoiceProcessors = []func(invoice *etree.Document, dest *types.Invoice) error{
+	income.ProcessBuyer,
+	income.ProcessInvoice,
+	income.ProcessVatInfo,
 }
 
-func (j *JPK) AddReceived(invoice *monthlyregistry.XMLInvoice) error {
-	return nil
+var purchaseInvoiceProcessors = []func(
+	dest *types.Invoice, xmlInvoice *etree.Document,
+	registryInvoice *monthlyregistry.Invoice,
+	manager interfaces.JPKManager,
+) error{
+	purchase.ProcessInvoice,
+	purchase.ProcessVatInfo,
 }
 
-func (j *JPK) Save(output string) error {
-	var err error
-	if err = os.MkdirAll(filepath.Dir(output), 0775); err != nil {
-		return err
+func (j *JPK) AddIncome(xmlInvoice *etree.Document, invoice *monthlyregistry.Invoice) error {
+	// no point in reporting a failed attempt
+	if invoice.KSeFRefNo == "" && len(invoice.UploadErrors) > 0 {
+		return nil
 	}
-	root := jpk_v7m_3.Document()
-	if j.sjs.FormMeta.IRSCode > 0 {
-		root.SetValue("JPK.Naglowek.KodUrzedu", strconv.Itoa(j.sjs.FormMeta.IRSCode))
-	}
-	if j.sjs.FormMeta.SystemName != "" {
-		root.SetValue("JPK.Naglowek.NazwaSystemu", j.sjs.FormMeta.SystemName)
-	}
-	// data/<env>/<nip><year>/<month>
-	//                   -2    -1
-	pathParts := strings.Split(j.path, string(filepath.Separator))
-	root.SetValuesFromMap(
-		map[string]string{
-			"JPK.Naglowek.Rok":     pathParts[len(pathParts)-2],
-			"JPK.Naglowek.Miesiac": pathParts[len(pathParts)-1],
-			"JPK.Podmiot1#rola":    "Podatnik",
+
+	income := &types.Invoice{
+		Attributes: map[string]string{
+			"LpSprzedazy":    strconv.Itoa(len(j.Income) + 1),
+			"NrKSeF":         invoice.KSeFRefNo,
+			"DowodSprzedazy": invoice.RefNo,
 		},
-	)
-	for node_name, default_value := range jpk_v7m_3.JPK_V7M_3RequiredDefaults {
-		// let's extract the prefix to check if it is contained in the array
-		// nodes. if so - we cannot apply it here.
-		node_name_parts := strings.Split(node_name, ".")
-		node_prefix := strings.Join(node_name_parts[:len(node_name_parts)-1], ".")
-		if jpk_v7m_3.JPK_V7M_3ArrayElements[node_prefix] {
-			continue
-		}
-		root.SetValue(node_name, default_value)
+		VAT: &types.VATInfo{
+			Base: money.MonetaryValue{},
+			Vat:  money.MonetaryValue{},
+		},
+		VATByRate: make(map[string]*types.VATInfo),
 	}
-	root.SetValuesFromMap(jpk_v7m_3.JPK_V7M_3RequiredDefaults)
-	if j.sjs.FormMeta.Subject != nil {
-		for subjectType, typeValues := range j.sjs.FormMeta.Subject {
-			for keyName, keyValue := range typeValues.(map[string]any) {
-				root.SetValue("JPK.Podmiot1."+subjectType+"."+keyName, fmt.Sprintf("%v", keyValue))
-			}
+
+	for _, processor := range incomeInvoiceProcessors {
+		if err := processor(xmlInvoice, income); err != nil {
+			return err
 		}
 	}
-	if err = root.ApplyOrdering(jpk_v7m_3.JPK_V7M_3ChildrenOrder); err != nil {
-		return err
+
+	j.Income = append(j.Income, income)
+
+	return nil
+}
+
+func (j *JPK) AddReceived(xmlInvoice *etree.Document, invoice *monthlyregistry.Invoice) error {
+	purchase := &types.Invoice{
+		Attributes: map[string]string{
+			"LpZakupu":    strconv.Itoa(len(j.Purchase) + 1),
+			"NrKSeF":      invoice.KSeFRefNo,
+			"DowodZakupu": invoice.RefNo,
+		},
+		VAT:       &types.VATInfo{},
+		VATByRate: make(map[string]*types.VATInfo),
 	}
-	writer, err := os.Create(output)
-	if err != nil {
-		return err
+
+	for _, processor := range purchaseInvoiceProcessors {
+		if err := processor(purchase, xmlInvoice, invoice, j.manager); err != nil {
+			return err
+		}
 	}
-	defer writer.Close()
-	return root.DumpToWriter(writer, 0)
+
+	j.Purchase = append(j.Purchase, purchase)
+	return nil
 }
