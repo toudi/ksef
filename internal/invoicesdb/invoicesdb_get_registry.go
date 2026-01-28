@@ -8,7 +8,7 @@ import (
 	"ksef/internal/runtime"
 	"ksef/internal/sei"
 	"os"
-	"path"
+	"path/filepath"
 	"time"
 )
 
@@ -21,7 +21,7 @@ func (idb *InvoicesDB) getMonthlyRegistryPrefix() (string, error) {
 		return "", err
 	}
 
-	return path.Join(
+	return filepath.Join(
 		idb.cfg.Root,
 		environmentId,
 		nip,
@@ -36,7 +36,7 @@ func (idb *InvoicesDB) getMonthlyRegistryForInvoice(inv *sei.ParsedInvoice) (*mo
 	environmentId := runtime.GetEnvironmentId(idb.vip)
 
 	// there is no active registry - let's try to create it.
-	path := path.Join(
+	path := filepath.Join(
 		idb.cfg.Root,
 		environmentId,
 		inv.Invoice.Issuer.NIP,
@@ -64,7 +64,7 @@ func (idb *InvoicesDB) getAnnualRegistryForInvoice(inv *sei.ParsedInvoice) (*ann
 	environmentId := runtime.GetEnvironmentId(idb.vip)
 
 	// there is no active registry - let's try to create it.
-	prefix := path.Join(
+	prefix := filepath.Join(
 		idb.cfg.Root,
 		environmentId,
 		inv.Invoice.Issuer.NIP,
@@ -92,7 +92,7 @@ func (idb *InvoicesDB) getUploadSessionRegistry(month time.Time) (*sessionregist
 	environmentId := runtime.GetEnvironmentId(idb.vip)
 
 	// there is no active registry - let's try to create it.
-	path := path.Join(
+	path := filepath.Join(
 		idb.cfg.Root,
 		environmentId,
 		nip,

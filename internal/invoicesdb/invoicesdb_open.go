@@ -5,7 +5,7 @@ import (
 	"ksef/internal/invoicesdb/config"
 	"ksef/internal/runtime"
 	"os"
-	"path"
+	"path/filepath"
 
 	"github.com/spf13/viper"
 )
@@ -18,7 +18,7 @@ func OpenForNIP(nip string, vip *viper.Viper, initializers ...func(*InvoicesDB))
 
 	// this prefix does not contain months yet - it is the entrypoint for further processing
 	// (like uploading invoices)
-	prefix := path.Join(
+	prefix := filepath.Join(
 		cfg.Root,
 		environmentId,
 		nip,

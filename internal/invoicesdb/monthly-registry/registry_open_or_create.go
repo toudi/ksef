@@ -8,6 +8,7 @@ import (
 	"ksef/internal/utils"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/spf13/viper"
@@ -57,7 +58,7 @@ func OpenOrCreateForMonth(vip *viper.Viper, month time.Time) (*Registry, error) 
 	environmentId := runtime.GetEnvironmentId(vip)
 	invoicesDBConfig := config.GetInvoicesDBConfig(vip)
 
-	registryPath := path.Join(
+	registryPath := filepath.Join(
 		invoicesDBConfig.Root,
 		environmentId,
 		nip,

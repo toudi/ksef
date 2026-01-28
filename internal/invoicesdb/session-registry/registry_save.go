@@ -2,7 +2,7 @@ package sessionregistry
 
 import (
 	"ksef/internal/utils"
-	"path"
+	"path/filepath"
 	"slices"
 )
 
@@ -24,5 +24,5 @@ func (r *Registry) Save() error {
 		return b.Timestamp.Compare(a.Timestamp)
 	})
 
-	return utils.SaveYAML(r.sessions, path.Join(r.dir, registryFilename))
+	return utils.SaveYAML(r.sessions, filepath.Join(r.dir, registryFilename))
 }

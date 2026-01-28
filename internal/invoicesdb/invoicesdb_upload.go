@@ -10,7 +10,7 @@ import (
 	uploaderconfig "ksef/internal/invoicesdb/uploader/config"
 	"ksef/internal/logging"
 	"os"
-	"path"
+	"path/filepath"
 )
 
 func (i *InvoicesDB) UploadOutstandingInvoices(
@@ -18,20 +18,20 @@ func (i *InvoicesDB) UploadOutstandingInvoices(
 	uploaderConfig uploaderconfig.UploaderConfig,
 	statusCheckerConfig statuscheckerconfig.StatusCheckerConfig,
 ) error {
-	var uploader = uploader.NewUploader(i.vip, uploaderConfig, i.ksefClient)
+	uploader := uploader.NewUploader(i.vip, uploaderConfig, i.ksefClient)
 	// in order to handle the 31st day / 1st day problem, let's just
 	// try to sync both of the months
 	// (basically what this is all about is if you've imported invoices that were issued on the 31'st day
 	// of the previous month but you're uploading them on the 1st day of the next month.
 
-	var months = i.monthsRange
+	months := i.monthsRange
 
-	var invoiceChecksumToRegistryMapping = make(map[string]*monthlyregistry.Registry)
+	invoiceChecksumToRegistryMapping := make(map[string]*monthlyregistry.Registry)
 	// these are all invoices that do not have KSeF number assigned right now, but
 	// are being processed by some upload sessions.
 	// we cannot upload them for the second time or it will result in an error, but we can
 	// still check the status of unresolved sessions with the sync command
-	var invoiceChecksumsToSkip = make(map[string]bool)
+	invoiceChecksumsToSkip := make(map[string]bool)
 
 	uploadSessionRegistry, err := i.getUploadSessionRegistry(i.today)
 	if err != nil {
@@ -42,7 +42,12 @@ func (i *InvoicesDB) UploadOutstandingInvoices(
 		// try to initialize monthly registry for the given month
 		registry, err := monthlyregistry.OpenForMonth(i.vip, month)
 		if err != nil && os.IsNotExist(err) {
-			logging.InvoicesDBLogger.Debug("registry does not exist; no-op", "dir", path.Join(i.prefix, month.Format("2006/01")))
+			logging.InvoicesDBLogger.Debug(
+				"registry does not exist; no-op",
+				"dir", filepath.Join(
+					i.prefix, month.Format("2006"), month.Format("01"),
+				),
+			)
 			continue
 		}
 		if err != nil {

@@ -10,7 +10,7 @@ import (
 	"ksef/internal/utils"
 	"log/slog"
 	"os"
-	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/spf13/viper"
@@ -59,7 +59,9 @@ func OpenOrCreate(dirName string) (*Registry, error) {
 	// this is a repeating pattern. I am more than convinced that I should do it in a generic way
 	// (i.e. something like OpenOrCreate[Registry], restore func())
 	// but I am under a time pressure
-	regFile, exists, err := utils.FileExists(path.Join(dirName, registryFilename))
+	regFile, exists, err := utils.FileExists(
+		filepath.Join(dirName, registryFilename),
+	)
 	if err != nil && !os.IsNotExist(err) {
 		// the only way for the err to be not nil is when there's a problem opening
 		// file
@@ -69,7 +71,7 @@ func OpenOrCreate(dirName string) (*Registry, error) {
 	reg := &Registry{
 		sessions: make([]*UploadSession, 0),
 		dir:      dirName,
-		logger:   logging.RegistryLogger.With("path", path.Join(dirName, registryFilename)),
+		logger:   logging.RegistryLogger.With("path", filepath.Join(dirName, registryFilename)),
 	}
 
 	if exists {
@@ -94,7 +96,7 @@ func OpenForMonth(vip *viper.Viper, month time.Time) (*Registry, error) {
 	invoicesDBConfig := config.GetInvoicesDBConfig(vip)
 
 	// there is no active registry - let's try to create it.
-	path := path.Join(
+	path := filepath.Join(
 		invoicesDBConfig.Root,
 		environmentId,
 		nip,

@@ -5,7 +5,7 @@ package monthlyregistry
 import (
 	"errors"
 	"ksef/internal/utils"
-	"path"
+	"path/filepath"
 )
 
 const (
@@ -19,7 +19,7 @@ var (
 
 func (r *Registry) Save() error {
 	r.SavedOrdNums = r.OrdNums.ToSlice()
-	return utils.SaveYAML(r, path.Join(r.dir, registryName))
+	return utils.SaveYAML(r, filepath.Join(r.dir, registryName))
 }
 
 func (r *Registry) Dir() string {

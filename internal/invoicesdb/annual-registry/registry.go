@@ -5,6 +5,7 @@ import (
 	"ksef/internal/utils"
 	"os"
 	"path"
+	"path/filepath"
 )
 
 const (
@@ -30,7 +31,7 @@ func OpenOrCreate(dir string) (*Registry, error) {
 		return nil, errors.Join(errOpeningRegistryFile, err)
 	}
 
-	var reg = &Registry{
+	reg := &Registry{
 		invoices: make([]*Invoice, 0),
 		dir:      dir,
 	}
@@ -47,5 +48,5 @@ func OpenOrCreate(dir string) (*Registry, error) {
 }
 
 func (r *Registry) Save() error {
-	return utils.SaveYAML(r.invoices, path.Join(r.dir, registryName))
+	return utils.SaveYAML(r.invoices, filepath.Join(r.dir, registryName))
 }

@@ -10,7 +10,7 @@ import (
 	"ksef/internal/pdf"
 	"ksef/internal/pdf/printer"
 	"ksef/internal/runtime"
-	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -26,7 +26,7 @@ func getUPODownloadPath(vip *viper.Viper, month time.Time) (string, error) {
 	environmentId := runtime.GetEnvironmentId(vip)
 	invoicesDBConfig := config.GetInvoicesDBConfig(vip)
 
-	return path.Join(
+	return filepath.Join(
 		invoicesDBConfig.Root,
 		environmentId,
 		nip,
