@@ -5,6 +5,8 @@ import (
 	"ksef/internal/runtime"
 	"slices"
 	"time"
+
+	"github.com/samber/lo"
 )
 
 func isPreferred(cert Certificate, preferredCertProfile string) bool {
@@ -39,7 +41,14 @@ func (cdb *CertificatesDB) GetByUsage(usage Usage, nip string) (Certificate, err
 			return 0
 		})
 
-		logging.CertsDBLogger.Debug("wybrano certyfikat", "id", foundCerts[0].UID, "typ", foundCerts[0].Usage, "self-signed", foundCerts[0].SelfSigned)
+		logging.CertsDBLogger.Debug(
+			"wybrano certyfikat",
+			"id", foundCerts[0].UID,
+			"typ", foundCerts[0].Usage,
+			"self-signed", foundCerts[0].SelfSigned,
+			"serial", foundCerts[0].SerialNumber,
+			"podmiot", lo.FromPtr(foundCerts[0].CN),
+		)
 
 		return foundCerts[0], nil
 	}

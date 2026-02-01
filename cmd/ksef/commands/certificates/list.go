@@ -11,6 +11,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	certSerial = "serial"
+)
+
 var listCommand = &cobra.Command{
 	Use:   "list",
 	Short: "wyświetla listę dostępnych certyfikatów",
@@ -18,6 +22,8 @@ var listCommand = &cobra.Command{
 }
 
 func init() {
+	flagSet := listCommand.Flags()
+	flagSet.String(certSerial, "", "filtruj wg. numeru seryjnego certyfikatu")
 	CertificatesCommand.AddCommand(listCommand)
 }
 
@@ -44,7 +50,13 @@ func listCerts(cmd *cobra.Command, _ []string) error {
 		},
 	}
 
+	certSerial := vip.GetString(certSerial)
+
 	for _, cert := range certDB.Certs() {
+		if certSerial != "" && cert.SerialNumber != certSerial {
+			continue
+		}
+
 		table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
 			{
 				Text: cert.UID,
