@@ -37,14 +37,17 @@ func syncInvoicesRun(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	defer ksefClient.Close()
 
 	invoicesDB, err := invoicesdb.OpenForNIP(nip, vip, invoicesdb.WithKSeFClient(ksefClient))
 	if err != nil {
 		return err
 	}
-	return invoicesDB.Sync(
+	if err = invoicesDB.Sync(
 		cmd.Context(),
 		vip,
-	)
+	); err != nil {
+		return err
+	}
+
+	return ksefClient.WaitForTokenManagerLoop()
 }

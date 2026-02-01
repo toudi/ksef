@@ -19,7 +19,7 @@ var (
 func (i *InvoicesDB) Sync(ctx context.Context, vip *viper.Viper) error {
 	var err error
 	var syncConfig config.SyncConfig
-	var logger = logging.InvoicesDBLogger.With("tryb", "synchronizacja")
+	logger := logging.InvoicesDBLogger.With("tryb", "synchronizacja")
 
 	if syncConfig, err = config.GetSyncConfig(vip); err != nil {
 		return errors.Join(errUnableToGetSyncConfig, err)
@@ -60,6 +60,8 @@ func (i *InvoicesDB) Sync(ctx context.Context, vip *viper.Viper) error {
 	); err != nil {
 		return errors.Join(errUnableToDownloadInvoices, err)
 	}
+
+	i.ksefClient.Close()
 
 	return nil
 }
