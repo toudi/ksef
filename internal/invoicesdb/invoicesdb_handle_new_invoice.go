@@ -27,7 +27,7 @@ func (idb *InvoicesDB) handleNewInvoice(
 		return errors.Join(errUnableToSaveInvoice, err)
 	}
 
-	if idb.importCfg.Offline {
+	if idb.importCfg.Offline || inv.Invoice.Issued.Before(idb.today) {
 		inv.Invoice.KSeFFlags.Offline = true
 	}
 	// let's add information about the invoice to the monthly registry
