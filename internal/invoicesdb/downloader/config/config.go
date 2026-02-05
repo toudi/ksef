@@ -28,8 +28,8 @@ func prefixedFlag(prefix string, flagName string) string {
 }
 
 func DownloaderFlags(flagSet *pflag.FlagSet, prefix string) {
-	var today = time.Now().Local()
-	var firstDayOfMonth = today.AddDate(0, 0, -today.Day()+1)
+	today := time.Now().Local()
+	firstDayOfMonth := today.AddDate(0, 0, -today.Day()+1)
 
 	flagSet.BoolFunc(prefixedFlag(prefix, "income"), "pobieranie faktur przychodowych (Subject=Subject1)", func(s string) error {
 		subjectTypes = append(subjectTypes, invoices.SubjectTypeIssuer)
@@ -77,8 +77,10 @@ func GetDownloaderConfig(vip *viper.Viper, prefix string) (params invoices.Downl
 	}
 	endDate := vip.GetString(prefixedFlag(prefix, flagEndDate))
 	if endDate != "" {
-		if *params.EndDate, err = time.ParseInLocation(time.DateOnly, endDate, time.Local); err != nil {
+		if parsedEndDate, err := time.ParseInLocation(time.DateOnly, endDate, time.Local); err != nil {
 			return params, err
+		} else {
+			params.EndDate = &parsedEndDate
 		}
 	}
 
