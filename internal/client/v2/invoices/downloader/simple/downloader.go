@@ -24,3 +24,7 @@ func NewDownloader(
 		params:     params,
 	}
 }
+
+func (d *simpleDownloader) Close() error {
+	return nil
+}

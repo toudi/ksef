@@ -15,4 +15,6 @@ type InvoiceDownloader interface {
 			content bytes.Buffer,
 		) error,
 	) (err error)
+
+	Close() error
 }

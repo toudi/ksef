@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"ksef/internal/client/v2/types/invoices"
 	invoiceTypes "ksef/internal/client/v2/types/invoices"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
+	"ksef/internal/logging"
 	"ksef/internal/pdf"
 	pdfconfig "ksef/internal/pdf/config"
 	"ksef/internal/runtime"
@@ -44,7 +46,7 @@ func (i *InvoicesDB) downloadInvoices(
 	monthsRange := i.monthsRange
 
 	if !cfg.StartDate.IsZero() {
-		monthsRange = generateMonthsRange(cfg.StartDate)
+		monthsRange = generateMonthsRange(cfg.StartDate, cfg.EndDate)
 	}
 
 	for idx, month := range monthsRange {
@@ -70,6 +72,7 @@ func (i *InvoicesDB) downloadInvoices(
 		lastTimestampPerRegistry[registry] = registry.SyncParams.LastTimestamp
 
 		downloader := i.ksefClient.InvoiceDownloader(
+			i.certsDB,
 			tmpDownloadParams,
 			registry,
 		)
@@ -77,6 +80,10 @@ func (i *InvoicesDB) downloadInvoices(
 		if err = downloader.Download(
 			ctx,
 			func(subjectType invoices.SubjectType, invoice invoiceTypes.InvoiceMetadata, content bytes.Buffer) error {
+				if registry.ContainsHash(invoice.Checksum()) {
+					logging.DownloadLogger.Info("Ta faktura już znajduje się w rejestrze", "KSeFRefNo", invoice.KSeFNumber, "checksum", invoice.Checksum())
+					return nil
+				}
 				targetFilename := registry.GetDestFileNameForAPIInvoice(subjectType, invoice)
 				if err = utils.SaveBufferToFile(content, targetFilename); err != nil {
 					return err
@@ -120,6 +127,9 @@ func (i *InvoicesDB) downloadInvoices(
 		); err != nil {
 			return errors.Join(errDownloadingInvoices, err)
 		}
+		if err = downloader.Close(); err != nil {
+			return errors.Join(err, fmt.Errorf("błąd zamykania downloadera"))
+		}
 	}
 
 	for registry := range affectedRegistries {
@@ -133,8 +143,11 @@ func (i *InvoicesDB) downloadInvoices(
 	return nil
 }
 
-func generateMonthsRange(startDate time.Time) []time.Time {
+func generateMonthsRange(startDate time.Time, endDate *time.Time) []time.Time {
 	today := time.Now().Local()
+	if endDate != nil {
+		today = *endDate
+	}
 
 	var monthsRange []time.Time
 	for startDate.Before(today) {

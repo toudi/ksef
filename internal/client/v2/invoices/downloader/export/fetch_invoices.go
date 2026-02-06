@@ -59,6 +59,11 @@ func (ed *exportDownloader) fetchInvoices(
 		}
 	}
 
+	if exportStatus.Package.InvoiceCount == 0 {
+		logging.DownloadLogger.Info("Brak faktur w paczce.")
+		return nil
+	}
+
 	logging.DownloadLogger.Info("Eksport faktur gotowy. Przystępuję do pobierania faktur")
 
 	return ed.downloadAndExtract(ctx, cipher, exportRequest, exportStatus, invoiceReady)

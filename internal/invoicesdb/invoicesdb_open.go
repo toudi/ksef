@@ -2,6 +2,7 @@ package invoicesdb
 
 import (
 	"errors"
+	"ksef/internal/certsdb"
 	"ksef/internal/invoicesdb/config"
 	"ksef/internal/runtime"
 	"os"
@@ -34,6 +35,11 @@ func OpenForNIP(nip string, vip *viper.Viper, initializers ...func(*InvoicesDB))
 
 	idb := newInvoicesDB(vip)
 	idb.prefix = prefix
+	certsDB, err := certsdb.OpenOrCreate(vip)
+	if err != nil {
+		return nil, err
+	}
+	idb.certsDB = certsDB
 
 	for _, initializer := range initializers {
 		initializer(idb)
