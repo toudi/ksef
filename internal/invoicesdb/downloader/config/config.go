@@ -4,6 +4,7 @@ import (
 	"ksef/cmd/ksef/flags"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/runtime"
+	"ksef/internal/utils"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -78,17 +79,18 @@ func GetDownloaderConfig(vip *viper.Viper, prefix string) (params invoices.Downl
 	if params.Incremental || params.DateType == "" {
 		params.DateType = invoices.DateTypeStorage
 	}
-	startDate := vip.GetString(prefixedFlag(prefix, flagStartDate))
-	if params.StartDate, err = time.ParseInLocation(time.DateOnly, startDate, time.Local); err != nil {
+	startDate, err := utils.ParseTimeFromString(vip.GetString(prefixedFlag(prefix, flagStartDate)))
+	if err != nil {
 		return params, err
 	}
+	params.StartDate = startDate
 	endDate := vip.GetString(prefixedFlag(prefix, flagEndDate))
 	if endDate != "" {
-		if parsedEndDate, err := time.ParseInLocation(time.DateOnly, endDate, time.Local); err != nil {
+		parsedEndDate, err := utils.ParseTimeFromString(endDate)
+		if err != nil {
 			return params, err
-		} else {
-			params.EndDate = &parsedEndDate
 		}
+		params.EndDate = &parsedEndDate
 	}
 	params.UseExportMode = vip.GetBool(prefixedFlag(prefix, flagUseExport))
 
