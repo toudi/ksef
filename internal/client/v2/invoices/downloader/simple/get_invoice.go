@@ -1,4 +1,4 @@
-package invoices
+package simple
 
 import (
 	"bytes"
@@ -13,12 +13,12 @@ const (
 	endpointDownloadInvoice = "/api/v2/invoices/ksef/%s"
 )
 
-func (d *InvoiceDownloader) downloadInvoice(
+func (sd *simpleDownloader) downloadInvoice(
 	ctx context.Context,
 	invoiceMeta invoices.InvoiceMetadata,
 	dest *bytes.Buffer,
 ) (err error) {
-	_, err = d.httpClient.Request(
+	_, err = sd.httpClient.Request(
 		ctx, http.RequestConfig{
 			DestWriter:     dest,
 			ExpectedStatus: baseHTTP.StatusOK,

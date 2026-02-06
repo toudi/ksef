@@ -1,31 +1,26 @@
-package invoices
+package simple
 
 import (
-	"ksef/internal/client/v2/invoices/downloader/export"
 	downloaderinterface "ksef/internal/client/v2/invoices/downloader/interface"
-	"ksef/internal/client/v2/invoices/downloader/simple"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/http"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 )
 
-type InvoiceDownloader struct {
+type simpleDownloader struct {
 	httpClient *http.Client
 	registry   *monthlyregistry.Registry
 	params     invoices.DownloadParams
 }
 
-func NewInvoiceDownloader(
+func NewDownloader(
 	httpClient *http.Client,
-	downloadParams invoices.DownloadParams,
 	registry *monthlyregistry.Registry,
+	params invoices.DownloadParams,
 ) downloaderinterface.InvoiceDownloader {
-	if downloadParams.UseExportMode {
-		return export.NewDownloader(
-			httpClient, registry, downloadParams,
-		)
+	return &simpleDownloader{
+		httpClient: httpClient,
+		registry:   registry,
+		params:     params,
 	}
-	return simple.NewDownloader(
-		httpClient, registry, downloadParams,
-	)
 }

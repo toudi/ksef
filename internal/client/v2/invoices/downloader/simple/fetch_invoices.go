@@ -1,9 +1,10 @@
-package invoices
+package simple
 
 import (
 	"bytes"
 	"context"
 	"errors"
+	downloadertypes "ksef/internal/client/v2/invoices/downloader/types"
 	"ksef/internal/client/v2/types/invoices"
 	types "ksef/internal/client/v2/types/invoices"
 	"ksef/internal/http"
@@ -16,9 +17,9 @@ var (
 	errProcessingDownloadedInvoice = errors.New("error processing downloaded invoice")
 )
 
-func (d *InvoiceDownloader) fetchInvoices(
+func (sd *simpleDownloader) fetchInvoices(
 	ctx context.Context,
-	req InvoiceMetadataRequest,
+	req downloadertypes.InvoiceListRequest,
 	params invoices.DownloadParams,
 	invoiceReady func(subjectType invoices.SubjectType, invoiceMeta invoices.InvoiceMetadata, content bytes.Buffer) error,
 ) (err error) {
@@ -30,7 +31,7 @@ func (d *InvoiceDownloader) fetchInvoices(
 	)
 
 	for !finished {
-		_, err = d.httpClient.Request(
+		_, err = sd.httpClient.Request(
 			ctx,
 			http.RequestConfig{
 				Method: baseHttp.MethodPost,
@@ -46,20 +47,19 @@ func (d *InvoiceDownloader) fetchInvoices(
 			},
 			endpointInvoicesMetadata,
 		)
-
 		if err != nil {
 			return err
 		}
 
 		for _, invoice := range resp.Invoices {
-			if d.registry.ContainsHash(invoice.Checksum()) {
+			if sd.registry.ContainsHash(invoice.Checksum()) {
 				continue
 			}
 
 			// download invoice to a buffer
 			invoiceContentBuffer.Reset()
 
-			if err = d.downloadInvoice(ctx, invoice, &invoiceContentBuffer); err != nil {
+			if err = sd.downloadInvoice(ctx, invoice, &invoiceContentBuffer); err != nil {
 				return errors.Join(errUnableToDownloadInvoice, err)
 			}
 

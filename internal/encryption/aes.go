@@ -50,5 +50,20 @@ func (c *Cipher) Encrypt(input []byte, add_pkcs7pad bool) []byte {
 	bm.CryptBlocks(ciphertext, plaintext)
 
 	return ciphertext
+}
 
+func (c *Cipher) Decrypt(input []byte, remove_pkcs7pad bool) ([]byte, error) {
+	var err error
+
+	bm := cipher.NewCBCDecrypter(c.block, c.IV)
+	bm.CryptBlocks(input, input)
+
+	if remove_pkcs7pad {
+		input, err = pkcs7Unpad(input, c.block.BlockSize())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return input, nil
 }

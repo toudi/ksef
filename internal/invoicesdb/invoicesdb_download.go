@@ -32,7 +32,8 @@ func (i *InvoicesDB) downloadInvoices(
 			invoiceTypes.SubjectTypePayer,
 			invoiceTypes.SubjectTypeAuthorized,
 		},
-		PageSize: cfg.PageSize,
+		PageSize:      cfg.PageSize,
+		UseExportMode: cfg.UseExportMode,
 	}
 
 	// so that we know which registries to save

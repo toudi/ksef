@@ -1,4 +1,4 @@
-package invoices
+package downloadertypes
 
 import (
 	types "ksef/internal/client/v2/types/invoices"
@@ -8,9 +8,8 @@ import (
 type DateRangeType string
 
 const (
-	endpointInvoicesMetadata               = "/api/v2/invoices/query/metadata"
-	DateRangeTypeIssue       DateRangeType = "Issue"
-	DateRangeStorage         DateRangeType = "PermanentStorage"
+	DateRangeTypeIssue DateRangeType = "Issue"
+	DateRangeStorage   DateRangeType = "PermanentStorage"
 )
 
 type DateRange struct {
@@ -19,7 +18,7 @@ type DateRange struct {
 	To       *time.Time    `json:"to,omitzero"`
 }
 
-type InvoiceMetadataRequest struct {
+type InvoiceListRequest struct {
 	SubjectType types.SubjectType `json:"subjectType"`
 	DateRange   DateRange         `json:"dateRange"`
 }

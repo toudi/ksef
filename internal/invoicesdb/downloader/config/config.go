@@ -3,6 +3,7 @@ package config
 import (
 	"ksef/cmd/ksef/flags"
 	"ksef/internal/client/v2/types/invoices"
+	"ksef/internal/runtime"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -16,6 +17,7 @@ const (
 	flagEndDate     = "end-date"
 	flagPageSize    = "page-size"
 	flagDateType    = "date-type"
+	flagUseExport   = "use-export-mode"
 )
 
 var subjectTypes []invoices.SubjectType
@@ -57,11 +59,16 @@ func DownloaderFlags(flagSet *pflag.FlagSet, prefix string) {
 		string(invoices.DateTypeInvoicing),
 		string(invoices.DateTypeStorage),
 	}), prefixedFlag(prefix, flagDateType), "typ daty używany do odpytywania listy faktur")
+	flagSet.Bool(prefixedFlag(prefix, flagUseExport), false, "używaj eksportu faktur do pobierania")
 
 	flagSet.SortFlags = false
 }
 
 func GetDownloaderConfig(vip *viper.Viper, prefix string) (params invoices.DownloadParams, err error) {
+	vip.SetDefault(
+		prefixedFlag(prefix, flagUseExport),
+		vip.GetBool(runtime.CfgKeyUseExportModeForDownloading),
+	)
 	params.Incremental = vip.GetBool(prefixedFlag(prefix, flagIncremental))
 	params.PDF = vip.GetBool(prefixedFlag(prefix, flagPDF))
 	params.SubjectTypes = subjectTypes
@@ -83,6 +90,7 @@ func GetDownloaderConfig(vip *viper.Viper, prefix string) (params invoices.Downl
 			params.EndDate = &parsedEndDate
 		}
 	}
+	params.UseExportMode = vip.GetBool(prefixedFlag(prefix, flagUseExport))
 
 	return params, nil
 }

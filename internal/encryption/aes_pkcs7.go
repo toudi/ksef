@@ -28,3 +28,15 @@ func pkcs7Pad(data []byte, blockSize int) ([]byte, error) {
 	padding := bytes.Repeat([]byte{byte(padLen)}, padLen)
 	return append(data, padding...), nil
 }
+
+// https://github.com/mergermarket/go-pkcs7/blob/master/pkcs7.go
+func pkcs7Unpad(padded []byte, size int) ([]byte, error) {
+	if len(padded)%size != 0 {
+		return nil, errors.New("pkcs7: Padded value wasn't in correct size.")
+	}
+
+	bufLen := len(padded) - int(padded[len(padded)-1])
+	buf := make([]byte, bufLen)
+	copy(buf, padded[:bufLen])
+	return buf, nil
+}
