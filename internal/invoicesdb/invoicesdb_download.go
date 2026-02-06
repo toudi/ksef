@@ -58,7 +58,7 @@ func (i *InvoicesDB) downloadInvoices(
 		// initialize starting cutoff for downloading invoices
 		tmpDownloadParams.StartDate = registry.SyncParams.LastTimestamp
 		// get rid of end range initially ..
-		tmpDownloadParams.EndDate = nil
+		tmpDownloadParams.EndDate = cfg.EndDate
 
 		if idx < len(monthsRange)-2 {
 			// unless there's a next month waiting to be processed - then we can easily determine
