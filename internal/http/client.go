@@ -57,6 +57,18 @@ func (rb *Client) Request(
 	endpoint string,
 ) (*http.Response, error) {
 	var cancel context.CancelFunc
+	fullUrl, err := url.Parse(rb.Base + endpoint)
+	if err != nil {
+		return nil, err
+	}
+	logger := logging.HTTPLogger.With("method", config.Method, "url", fullUrl.String())
+
+	// call rate limiter if possible - but before initializing context with timeout.
+	// otherwise the request timeout would hit due to rate limiting.
+	if rb.rateLimiter != nil {
+		logger.Debug("calling rateLimiter.Wait()")
+		rb.rateLimiter.Wait(config.OperationId)
+	}
 
 	if config.Timeout.Abs() == 0 {
 		config.Timeout = 15 * time.Second
@@ -69,13 +81,7 @@ func (rb *Client) Request(
 	ctx, cancel = context.WithTimeout(ctx, config.Timeout)
 	defer cancel()
 
-	fullUrl, err := url.Parse(rb.Base + endpoint)
-	if err != nil {
-		return nil, err
-	}
-
 	var body io.Reader
-	logger := logging.HTTPLogger.With("method", config.Method, "url", fullUrl.String())
 
 	if config.Body != nil {
 		var isReader bool
@@ -134,11 +140,6 @@ func (rb *Client) Request(
 				)
 			}
 		}
-	}
-
-	if rb.rateLimiter != nil {
-		logger.Debug("calling rateLimiter.Wait()")
-		rb.rateLimiter.Wait(config.OperationId)
 	}
 
 	resp, err := http.DefaultClient.Do(req)
