@@ -12,6 +12,8 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/spf13/viper"
 )
 
 var (
@@ -45,6 +47,7 @@ type Client struct {
 	rateLimiter            *RequestRateLimit
 	AuthTokenRetrieverFunc interfaces.TokenRetrieverFunc
 	RateLimitsDiscoverFunc interfaces.RateLimitsDiscoverFunc
+	Vip                    *viper.Viper
 }
 
 func NewClient(host string) *Client {
@@ -56,12 +59,33 @@ func (rb *Client) Request(
 	config RequestConfig,
 	endpoint string,
 ) (*http.Response, error) {
-	var cancel context.CancelFunc
 	fullUrl, err := url.Parse(rb.Base + endpoint)
 	if err != nil {
 		return nil, err
 	}
 	logger := logging.HTTPLogger.With("method", config.Method, "url", fullUrl.String())
+
+	// retrieve auth token if required:
+	var bearerToken string
+	if rb.AuthTokenRetrieverFunc != nil {
+		token, err := rb.AuthTokenRetrieverFunc()
+		if err != nil {
+			return nil, err
+		}
+		bearerToken = token
+
+		if rb.rateLimiter == nil && rb.RateLimitsDiscoverFunc != nil {
+			// try to discover rate limits
+			rateLimits, err := rb.RateLimitsDiscoverFunc(ctx, rb.Base, token)
+			if err != nil {
+				logging.HTTPLogger.Error("Unable to discover rate limits", "err", err)
+			} else {
+				rb.SetRateLimiter(
+					NewRequestRateLimit(logger, rateLimits),
+				)
+			}
+		}
+	}
 
 	// call rate limiter if possible - but before initializing context with timeout.
 	// otherwise the request timeout would hit due to rate limiting.
@@ -78,6 +102,7 @@ func (rb *Client) Request(
 		config.ContentType = JSON
 	}
 
+	var cancel context.CancelFunc
 	ctx, cancel = context.WithTimeout(ctx, config.Timeout)
 	defer cancel()
 
@@ -122,24 +147,8 @@ func (rb *Client) Request(
 		req.Header.Set(headerName, headerValue)
 	}
 
-	if rb.AuthTokenRetrieverFunc != nil {
-		token, err := rb.AuthTokenRetrieverFunc()
-		if err != nil {
-			return nil, err
-		}
-		req.Header.Set("Authorization", "Bearer "+token)
-
-		if rb.rateLimiter == nil && rb.RateLimitsDiscoverFunc != nil {
-			// try to discover rate limits
-			rateLimits, err := rb.RateLimitsDiscoverFunc(ctx, rb.Base, token)
-			if err != nil {
-				logging.HTTPLogger.Error("Unable to discover rate limits", "err", err)
-			} else {
-				rb.SetRateLimiter(
-					NewRequestRateLimit(logger, rateLimits),
-				)
-			}
-		}
+	if bearerToken != "" {
+		req.Header.Set("Authorization", "Bearer "+bearerToken)
 	}
 
 	resp, err := http.DefaultClient.Do(req)
@@ -207,4 +216,9 @@ func jsonBodyReader(body any) (*bytes.Buffer, error) {
 
 func (rb *Client) SetRateLimiter(limiter *RequestRateLimit) {
 	rb.rateLimiter = limiter
+	if rb.Vip != nil {
+		if err := rb.restoreRateLimitsState(rb.Vip); err != nil {
+			logging.HTTPLogger.Error("Unable to restore rate limits state", "err", err)
+		}
+	}
 }

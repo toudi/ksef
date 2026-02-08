@@ -27,6 +27,7 @@ type APIClient struct {
 	// init options
 	runTokenManager     bool
 	tokenManagerStarted bool
+	vip                 *viper.Viper
 }
 
 type InitializerFunc func(c *APIClient)
@@ -41,6 +42,7 @@ func NewClient(ctx context.Context, vip *viper.Viper, options ...InitializerFunc
 		ctx:             ctx,
 		httpClient:      httpClient,
 		runTokenManager: true,
+		vip:             vip,
 	}
 
 	for _, option := range options {
@@ -71,6 +73,7 @@ func (c *APIClient) authenticatedHTTPClient() *httpClient.Client {
 			Base:                   c.httpClient.Base,
 			AuthTokenRetrieverFunc: c.tokenManager.GetAuthorizationToken,
 			RateLimitsDiscoverFunc: ratelimits.DiscoverRateLimits,
+			Vip:                    c.vip,
 		}
 	}
 	return c.authedHTTPClient
@@ -78,6 +81,11 @@ func (c *APIClient) authenticatedHTTPClient() *httpClient.Client {
 
 func (c *APIClient) Close() {
 	c.tokenManager.Stop()
+	if c.authedHTTPClient != nil {
+		if err := c.authedHTTPClient.SaveRateLimitsState(c.vip); err != nil {
+			logging.SeiLogger.Error("unable to persist rate limits state", "err", err)
+		}
+	}
 }
 
 func WithAuthValidator(validator validator.AuthChallengeValidator) func(client *APIClient) {
