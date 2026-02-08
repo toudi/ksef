@@ -28,8 +28,8 @@ func (b *callHistory) Push(value time.Time) {
 		b.entries = append(b.entries, value)
 	} else {
 		b.entries[b.writeIndex] = value
-		b.writeIndex = (b.writeIndex + 1) % len(b.entries)
 	}
+	b.writeIndex = (b.writeIndex + 1) % b.capacity
 }
 
 // this function checks if there are less entries than now - slot than capacity.
@@ -65,8 +65,21 @@ func (b *callHistory) IsAllowed(slot time.Duration, now time.Time) (isAllowed bo
 	isAllowed = occupied < b.capacity
 	// and, if not - how much do we have to wait
 	if !isAllowed {
-		waitTime = earliestEntry.Add(slot).Sub(now)
+		waitTime = earliestEntry.Add(slot).Sub(now).Round(time.Second)
 		fmt.Printf("calculated wait time as %v\n", waitTime)
 	}
 	return isAllowed, waitTime
+}
+
+func (b *callHistory) ReplaceLastEntry(value time.Time) {
+	// write index is incremented after pushing value into the buffer therefore
+	// we can initially try to simply decrease it by 1 to get the last value..
+	var previousWriteIndex int = b.writeIndex - 1%b.capacity
+	// however because the entries roll over due to the nature of the ring buffer,
+	// 0-1 would yield -1
+	// if that is the case then we have to write to the last position in the buffer
+	if previousWriteIndex < 0 {
+		previousWriteIndex = b.capacity - 1
+	}
+	b.entries[previousWriteIndex] = value
 }

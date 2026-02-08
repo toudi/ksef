@@ -94,3 +94,14 @@ func (l *Limiter) LoadEntries(entries []LimiterSlotEntries) {
 		}
 	}
 }
+
+func (l *Limiter) ReplaceLastEntry() {
+	now := time.Now()
+	for limitIdx := range l.limits {
+		limiter := l.limits[limitIdx]
+		if limiter.buffer == nil {
+			continue
+		}
+		limiter.buffer.ReplaceLastEntry(now)
+	}
+}

@@ -152,7 +152,11 @@ func (rb *Client) Request(
 	}
 
 	resp, err := http.DefaultClient.Do(req)
+	if rb.rateLimiter != nil {
+		rb.rateLimiter.replaceLastEntry(config.OperationId)
+	}
 	if err != nil {
+		rb.tryToPersistRateLimiterState()
 		return resp, err
 	}
 
@@ -169,6 +173,9 @@ func (rb *Client) Request(
 	)
 
 	if config.ExpectedStatus > 0 && resp.StatusCode != config.ExpectedStatus {
+		if resp.StatusCode == http.StatusTooManyRequests {
+			rb.tryToPersistRateLimiterState()
+		}
 		return resp, fmt.Errorf("%w: %d vs %d", ErrUnexpectedStatusCode, resp.StatusCode, config.ExpectedStatus)
 	}
 

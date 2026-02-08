@@ -41,6 +41,12 @@ func (rb *Client) SaveRateLimitsState(vip *viper.Viper) error {
 	return utils.SaveYAML(state, outputFilename)
 }
 
+func (rb *Client) tryToPersistRateLimiterState() {
+	if rb.Vip != nil {
+		rb.SaveRateLimitsState(rb.Vip)
+	}
+}
+
 func (rb *Client) restoreRateLimitsState(vip *viper.Viper) error {
 	stateFilename, err := rb.stateFilename(vip)
 	if err != nil {
