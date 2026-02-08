@@ -72,6 +72,7 @@ func (i *InvoicesDB) downloadInvoices(
 		lastTimestampPerRegistry[registry] = registry.SyncParams.LastTimestamp
 
 		downloader := i.ksefClient.InvoiceDownloader(
+			vip,
 			i.certsDB,
 			tmpDownloadParams,
 			registry,

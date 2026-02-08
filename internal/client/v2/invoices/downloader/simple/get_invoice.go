@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	ratelimits "ksef/internal/client/v2/rate-limits"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/http"
 	baseHTTP "net/http"
@@ -22,6 +23,7 @@ func (sd *simpleDownloader) downloadInvoice(
 		ctx, http.RequestConfig{
 			DestWriter:     dest,
 			ExpectedStatus: baseHTTP.StatusOK,
+			OperationId:    ratelimits.OperationInvoiceDownload,
 		}, fmt.Sprintf(endpointDownloadInvoice, invoiceMeta.KSeFNumber),
 	)
 

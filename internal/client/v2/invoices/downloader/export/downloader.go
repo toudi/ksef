@@ -6,9 +6,12 @@ import (
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/http"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
+
+	"github.com/spf13/viper"
 )
 
 type exportDownloader struct {
+	vip            *viper.Viper
 	httpClient     *http.Client
 	registry       *monthlyregistry.Registry
 	params         invoices.DownloadParams
@@ -17,12 +20,14 @@ type exportDownloader struct {
 }
 
 func NewDownloader(
+	vip *viper.Viper,
 	certsDB *certsdb.CertificatesDB,
 	httpClient *http.Client,
 	registry *monthlyregistry.Registry,
 	params invoices.DownloadParams,
 ) downloaderinterface.InvoiceDownloader {
 	return &exportDownloader{
+		vip:        vip,
 		certsDB:    certsDB,
 		httpClient: httpClient,
 		registry:   registry,

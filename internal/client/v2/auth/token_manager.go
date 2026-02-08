@@ -53,7 +53,11 @@ type TokenManager struct {
 	certsDB             *certsdb.CertificatesDB
 }
 
-func NewTokenManager(ctx context.Context, vip *viper.Viper, challengeValidator validator.AuthChallengeValidator) (*TokenManager, error) {
+func NewTokenManager(
+	ctx context.Context,
+	vip *viper.Viper,
+	challengeValidator validator.AuthChallengeValidator,
+) (*TokenManager, error) {
 	environment := runtime.GetEnvironment(vip)
 	httpClient := http.NewClient(environment.API)
 

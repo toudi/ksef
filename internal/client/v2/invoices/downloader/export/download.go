@@ -6,6 +6,7 @@ import (
 	"errors"
 	"ksef/internal/certsdb"
 	downloadertypes "ksef/internal/client/v2/invoices/downloader/types"
+	ratelimits "ksef/internal/client/v2/rate-limits"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/encryption"
 	"ksef/internal/http"
@@ -60,6 +61,7 @@ func (ed *exportDownloader) Download(
 				Body:            req,
 				Method:          baseHTTP.MethodPost,
 				ExpectedStatus:  baseHTTP.StatusCreated,
+				OperationId:     ratelimits.OperationInvoicesExport,
 			},
 			endpointInvoicesExport,
 		)

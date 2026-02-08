@@ -5,10 +5,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	ratelimits "ksef/internal/client/v2/rate-limits"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/encryption"
 	"ksef/internal/http"
 	"ksef/internal/logging"
+	"ksef/internal/runtime"
 	baseHTTP "net/http"
 	"time"
 )
@@ -42,7 +44,7 @@ func (ed *exportDownloader) fetchInvoices(
 		return err
 	}
 
-	statusPoller := time.NewTicker(10 * time.Second)
+	statusPoller := time.NewTicker(runtime.HttpPollWaitTime(ed.vip))
 	defer statusPoller.Stop()
 
 	for !exportStatusReady {
@@ -80,6 +82,7 @@ func (ed *exportDownloader) pollForExportStatus(
 			DestContentType: http.JSON,
 			Dest:            &esResp,
 			ExpectedStatus:  baseHTTP.StatusOK,
+			OperationId:     ratelimits.OperationExportStatus,
 		},
 		fmt.Sprintf(endpointInvoicesExportStatus, referenceNumber),
 	)

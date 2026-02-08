@@ -6,6 +6,7 @@ import (
 	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/validator"
 	"ksef/internal/client/v2/certificates"
+	ratelimits "ksef/internal/client/v2/rate-limits"
 	"ksef/internal/http"
 	httpClient "ksef/internal/http"
 	"ksef/internal/logging"
@@ -18,6 +19,7 @@ type APIClient struct {
 	tokenManager           *auth.TokenManager
 	authChallengeValidator validator.AuthChallengeValidator
 	httpClient             *httpClient.Client
+	authedHTTPClient       *httpClient.Client
 	ctx                    context.Context
 	// for uploading sessions
 	certificates *certificates.Manager
@@ -61,11 +63,17 @@ func NewClient(ctx context.Context, vip *viper.Viper, options ...InitializerFunc
 }
 
 func (c *APIClient) authenticatedHTTPClient() *httpClient.Client {
-	// create a copy of httpClient that will use token manager instance to retrieve the current session token
-	return &httpClient.Client{
-		Base:                   c.httpClient.Base,
-		AuthTokenRetrieverFunc: c.tokenManager.GetAuthorizationToken,
+	// always return the same instance so that we can call setRateLimits on it and all the other
+	// endpoints make use of that.
+	if c.authedHTTPClient == nil {
+		// create a copy of httpClient that will use token manager instance to retrieve the current session token
+		c.authedHTTPClient = &httpClient.Client{
+			Base:                   c.httpClient.Base,
+			AuthTokenRetrieverFunc: c.tokenManager.GetAuthorizationToken,
+			RateLimitsDiscoverFunc: ratelimits.DiscoverRateLimits,
+		}
 	}
+	return c.authedHTTPClient
 }
 
 func (c *APIClient) Close() {

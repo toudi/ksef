@@ -37,18 +37,25 @@ type RequestConfig struct {
 	DestContentType string
 	ExpectedStatus  int
 	Method          string
+	OperationId     string
 }
 
 type Client struct {
 	Base                   string
+	rateLimiter            *RequestRateLimit
 	AuthTokenRetrieverFunc interfaces.TokenRetrieverFunc
+	RateLimitsDiscoverFunc interfaces.RateLimitsDiscoverFunc
 }
 
 func NewClient(host string) *Client {
 	return &Client{Base: host}
 }
 
-func (rb *Client) Request(ctx context.Context, config RequestConfig, endpoint string) (*http.Response, error) {
+func (rb *Client) Request(
+	ctx context.Context,
+	config RequestConfig,
+	endpoint string,
+) (*http.Response, error) {
 	var cancel context.CancelFunc
 
 	if config.Timeout.Abs() == 0 {
@@ -115,6 +122,23 @@ func (rb *Client) Request(ctx context.Context, config RequestConfig, endpoint st
 			return nil, err
 		}
 		req.Header.Set("Authorization", "Bearer "+token)
+
+		if rb.rateLimiter == nil && rb.RateLimitsDiscoverFunc != nil {
+			// try to discover rate limits
+			rateLimits, err := rb.RateLimitsDiscoverFunc(ctx, rb.Base, token)
+			if err != nil {
+				logging.HTTPLogger.Error("Unable to discover rate limits", "err", err)
+			} else {
+				rb.SetRateLimiter(
+					NewRequestRateLimit(logger, rateLimits),
+				)
+			}
+		}
+	}
+
+	if rb.rateLimiter != nil {
+		logger.Debug("calling rateLimiter.Wait()")
+		rb.rateLimiter.Wait(config.OperationId)
 	}
 
 	resp, err := http.DefaultClient.Do(req)
@@ -178,4 +202,8 @@ func jsonBodyReader(body any) (*bytes.Buffer, error) {
 	encoder := json.NewEncoder(&buffer)
 	err := encoder.Encode(body)
 	return &buffer, err
+}
+
+func (rb *Client) SetRateLimiter(limiter *RequestRateLimit) {
+	rb.rateLimiter = limiter
 }
