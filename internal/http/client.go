@@ -5,12 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"ksef/internal/interfaces"
 	"ksef/internal/logging"
+	"ksef/internal/runtime"
 	"net/http"
-	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/spf13/viper"
@@ -59,142 +59,34 @@ func (rb *Client) Request(
 	config RequestConfig,
 	endpoint string,
 ) (*http.Response, error) {
-	fullUrl, err := url.Parse(rb.Base + endpoint)
-	if err != nil {
-		return nil, err
+	maxRetries := runtime.DefaultHttpRetries
+	if rb.Vip != nil {
+		maxRetries = runtime.HttpMaxRetries(rb.Vip)
 	}
-	logger := logging.HTTPLogger.With("method", config.Method, "url", fullUrl.String())
 
-	// retrieve auth token if required:
-	var bearerToken string
-	if rb.AuthTokenRetrieverFunc != nil {
-		token, err := rb.AuthTokenRetrieverFunc()
+	var err error
+	var resp *http.Response
+
+	for numRetries := range maxRetries {
+		resp, err = rb.requestAttempt(ctx, config, endpoint, numRetries, maxRetries)
 		if err != nil {
-			return nil, err
-		}
-		bearerToken = token
-
-		if rb.rateLimiter == nil && rb.RateLimitsDiscoverFunc != nil {
-			// try to discover rate limits
-			rateLimits, err := rb.RateLimitsDiscoverFunc(ctx, rb.Base, token)
-			if err != nil {
-				logging.HTTPLogger.Error("Unable to discover rate limits", "err", err)
-			} else {
-				rb.SetRateLimiter(
-					NewRequestRateLimit(logger, rateLimits),
-				)
+			// let's check if the returned error code is telling us to slow down
+			if resp != nil && resp.StatusCode == http.StatusTooManyRequests {
+				secondsToWait, _ := strconv.Atoi(resp.Header.Get("Retry-After"))
+				if secondsToWait > 0 {
+					time.Sleep(time.Duration(secondsToWait) * time.Second)
+				}
 			}
+			continue
 		}
-	}
-
-	// call rate limiter if possible - but before initializing context with timeout.
-	// otherwise the request timeout would hit due to rate limiting.
-	if rb.rateLimiter != nil {
-		logger.Debug("calling rateLimiter.Wait()")
-		rb.rateLimiter.Wait(config.OperationId)
-	}
-
-	if config.Timeout.Abs() == 0 {
-		config.Timeout = 15 * time.Second
-	}
-
-	if config.ContentType == "" {
-		config.ContentType = JSON
-	}
-
-	var cancel context.CancelFunc
-	ctx, cancel = context.WithTimeout(ctx, config.Timeout)
-	defer cancel()
-
-	var body io.Reader
-
-	if config.Body != nil {
-		var isReader bool
-
-		if config.ContentType == JSON {
-			logger = logger.With("body", fmt.Sprintf("%+v", config.Body))
-			body, err = jsonBodyReader(config.Body)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			body, isReader = config.Body.(io.Reader)
-			if !isReader {
-				return nil, ErrUnexpectedBody
-			}
+		// if we're here it means that the error was nil
+		if rb.rateLimiter != nil {
+			rb.rateLimiter.replaceLastEntry(config.OperationId)
 		}
+		break
 	}
 
-	logger.Debug("request")
-
-	req, err := http.NewRequestWithContext(ctx, config.Method, fullUrl.String(), body)
-	if err != nil {
-		return nil, err
-	}
-	if config.QueryParams != nil {
-		params := req.URL.Query()
-		for paramName, paramValue := range config.QueryParams {
-			params.Set(paramName, paramValue)
-		}
-		req.URL.RawQuery = params.Encode()
-	}
-
-	if config.ContentType != "" {
-		req.Header.Set("Content-Type", config.ContentType)
-	}
-
-	for headerName, headerValue := range config.Headers {
-		req.Header.Set(headerName, headerValue)
-	}
-
-	if bearerToken != "" {
-		req.Header.Set("Authorization", "Bearer "+bearerToken)
-	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if rb.rateLimiter != nil {
-		rb.rateLimiter.replaceLastEntry(config.OperationId)
-	}
-	if err != nil {
-		rb.tryToPersistRateLimiterState()
-		return resp, err
-	}
-
-	var bodyBuffer bytes.Buffer
-	if _, err = io.Copy(&bodyBuffer, resp.Body); err != nil {
-		return nil, ErrUnableToCopyResponse
-	}
-	defer resp.Body.Close()
-
-	logging.HTTPLogger.Debug(
-		"response",
-		"body",
-		bodyBuffer.String(),
-	)
-
-	if config.ExpectedStatus > 0 && resp.StatusCode != config.ExpectedStatus {
-		if resp.StatusCode == http.StatusTooManyRequests {
-			rb.tryToPersistRateLimiterState()
-		}
-		return resp, fmt.Errorf("%w: %d vs %d", ErrUnexpectedStatusCode, resp.StatusCode, config.ExpectedStatus)
-	}
-
-	if config.DestContentType == "" {
-		// if no content type is specified, simply copy to dest
-		if config.DestWriter != nil {
-			_, err = io.Copy(config.DestWriter, &bodyBuffer)
-			return resp, err
-		}
-
-		return resp, nil
-	}
-
-	if config.DestContentType == JSON {
-		decoder := json.NewDecoder(&bodyBuffer)
-		return resp, decoder.Decode(config.Dest)
-	}
-
-	return resp, nil
+	return resp, err
 }
 
 func (rb *Client) Download(ctx context.Context, url string, dest io.Writer) error {

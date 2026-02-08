@@ -51,7 +51,7 @@ func init() {
 		runtime.SetEnvironment(viper.GetViper(), runtime.DemoEnvironmentId)
 		return nil
 	})
-	runtime.FlagHttpPollWaitTime(RootCommand.PersistentFlags())
+	runtime.HttpFlags(RootCommand.PersistentFlags())
 	runtime.FlagIgnoreSSLErrors(RootCommand.PersistentFlags())
 	RootCommand.PersistentFlags().SortFlags = false
 
