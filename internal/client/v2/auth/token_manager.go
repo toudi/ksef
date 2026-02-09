@@ -105,12 +105,13 @@ func (t *TokenManager) GetAuthorizationToken(timeout ...time.Duration) (string, 
 	if len(timeout) == 0 {
 		timeout = []time.Duration{15 * time.Second}
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout[0])
-	defer cancel()
 
 	// so this temporary channel is for retrieving the *current* token
-	tokenChan := make(chan string)
-	defer close(tokenChan)
+	tokenChan := make(chan string, 1)
+	// defer close(tokenChan)
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout[0])
+	defer cancel()
 
 	go t.readToken(tokenChan)
 
