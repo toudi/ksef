@@ -47,11 +47,10 @@ func (fg *FAGenerator) IssuerTIN() string {
 }
 
 func (fg *FAGenerator) isCommonData(section string) bool {
-	var sectionLower = strings.ToLower(section)
+	sectionLower := strings.ToLower(section)
 
 	return (sectionLower == constants.SectionInvoiceRoot ||
 		sectionLower == constants.SectionInvoiceHeader ||
-		sectionLower == constants.SectionInvoiceAnnotations ||
 		strings.HasPrefix(sectionLower, constants.SectionInvoiceIssuer))
 }
 
