@@ -6,7 +6,6 @@ import (
 	"ksef/internal/logging"
 	"ksef/internal/pdf/printer"
 	"ksef/internal/utils"
-	"maps"
 	"path/filepath"
 )
 
@@ -73,7 +72,7 @@ func (tp *typstPrinter) PrintInvoice(
 	meta.Page.Footer.Center = tp.cfg.Invoice.Footer.Center
 	meta.Page.Footer.Right = tp.cfg.Invoice.Footer.Right
 
-	maps.Copy(meta.Printout, tp.cfg.Invoice.Printout)
+	utils.MergeMaps(meta.Printout, tp.cfg.Invoice.Printout)
 
 	if err := utils.SaveYAML(meta, metaYAML); err != nil {
 		return err
