@@ -51,5 +51,7 @@ func rehashRegistryRun(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// TODO: repopulate ksef ref no's
+
 	return registry.Save()
 }

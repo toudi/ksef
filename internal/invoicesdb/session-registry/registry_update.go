@@ -2,24 +2,29 @@ package sessionregistry
 
 import (
 	sessionTypes "ksef/internal/client/v2/session/types"
+	annualregistry "ksef/internal/invoicesdb/annual-registry"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 )
 
 func (r *Registry) Update(
 	uploadResult *sessionTypes.UploadSessionResult,
 	invoiceChecksumToRegistry map[string]*monthlyregistry.Registry,
+	invoiceChecksumToAnnualRegistry map[string]*annualregistry.Registry,
 ) error {
 	return r.processUploadResult(
 		uploadResult,
 		invoiceChecksumToRegistry,
+		invoiceChecksumToAnnualRegistry,
 	)
 }
 
 func (r *Registry) processUploadResult(
 	uploadSessionStatus *sessionTypes.UploadSessionResult,
 	invoiceChecksumToRegistry map[string]*monthlyregistry.Registry,
+	invoiceChecksumToAnnualRegistry map[string]*annualregistry.Registry,
 ) error {
 	affectedRegistries := make(map[*monthlyregistry.Registry]bool)
+	affectedAnnualRegistries := make(map[*annualregistry.Registry]bool)
 
 	// first step - update entries
 	uploadSessionId := uploadSessionStatus.SessionID
@@ -68,10 +73,25 @@ func (r *Registry) processUploadResult(
 				return err
 			}
 
+			// lookup annual registry
+			annualRegistry := invoiceChecksumToAnnualRegistry[invoiceChecksum]
+			if err := annualRegistry.UpdateInvoiceByChecksum(
+				invoiceChecksum,
+				func(invoice *annualregistry.Invoice) error {
+					if invoiceUploadStatus.KSeFRefNo != "" && invoiceUploadStatus.Status.Successful() {
+						invoice.KSeFRefNo = invoiceUploadStatus.KSeFRefNo
+					}
+					return nil
+				},
+			); err != nil {
+				return err
+			}
+
 			// if we're here then the updateInvoiceByChecksum succeeded and
 			// we've now successfully obtained invoice's original number as
 			// an artifact
 			affectedRegistries[registry] = true
+			affectedAnnualRegistries[annualRegistry] = true
 		}
 
 		entry.addInfoAboutInvoice(
@@ -98,6 +118,11 @@ func (r *Registry) processUploadResult(
 	// third step - iterate through affected registries and save their files
 	for registry := range affectedRegistries {
 		if err := registry.Save(); err != nil {
+			return err
+		}
+	}
+	for annualRegistry := range affectedAnnualRegistries {
+		if err := annualRegistry.Save(); err != nil {
 			return err
 		}
 	}

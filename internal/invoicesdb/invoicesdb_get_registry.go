@@ -5,6 +5,7 @@ import (
 	annualregistry "ksef/internal/invoicesdb/annual-registry"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	sessionregistry "ksef/internal/invoicesdb/session-registry"
+	subjectsettings "ksef/internal/invoicesdb/subject-settings"
 	"ksef/internal/runtime"
 	"ksef/internal/sei"
 	"os"
@@ -104,4 +105,24 @@ func (idb *InvoicesDB) getUploadSessionRegistry(month time.Time) (*sessionregist
 	}
 
 	return sessionregistry.OpenOrCreate(path)
+}
+
+func (idb *InvoicesDB) getSubjectSettings() (*subjectsettings.SubjectSettings, error) {
+	nip, err := runtime.GetNIP(idb.vip)
+	if err != nil {
+		return nil, err
+	}
+
+	environmentId := runtime.GetEnvironmentId(idb.vip)
+
+	// there is no active registry - let's try to create it.
+	path := filepath.Join(
+		idb.cfg.Root,
+		environmentId,
+		nip,
+	)
+
+	return subjectsettings.OpenOrCreate(
+		path,
+	)
 }

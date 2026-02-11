@@ -31,6 +31,7 @@ func (c *StatusChecker) CheckSessions(ctx context.Context) error {
 		sessionRegistry.Update(
 			sessionStatus,
 			c.invoiceHashToMonthlyRegistry,
+			c.invoiceHashToAnnualRegistry,
 		)
 
 		// if the session is processed we can (conditionally) download UPO

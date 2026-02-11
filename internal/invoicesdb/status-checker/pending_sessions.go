@@ -2,6 +2,7 @@ package statuschecker
 
 import (
 	"errors"
+	annualregistry "ksef/internal/invoicesdb/annual-registry"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	sessionregistry "ksef/internal/invoicesdb/session-registry"
 	"ksef/internal/logging"
@@ -12,11 +13,15 @@ import (
 var (
 	errOpeningSessionRegistry = errors.New("unable to open session registry")
 	errOpeningMonthlyRegistry = errors.New("unable to open monthly registry")
+	errOpeningAnnualRegistry  = errors.New("unable to open annual registry")
 )
 
 func (c *StatusChecker) DiscoverPendingSessions() error {
 	c.sessionIdToSessionRegistry = make(map[string]*sessionregistry.Registry)
 	c.invoiceHashToMonthlyRegistry = make(map[string]*monthlyregistry.Registry)
+	c.invoiceHashToAnnualRegistry = make(map[string]*annualregistry.Registry)
+
+	yearToAnnualRegistryMap := make(map[int]*annualregistry.Registry)
 
 	// here's the thing: we have our months range starting from previous month and ending with
 	// current month. So what would happen is if we have invoices from previous month being
@@ -49,6 +54,8 @@ func (c *StatusChecker) DiscoverPendingSessions() error {
 					// initialize to empty hash
 					logging.InvoicesDBLogger.Debug("set monthly registry to nil ptr", "invoice", invoice.Checksum)
 					c.invoiceHashToMonthlyRegistry[invoice.Checksum] = nil
+					logging.InvoicesDBLogger.Debug("set annual registry to nil ptr", "invoice", invoice.Checksum)
+					c.invoiceHashToAnnualRegistry[invoice.Checksum] = nil
 				}
 			}
 			// now we can open the monthly registry for this month and
@@ -61,11 +68,25 @@ func (c *StatusChecker) DiscoverPendingSessions() error {
 				}
 				return errors.Join(errOpeningMonthlyRegistry, err)
 			}
+			// check annual registry
+			if _, exists := yearToAnnualRegistryMap[month.Year()]; !exists {
+				annualRegistry, err := annualregistry.OpenForMonth(c.vip, month)
+				if err != nil {
+					if os.IsNotExist(err) {
+						logging.InvoicesDBLogger.Info("annual registry does not exist for month", "month", month)
+						continue
+					}
+					return errors.Join(errOpeningAnnualRegistry, err)
+				}
+				yearToAnnualRegistryMap[month.Year()] = annualRegistry
+			}
+
 			logging.InvoicesDBLogger.Debug("opened monthly registry", "path", monthlyRegistry.Dir())
 			for invoiceHash := range c.invoiceHashToMonthlyRegistry {
 				if monthlyRegistry.ContainsHash(invoiceHash) {
 					logging.InvoicesDBLogger.Debug("override monthly registry for invoice", "invoice", invoiceHash)
 					c.invoiceHashToMonthlyRegistry[invoiceHash] = monthlyRegistry
+					c.invoiceHashToAnnualRegistry[invoiceHash] = yearToAnnualRegistryMap[month.Year()]
 				}
 			}
 		}
@@ -91,4 +112,10 @@ func (c *StatusChecker) SetInvoiceHashToMonthlyRegistry(
 	invoiceHashToMonthlyRegistry map[string]*monthlyregistry.Registry,
 ) {
 	c.invoiceHashToMonthlyRegistry = invoiceHashToMonthlyRegistry
+}
+
+func (c *StatusChecker) SetInvoiceHashToAnnualRegistry(
+	invoiceHashToAnnualRegistry map[string]*annualregistry.Registry,
+) {
+	c.invoiceHashToAnnualRegistry = invoiceHashToAnnualRegistry
 }

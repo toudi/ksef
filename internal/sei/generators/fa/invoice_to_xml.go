@@ -13,9 +13,14 @@ import (
 // metadata and so on.
 // if this is not what you wish to do, then please use the line-based generator approach (either CSV or XLSX)
 func (fg *FAGenerator) InvoiceToXMLTree(invoice *invoice.Invoice) (*xml.Node, error) {
-	var root = &xml.Node{Name: "Faktura"}
+	root := &xml.Node{Name: "Faktura"}
 
 	root.SetValuesFromMap(fg.commonData)
+
+	if invoice.Correction != nil {
+		delete(invoice.Attributes, "Faktura.Fa.P_6")
+	}
+
 	root.SetValuesFromMap(invoice.Attributes)
 
 	if !invoice.Issued.IsZero() {
@@ -24,7 +29,7 @@ func (fg *FAGenerator) InvoiceToXMLTree(invoice *invoice.Invoice) (*xml.Node, er
 	if invoice.Number != "" {
 		root.SetValue("Faktura.Fa.P_2", invoice.Number)
 	}
-	var generationTime = invoice.GenerationTime
+	generationTime := invoice.GenerationTime
 	if generationTime.IsZero() {
 		generationTime = fg.runTimestamp
 	}
@@ -46,7 +51,7 @@ func (fg *FAGenerator) InvoiceToXMLTree(invoice *invoice.Invoice) (*xml.Node, er
 
 	for i, item := range invoice.Items {
 		faChildNode, _ := faNode.CreateChild("FaWiersz", true)
-		var rowNo = i + 1
+		rowNo := i + 1
 		if item.RowNo > 0 {
 			rowNo = item.RowNo
 		}

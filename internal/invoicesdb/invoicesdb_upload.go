@@ -3,6 +3,7 @@ package invoicesdb
 import (
 	"context"
 	"errors"
+	annualregistry "ksef/internal/invoicesdb/annual-registry"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	statuschecker "ksef/internal/invoicesdb/status-checker"
 	statuscheckerconfig "ksef/internal/invoicesdb/status-checker/config"
@@ -11,6 +12,7 @@ import (
 	"ksef/internal/logging"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 func (i *InvoicesDB) UploadOutstandingInvoices(
@@ -27,6 +29,9 @@ func (i *InvoicesDB) UploadOutstandingInvoices(
 	months := i.monthsRange
 
 	invoiceChecksumToRegistryMapping := make(map[string]*monthlyregistry.Registry)
+	invoiceChecksumToAnnualRegistryMapping := make(map[string]*annualregistry.Registry)
+	// because we're opening monthly registries we also need to open corresponding annual registries
+	monthToAnnualRegistryMapping := make(map[time.Time]*annualregistry.Registry)
 	// these are all invoices that do not have KSeF number assigned right now, but
 	// are being processed by some upload sessions.
 	// we cannot upload them for the second time or it will result in an error, but we can
@@ -73,6 +78,14 @@ func (i *InvoicesDB) UploadOutstandingInvoices(
 			}
 			uploader.AddToQueue(invoice)
 			invoiceChecksumToRegistryMapping[invoice.Invoice.Checksum] = registry
+			if _, exists := monthToAnnualRegistryMapping[month]; !exists {
+				annualRegistry, err := annualregistry.OpenForMonth(i.vip, month)
+				if err != nil {
+					return err
+				}
+				monthToAnnualRegistryMapping[month] = annualRegistry
+			}
+			invoiceChecksumToAnnualRegistryMapping[invoice.Invoice.Checksum] = monthToAnnualRegistryMapping[month]
 		}
 	}
 
@@ -99,6 +112,7 @@ func (i *InvoicesDB) UploadOutstandingInvoices(
 		if err = uploadSessionRegistry.Update(
 			uploadSessionResult,
 			invoiceChecksumToRegistryMapping,
+			invoiceChecksumToAnnualRegistryMapping,
 		); err != nil {
 			return err
 		}
@@ -120,6 +134,9 @@ func (i *InvoicesDB) UploadOutstandingInvoices(
 
 		checker.SetInvoiceHashToMonthlyRegistry(
 			invoiceChecksumToRegistryMapping,
+		)
+		checker.SetInvoiceHashToAnnualRegistry(
+			invoiceChecksumToAnnualRegistryMapping,
 		)
 
 		return checker.CheckSessions(ctx)

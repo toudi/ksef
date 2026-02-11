@@ -2,10 +2,15 @@ package annualregistry
 
 import (
 	"errors"
+	"ksef/internal/invoicesdb/config"
+	"ksef/internal/runtime"
 	"ksef/internal/utils"
 	"os"
 	"path"
 	"path/filepath"
+	"time"
+
+	"github.com/spf13/viper"
 )
 
 const (
@@ -49,4 +54,24 @@ func OpenOrCreate(dir string) (*Registry, error) {
 
 func (r *Registry) Save() error {
 	return utils.SaveYAML(r.invoices, filepath.Join(r.dir, registryName))
+}
+
+func OpenForMonth(vip *viper.Viper, month time.Time) (*Registry, error) {
+	var err error
+	nip, err := runtime.GetNIP(vip)
+	if err != nil {
+		return nil, err
+	}
+
+	environmentId := runtime.GetEnvironmentId(vip)
+	invoicesDBConfig := config.GetInvoicesDBConfig(vip)
+
+	registryPath := filepath.Join(
+		invoicesDBConfig.Root,
+		environmentId,
+		nip,
+		month.Format("2006"),
+	)
+
+	return OpenOrCreate(registryPath)
 }

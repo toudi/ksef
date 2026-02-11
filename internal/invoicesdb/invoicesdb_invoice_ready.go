@@ -11,9 +11,10 @@ import (
 )
 
 var (
-	errUnableToRenderXML   = errors.New("unable to render XML to temporary buffer")
-	errUnableToHash        = errors.New("unable to hash temporary invoice")
-	ErrAutoCorrectDisabled = errors.New("auto-correct is disabled")
+	errUnableToRenderXML           = errors.New("unable to render XML to temporary buffer")
+	errUnableToHash                = errors.New("unable to hash temporary invoice")
+	ErrAutoCorrectDisabled         = errors.New("auto-correct is disabled")
+	errUnableToOpenSubjectSettings = errors.New("unable to open subject settings")
 )
 
 func (idb *InvoicesDB) invoiceReady(inv *sei.ParsedInvoice) error {
@@ -38,6 +39,13 @@ func (idb *InvoicesDB) invoiceReady(inv *sei.ParsedInvoice) error {
 		return err
 	}
 	invoice := inv.Invoice
+
+	// let's lazily load subject settings since they rely on NIP
+	if idb.subjectSettings == nil {
+		if idb.subjectSettings, err = idb.getSubjectSettings(); err != nil {
+			return errors.Join(errUnableToOpenSubjectSettings, err)
+		}
+	}
 
 	// check if this invoice is already in the annual registry. if so, we can just no-op.
 	// however because the checksum depends on generation time, we need to establish if
@@ -78,7 +86,7 @@ func (idb *InvoicesDB) invoiceReady(inv *sei.ParsedInvoice) error {
 	}
 
 	// if not, it must be a correction
-	if !idb.importCfg.AutoCorrection.Enabled {
+	if idb.subjectSettings.Import == nil || !idb.subjectSettings.Import.AutoCorrection.Enabled {
 		return ErrAutoCorrectDisabled
 	}
 	return idb.handleCorrection(inv, _invoice)

@@ -8,6 +8,7 @@ import (
 	annualregistry "ksef/internal/invoicesdb/annual-registry"
 	"ksef/internal/invoicesdb/config"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
+	subjectsettings "ksef/internal/invoicesdb/subject-settings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -26,6 +27,7 @@ type InvoicesDB struct {
 	contentBuffer   bytes.Buffer              // buffer for temporary XML
 	monthlyRegistry *monthlyregistry.Registry // currently used monthly invoice registry
 	annualRegistry  *annualregistry.Registry  // currently used annual invoice registry
+	subjectSettings *subjectsettings.SubjectSettings
 
 	certsDB *certsdb.CertificatesDB // for retrieving offline certificate
 	vip     *viper.Viper

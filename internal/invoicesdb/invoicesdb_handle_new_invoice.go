@@ -48,10 +48,12 @@ func (idb *InvoicesDB) handleNewInvoice(
 		},
 	)
 
+	autoCorrectionEnabled := idb.subjectSettings.Import != nil && idb.subjectSettings.Import.AutoCorrection.Enabled
+
 	// now let's save info about the invoice to the annual registry
 	return annualRegistry.AddInvoice(
 		inv,
 		checksum,
-		idb.importCfg.AutoCorrection.Enabled,
+		autoCorrectionEnabled,
 	)
 }
