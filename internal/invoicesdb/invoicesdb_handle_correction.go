@@ -44,32 +44,48 @@ func (idb *InvoicesDB) handleCorrection(
 
 	// we can only find the difference in items if the content is serialized
 	if originalInvoiceData.Contents != "" {
-		serializedInvoice, err := originalInvoiceData.Unmarshall()
+		originalInvoice, err := originalInvoiceData.Unmarshall()
 		if err != nil {
 			return err
 		}
 
-		for itemNo, itemData := range inv.Invoice.Items {
-			originalItem := serializedInvoice.Items[itemNo]
-
-			if itemData == originalItem {
-				logging.GenerateLogger.Debug("pozycje są identyczne", "item", itemNo)
-				continue
+		if len(inv.Invoice.Items) == 0 {
+			// a special case - we're zeroing out the original invoice
+			if err = correction_RemoveAllItems(
+				originalInvoice,
+				inv.Invoice,
+				correctionInvoice,
+			); err != nil {
+				return err
 			}
-
-			var originalItemClone *invoice.InvoiceItem = &invoice.InvoiceItem{}
-			*originalItemClone = *originalItem
-
-			originalItemClone.Before = true
-			originalItemClone.RowNo = itemNo + 1
-
-			itemData.RowNo = itemNo + 1
-
-			if err = correctionInvoice.AddCorrectedItem(originalItemClone, itemData); err != nil {
-				return errors.Join(errAddingItem, err)
+		} else if len(inv.Invoice.Items) > len(originalInvoice.Items) {
+			// a new item has been added
+			if err = correction_ItemHasBeenAdded(
+				originalInvoice,
+				inv.Invoice,
+				correctionInvoice,
+			); err != nil {
+				return err
+			}
+		} else if len(inv.Invoice.Items) < len(originalInvoice.Items) {
+			// item has been removed
+			if err = correction_ItemHasBeenRemoved(
+				originalInvoice,
+				inv.Invoice,
+				correctionInvoice,
+			); err != nil {
+				return err
+			}
+		} else {
+			// number of items is equal
+			if err = correction_NumberOfItemsEqual(
+				originalInvoice,
+				inv.Invoice,
+				correctionInvoice,
+			); err != nil {
+				return err
 			}
 		}
-
 	}
 
 	for _, correction := range originalInvoiceData.Corrections {
