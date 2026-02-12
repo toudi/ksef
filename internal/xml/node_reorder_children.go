@@ -25,10 +25,21 @@ func (node *Node) sortChildrenRecurse(path string, ordering map[string]map[strin
 
 	sort.Slice(children, func(i, j int) bool {
 		if children[i].Name == "FaWiersz" && children[j].Name == "FaWiersz" {
-			var s1 = children[i].Children[0].Value
-			var s2 = children[j].Children[0].Value
+			s1 := children[i].Children[0].Value
+			s2 := children[j].Children[0].Value
 
-			return s1 < s2
+			if s1 < s2 {
+				return true
+			}
+
+			// if s1 == s2 then let's arbitrarily position rows that are marked with "StanPrzed"
+			// before these which do not have this flag
+			if s1 == s2 {
+				before1 := findChildOr(children[i].Children, "StanPrzed", "0")
+				before2 := findChildOr(children[j].Children, "StanPrzed", "0")
+
+				return before1 == "1" && before2 == "0"
+			}
 		}
 		return pathOrdering[children[i].Name] < pathOrdering[children[j].Name]
 	})
@@ -40,4 +51,14 @@ func (node *Node) sortChildrenRecurse(path string, ordering map[string]map[strin
 	}
 
 	return nil
+}
+
+func findChildOr(children []*Node, nodeName string, defaultValue string) string {
+	for _, child := range children {
+		if child.Name == nodeName {
+			return child.Value
+		}
+	}
+
+	return defaultValue
 }
