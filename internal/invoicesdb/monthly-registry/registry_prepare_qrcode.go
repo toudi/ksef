@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	contextIdentifierNIP = "Nip"
+	contextIdentifierNIP        = "Nip"
+	contextIdentifierInternalId = "InternalId"
 )
 
 func generateInvoiceQRCodeInner(qrcodeURL string, issuerNIP string, issued time.Time, checksumBytes []byte) string {
@@ -53,13 +54,19 @@ func (i *Invoice) generateCertificateQRCode(
 	if err != nil {
 		return "", err
 	}
+	contextIdentifier := contextIdentifierNIP
 	ctxIdentValue := parsed.Invoice.Issuer.NIP
+	internalId := certificate.GetInternalIDForNIP(parsed.Invoice.Issuer.NIP)
+	if internalId != nil {
+		contextIdentifier = contextIdentifierInternalId
+		ctxIdentValue = *internalId
+	}
 	issuerNIP := parsed.Invoice.Issuer.NIP
 	// note: here we do *not* use the leading https://
 	signingContent, _ := url.JoinPath(
 		strings.TrimPrefix(qrcodeURL, "https://"),
 		"certificate",
-		contextIdentifierNIP,
+		contextIdentifier,
 		ctxIdentValue,
 		issuerNIP,
 		certificate.SerialNumber,

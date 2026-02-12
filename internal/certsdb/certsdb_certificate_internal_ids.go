@@ -59,3 +59,13 @@ func (cdb *CertificatesDB) RemoveInternalIdsFromCertificate(
 		},
 	)
 }
+
+func (c Certificate) GetInternalIDForNIP(nip string) *string {
+	for _, internalId := range c.InternalIDs {
+		if strings.HasPrefix(internalId, nip) {
+			return lo.ToPtr(internalId)
+		}
+	}
+
+	return nil
+}

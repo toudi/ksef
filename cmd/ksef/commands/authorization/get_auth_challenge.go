@@ -3,6 +3,7 @@ package authorization
 import (
 	"fmt"
 	"ksef/cmd/ksef/flags"
+	"ksef/internal/certsdb"
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/token"
@@ -32,6 +33,11 @@ func dumpAuthChallenge(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
 	vip.Set(auth.FlagDoNotRestoreTokens, "true")
 
+	certsDB, err := certsdb.OpenOrCreate(vip)
+	if err != nil {
+		return err
+	}
+
 	output, err := cmd.Flags().GetString(flagOutput)
 	if output == "" || err != nil {
 		return fmt.Errorf("nie podano pliku wyjścia")
@@ -40,6 +46,7 @@ func dumpAuthChallenge(cmd *cobra.Command, _ []string) error {
 	authValidator := token.NewAuthHandler(
 		vip,
 		token.WithDumpChallenge(output),
+		token.WithCertsDB(certsDB),
 	)
 	cli, err := v2.NewClient(cmd.Context(), vip, v2.WithAuthValidator(authValidator))
 	if err != nil {

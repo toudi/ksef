@@ -2,6 +2,7 @@ package certificates
 
 import (
 	"bufio"
+	"errors"
 	"iter"
 	"ksef/internal/certsdb"
 	"os"
@@ -64,7 +65,7 @@ func internalIdsIterator(flagSet *pflag.FlagSet) iter.Seq[string] {
 	idsSlice, _ := flagSet.GetStringSlice(flagNameIds)
 	return func(yield func(string) bool) {
 		fileReader, err := os.Open(idsSlice[0])
-		if err != nil && err == os.ErrNotExist {
+		if err != nil && errors.Is(err, os.ErrNotExist) {
 			// this is just a regular input, not file-based
 			for _, id := range idsSlice {
 				if !yield(id) {
