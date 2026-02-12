@@ -3,6 +3,7 @@ package invoice
 import (
 	"ksef/internal/money"
 	"math"
+	"reflect"
 )
 
 type InvoiceItem struct {
@@ -33,4 +34,15 @@ func (ii *InvoiceItem) Amount() Amount {
 	amount.VAT = amount.Gross - amount.Net
 
 	return amount
+}
+
+func (ii InvoiceItem) IsEmpty() bool {
+	// this may be tricky, however we've got a (sort of) nasty trick up uour sleves
+	// what we can do is we can initialize an empty item, set the row number to the one
+	// we're comparing and compare that instead. so the end result would be to compare
+	// an item that consists of all of the zero values and checking if this one (ii)
+	// also consists of all of the zero values (apart from the row number)
+	emptyItem := InvoiceItem{RowNo: ii.RowNo, Before: ii.Before}
+
+	return reflect.DeepEqual(ii, emptyItem)
 }

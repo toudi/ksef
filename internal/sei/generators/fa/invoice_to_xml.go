@@ -59,23 +59,27 @@ func (fg *FAGenerator) InvoiceToXMLTree(invoice *invoice.Invoice) (*xml.Node, er
 		if item.Before {
 			faChildNode.SetValue("StanPrzed", "1")
 		}
-		faChildNode.SetValue("P_7", item.Description)
-		if item.Unit != "" {
-			faChildNode.SetValue("P_8A", item.Unit)
+		// an empty item may appear on correction invoices when a before / after item
+		// does not have any values - thus marking it as empty
+		if !item.IsEmpty() {
+			faChildNode.SetValue("P_7", item.Description)
+			if item.Unit != "" {
+				faChildNode.SetValue("P_8A", item.Unit)
+			}
+			faChildNode.SetValue("P_8B", money.RenderAmountFromCurrencyUnits(item.Quantity.Amount, uint8(item.Quantity.DecimalPlaces)))
+			if !item.UnitPrice.IsGross {
+				faChildNode.SetValue("P_11", money.RenderAmountFromCurrencyUnits(item.Amount().Net, 2))
+			} else {
+				faChildNode.SetValue("P_11A", money.RenderAmountFromCurrencyUnits(item.Amount().Gross, 2))
+			}
+			faChildNode.SetValue("P_12", item.UnitPrice.Vat.Description)
+			unitPriceField := "P_9B"
+			if !item.UnitPrice.IsGross {
+				unitPriceField = "P_9A"
+			}
+			faChildNode.SetValue(unitPriceField, money.RenderAmountFromCurrencyUnits(item.UnitPrice.Amount, uint8(item.UnitPrice.DecimalPlaces)))
+			faChildNode.SetValuesFromMap(item.Attributes)
 		}
-		faChildNode.SetValue("P_8B", money.RenderAmountFromCurrencyUnits(item.Quantity.Amount, uint8(item.Quantity.DecimalPlaces)))
-		if !item.UnitPrice.IsGross {
-			faChildNode.SetValue("P_11", money.RenderAmountFromCurrencyUnits(item.Amount().Net, 2))
-		} else {
-			faChildNode.SetValue("P_11A", money.RenderAmountFromCurrencyUnits(item.Amount().Gross, 2))
-		}
-		faChildNode.SetValue("P_12", item.UnitPrice.Vat.Description)
-		unitPriceField := "P_9B"
-		if !item.UnitPrice.IsGross {
-			unitPriceField = "P_9A"
-		}
-		faChildNode.SetValue(unitPriceField, money.RenderAmountFromCurrencyUnits(item.UnitPrice.Amount, uint8(item.UnitPrice.DecimalPlaces)))
-		faChildNode.SetValuesFromMap(item.Attributes)
 		fieldToVatRatesMapping.Accumulate(item)
 	}
 
