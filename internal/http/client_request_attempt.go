@@ -27,7 +27,10 @@ func (rb *Client) requestAttempt(
 	if config.Method != "" {
 		method = config.Method
 	}
-	logger := logging.HTTPLogger.With("method", method, "url", fullUrl.String(), "attempt", attempt+1, "max", maxAttempts)
+	logger := logging.HTTPLogger.With(
+		"method", method, "url", fullUrl.String(), "attempt", attempt+1, "max", maxAttempts,
+		"operationId", config.OperationId,
+	)
 
 	// retrieve auth token if required:
 	var bearerToken string
@@ -54,7 +57,7 @@ func (rb *Client) requestAttempt(
 	// call rate limiter if possible - but before initializing context with timeout.
 	// otherwise the request timeout would hit due to rate limiting.
 	if rb.rateLimiter != nil {
-		logger.Debug("calling rateLimiter.Wait()")
+		logger.Debug("calling rateLimiter.Wait()", "operationId", config.OperationId)
 		rb.rateLimiter.Wait(config.OperationId)
 	}
 
