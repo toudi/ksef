@@ -1,7 +1,6 @@
 package ratelimiter
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -66,7 +65,6 @@ func (b *callHistory) IsAllowed(slot time.Duration, now time.Time) (isAllowed bo
 	// and, if not - how much do we have to wait
 	if !isAllowed {
 		waitTime = earliestEntry.Add(slot).Sub(now).Round(time.Second)
-		fmt.Printf("calculated wait time as %v\n", waitTime)
 	}
 	return isAllowed, waitTime
 }
