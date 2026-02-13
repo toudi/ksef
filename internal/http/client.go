@@ -20,6 +20,7 @@ var (
 	ErrUnexpectedStatusCode = errors.New("unexpected status code")
 	ErrUnableToCopyResponse = errors.New("unable to copy HTTP response to buffer")
 	ErrUnexpectedBody       = errors.New("unexpected body (content type not specified and body is not a reader)")
+	ErrUnwindingBody        = errors.New("unable to rewind body reader")
 )
 
 const (
@@ -68,6 +69,14 @@ func (rb *Client) Request(
 	var resp *http.Response
 
 	for numRetries := range maxRetries {
+		// if the request is a bytes.Buffer then we need to temporarily
+		// read it to memory so that we can rewind it after failed request.
+		// otherwise the content would be lost since bytes.Buffer implements
+		// Reader but not Seeker
+		if body, isBuffer := config.Body.(*bytes.Buffer); isBuffer {
+			logging.HTTPLogger.Debug("replace body with reader in order to be able to rewind it in case the request fails")
+			config.Body = bytes.NewReader(body.Bytes())
+		}
 		resp, err = rb.requestAttempt(ctx, config, endpoint, numRetries, maxRetries)
 		if err != nil {
 			// let's check if the returned error code is telling us to slow down
@@ -75,6 +84,15 @@ func (rb *Client) Request(
 				secondsToWait, _ := strconv.Atoi(resp.Header.Get("Retry-After"))
 				if secondsToWait > 0 {
 					time.Sleep(time.Duration(secondsToWait) * time.Second)
+				}
+			}
+			if config.Body != nil {
+				logging.HTTPLogger.Debug("request has failed but it has a body. trying to rewind it so it can be resent")
+				if seeker, ok := config.Body.(io.Seeker); ok {
+					_, err := seeker.Seek(0, io.SeekStart)
+					if err != nil {
+						return nil, errors.Join(ErrUnwindingBody, err)
+					}
 				}
 			}
 			continue
