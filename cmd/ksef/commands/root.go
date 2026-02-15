@@ -85,9 +85,11 @@ func setContext(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	if err = logging.InitLogging(logOutput); err != nil {
-		fmt.Printf("[ ERROR ] Błąd inicjalizacji logowania: %v", err)
-		return err
+	if cmd.Use != "version" {
+		if err = logging.InitLogging(logOutput); err != nil {
+			fmt.Printf("[ ERROR ] Błąd inicjalizacji logowania: %v", err)
+			return err
+		}
 	}
 
 	logging.SeiLogger.Info("start programu")
