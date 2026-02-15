@@ -4,13 +4,15 @@ import (
 	"encoding/xml"
 	"ksef/internal/runtime"
 	"os"
+	"strings"
 
 	"github.com/spf13/viper"
 )
 
 type AuthChallenge struct {
-	XMLName xml.Name `xml:"AuthTokenRequest"`
-	NIP     string   `xml:"ContextIdentifier>Nip"`
+	XMLName    xml.Name `xml:"AuthTokenRequest"`
+	NIP        string   `xml:"ContextIdentifier>Nip"`
+	InternalId string   `xml:"ContextIdentifier>InternalId"`
 }
 
 func GetNIPFromChallengeFile(challengeFile string) (challengeBytes []byte, nip string, err error) {
@@ -22,6 +24,11 @@ func GetNIPFromChallengeFile(challengeFile string) (challengeBytes []byte, nip s
 	if err = xml.Unmarshal(challengeBytes, &challenge); err != nil {
 		return nil, "", err
 	}
+	var NIP string = challenge.NIP
+	if challenge.InternalId != "" {
+		internalIdParts := strings.Split(challenge.InternalId, "-")
+		NIP = internalIdParts[0]
+	}
 	runtime.SetNIP(viper.GetViper(), challenge.NIP)
-	return challengeBytes, challenge.NIP, nil
+	return challengeBytes, NIP, nil
 }

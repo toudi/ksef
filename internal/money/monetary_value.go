@@ -104,7 +104,8 @@ func (m *MonetaryValue) LoadFromString(value string) error {
 
 	numberParts := strings.SplitN(value, ".", 2)
 	var decimalPart int = 0
-	numberParts[1] = strings.TrimLeft(numberParts[1], "0")
+	// zeroes on the left (after the dot) **ARE** significant
+	// therefore we cannot trim them on left (as we do with numberParts[0] - whole number part)
 	if numberParts[0] != "" {
 		decimalPart, err = strconv.Atoi(numberParts[0])
 		if err != nil {

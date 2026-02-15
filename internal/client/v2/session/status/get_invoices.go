@@ -3,6 +3,7 @@ package status
 import (
 	"context"
 	"fmt"
+	ratelimits "ksef/internal/client/v2/rate-limits"
 	HTTP "ksef/internal/http"
 	"ksef/internal/utils"
 	"net/http"
@@ -88,12 +89,11 @@ func (sc *SessionStatusChecker) GetInvoiceList(
 	var sessionInvoices []InvoiceInfo
 	var err error
 
-	var invoicesResponse SessionInvoicesResponse
-
 	var finished bool = false
 	var continuationToken string
 
 	for !finished {
+		var invoicesResponse SessionInvoicesResponse
 		headers := map[string]string{}
 		if continuationToken != "" {
 			headers["x-continuation-token"] = continuationToken
@@ -108,6 +108,7 @@ func (sc *SessionStatusChecker) GetInvoiceList(
 				DestContentType: HTTP.JSON,
 				ExpectedStatus:  http.StatusOK,
 				Method:          http.MethodGet,
+				OperationId:     ratelimits.OperationSessionInvoiceList,
 			},
 			fmt.Sprintf(endpointSessionInvoices, uploadSessionId),
 		)
@@ -115,7 +116,9 @@ func (sc *SessionStatusChecker) GetInvoiceList(
 			return nil, err
 		}
 
-		finished = invoicesResponse.ContinuationToken == ""
+		continuationToken = invoicesResponse.ContinuationToken
+
+		finished = continuationToken == ""
 
 		for _, invoiceInfo := range invoicesResponse.Invoices {
 			var allDetails []string

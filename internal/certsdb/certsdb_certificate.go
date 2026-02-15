@@ -50,6 +50,10 @@ type Certificate struct {
 	CSRData         string  `yaml:"csr-data,omitempty"`
 	ProfileName     string  `yaml:"profile,omitempty"`
 	CN              *string `yaml:"cn"`
+	// https://www.gov.pl/web/finanse/ksef-kiedy-masz-w-firmie-wiecej-pracownikow
+	// internal ID has the following format:
+	// NIP-12345
+	InternalIDs []string `yaml:"internal-ids,omitempty"`
 }
 
 func (c Certificate) Filename() string {

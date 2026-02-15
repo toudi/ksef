@@ -3,6 +3,7 @@ package status
 import (
 	"context"
 	"fmt"
+	ratelimits "ksef/internal/client/v2/rate-limits"
 	HTTP "ksef/internal/http"
 	"net/http"
 )
@@ -23,10 +24,10 @@ func (sc *SessionStatusChecker) CheckSessionStatus(
 			DestContentType: HTTP.JSON,
 			ExpectedStatus:  http.StatusOK,
 			Method:          http.MethodGet,
+			OperationId:     ratelimits.OperationSessionMisc,
 		},
 		fmt.Sprintf(endpointSessionStatus, sessionId),
 	)
-
 	if err != nil {
 		return nil, err
 	}

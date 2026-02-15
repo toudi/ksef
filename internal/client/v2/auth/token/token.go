@@ -92,7 +92,7 @@ func (e *TokenHandler) initialize(ctx context.Context, errChan chan error) {
 
 func (e *TokenHandler) Initialize(ctx context.Context, httpClient *http.Client) error {
 	e.httpClient = httpClient
-	var errChan = make(chan error)
+	errChan := make(chan error)
 	go e.initialize(ctx, errChan)
 	err := <-errChan
 	return err
@@ -117,7 +117,12 @@ func (e *TokenHandler) ValidateChallenge(ctx context.Context, challenge validato
 		return err
 	}
 
-	if err = dumpChallengeToWriter(challenge, nip, sourceDocument); err != nil {
+	certificate, err := e.certsDB.GetByUsage(certsdb.UsageAuthentication, nip)
+	if err != nil {
+		return err
+	}
+
+	if err = dumpChallengeToWriter(challenge, nip, certificate, sourceDocument); err != nil {
 		logging.AuthLogger.Error("nie udało się zapisać wyzwania do bufora", "err", err)
 		return err
 	}
@@ -130,10 +135,6 @@ func (e *TokenHandler) ValidateChallenge(ctx context.Context, challenge validato
 		return nil
 	}
 	// great. now we can sign it using the certificate
-	certificate, err := e.certsDB.GetByUsage(certsdb.UsageAuthentication, nip)
-	if err != nil {
-		return err
-	}
 	var signedDocument bytes.Buffer
 	if err = xades.SignAuthChallenge(sourceDocument, certificate, &signedDocument); err != nil {
 		return err

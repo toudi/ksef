@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AuthTokenRequest xmlns="http://ksef.mf.gov.pl/auth/token/2.0">
+    <Challenge>{{.Challenge}}</Challenge>
+    <ContextIdentifier>
+        <InternalId>{{.InternalId}}</InternalId>
+    </ContextIdentifier>
+    <SubjectIdentifierType>certificateSubject</SubjectIdentifierType>
+</AuthTokenRequest>

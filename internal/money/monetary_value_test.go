@@ -50,6 +50,10 @@ func TestMonetaryValue(t *testing.T) {
 			"12.",
 			money.MonetaryValue{Amount: 12},
 		},
+		{
+			"0.015723",
+			money.MonetaryValue{Amount: 15723, DecimalPlaces: 6},
+		},
 	} {
 		t.Run(test.input, func(t *testing.T) {
 			var m money.MonetaryValue

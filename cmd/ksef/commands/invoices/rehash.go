@@ -2,6 +2,7 @@ package invoices
 
 import (
 	"ksef/cmd/ksef/flags"
+	annualregistry "ksef/internal/invoicesdb/annual-registry"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	"strconv"
 	"time"
@@ -51,7 +52,32 @@ func rehashRegistryRun(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// TODO: repopulate ksef ref no's
+	annualRegistry, err := annualregistry.OpenForMonth(
+		vip, month,
+	)
+	if err != nil {
+		return err
+	}
 
-	return registry.Save()
+	for _, invoice := range registry.Invoices {
+		if invoice.KSeFRefNo == "" {
+			continue
+		}
+
+		if err = annualRegistry.UpdateInvoiceByChecksum(
+			invoice.Checksum,
+			func(_invoice *annualregistry.Invoice) error {
+				_invoice.KSeFRefNo = invoice.KSeFRefNo
+				return nil
+			},
+		); err != nil {
+			return err
+		}
+	}
+
+	if err = registry.Save(); err != nil {
+		return err
+	}
+
+	return annualRegistry.Save()
 }
