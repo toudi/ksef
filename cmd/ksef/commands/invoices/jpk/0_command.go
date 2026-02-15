@@ -30,7 +30,7 @@ func init() {
 	flagSet := JPKCommand.Flags()
 	flags.NIP(flagSet)
 	JPKCommand.MarkFlagRequired(flags.FlagNameNIP)
-	JPKCommand.AddCommand(jpkExclude, jpk50PercVAT, jpkClearFlags, jpkDumpItems)
+	JPKCommand.AddCommand(jpkExclude, jpk50PercVAT, jpkFixedAssets, jpkClearFlags, jpkDumpItems)
 }
 
 func generateJPK(cmd *cobra.Command, args []string) error {

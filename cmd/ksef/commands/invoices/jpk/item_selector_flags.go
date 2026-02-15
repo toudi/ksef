@@ -62,7 +62,7 @@ func getItemHash(xmlInvoice *monthlyregistry.XMLInvoice, itemNumber string) (has
 		return shared.ItemHash{}, err
 	}
 
-	if len(xmlInvoice.Items) <= itemNo {
+	if len(xmlInvoice.Items) < itemNo {
 		return shared.ItemHash{}, fmt.Errorf("item %d not found", itemNo)
 	}
 	itemNo -= 1
