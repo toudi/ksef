@@ -11,8 +11,9 @@ import (
 )
 
 var (
-	errUnableToReadFile = errors.New("unable to read invoice file")
-	errUnableToParseXML = errors.New("unable to parse XML")
+	errUnableToReadFile           = errors.New("unable to read invoice file")
+	errUnableToParseXML           = errors.New("unable to parse XML")
+	errUnableToParseGeneratedTime = errors.New("unable to parse generated time")
 )
 
 type Item struct {
@@ -38,16 +39,17 @@ func (i *Item) Hash() shared.ItemHash {
 type XMLInvoice struct {
 	XMLName             xml.Name                     `xml:"Faktura"`
 	HeaderFormCode      sessionTypes.InvoiceFormCode `xml:"Naglowek>KodFormularza"`
-	GeneratedTime       time.Time                    `xml:"Naglowek>DataWytworzeniaFa"`
-	Issuer              string                       `xml:"Podmiot1>DaneIdentyfikacyjne>NIP"`
-	IssuerName          string                       `xml:"Podmiot1>DaneIdentyfikacyjne>Nazwa"`
-	RecipientName       string                       `xml:"Podmiot2>DaneIdentyfikacyjne>Nazwa"`
-	Recipient           string                       `xml:"Podmiot2>DaneIdentyfikacyjne>NIP"`
-	RecipientVatIdEU    string                       `xml:"Podmiot2>DaneIdentyfikacyjne>NrVatUE"`
-	RecipientVatIdNonEU string                       `xml:"Podmiot2>DaneIdentyfikacyjne>NrID"`
-	Issued              string                       `xml:"Fa>P_1"`
-	InvoiceNumber       string                       `xml:"Fa>P_2"`
-	Items               []Item                       `xml:"Fa>FaWiersz"`
+	GeneratedTimeRaw    string                       `xml:"Naglowek>DataWytworzeniaFa"`
+	GeneratedTime       time.Time
+	Issuer              string `xml:"Podmiot1>DaneIdentyfikacyjne>NIP"`
+	IssuerName          string `xml:"Podmiot1>DaneIdentyfikacyjne>Nazwa"`
+	RecipientName       string `xml:"Podmiot2>DaneIdentyfikacyjne>Nazwa"`
+	Recipient           string `xml:"Podmiot2>DaneIdentyfikacyjne>NIP"`
+	RecipientVatIdEU    string `xml:"Podmiot2>DaneIdentyfikacyjne>NrVatUE"`
+	RecipientVatIdNonEU string `xml:"Podmiot2>DaneIdentyfikacyjne>NrID"`
+	Issued              string `xml:"Fa>P_1"`
+	InvoiceNumber       string `xml:"Fa>P_2"`
+	Items               []Item `xml:"Fa>FaWiersz"`
 }
 
 func (xi *XMLInvoice) Participants() map[string]any {
@@ -90,6 +92,10 @@ func ParseInvoice(sourceFile string) (*XMLInvoice, string, error) {
 	}
 	if err = xml.Unmarshal(xmlContents, &invoice); err != nil {
 		return nil, "", errors.Join(errUnableToParseXML, err)
+	}
+
+	if invoice.GeneratedTime, err = utils.ParseTimeFromString(invoice.GeneratedTimeRaw); err != nil {
+		return nil, "", errors.Join(errUnableToParseGeneratedTime, err)
 	}
 
 	return &invoice, utils.Sha256Hex(xmlContents), nil
