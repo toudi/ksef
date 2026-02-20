@@ -33,12 +33,23 @@
 
 #{ participants(invoice) }
 
-#import "./components/items.typ": items, vat-summary
+#if extract(invoice, "Fa.RodzajFaktury") == "KOR" {
+  import "./components/items-delta.typ": delta-summary, items-delta
 
-#v(2em)
+  [== Przed korektą]
+  { items-delta(invoice, true) }
+  [== Po korekcie]
+  { items-delta(invoice, false) }
+  [== Wartość korekty]
+  delta-summary(invoice)
+} else {
+  import "./components/items.typ": items, vat-summary
 
-#{ items(invoice) }
+  v(2em)
 
-#v(1em)
+  { items(invoice) }
 
-#align(end, { vat-summary(invoice) })
+  v(1em)
+
+  align(end, { vat-summary(invoice) })
+}

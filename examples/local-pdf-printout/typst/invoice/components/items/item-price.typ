@@ -14,27 +14,36 @@
 
   if vat-field.match(regex("^[0-9]+$")) != none {
     vat-multiplier = decimal(vat-field)
-    vat-divisor = (100 + vat-multiplier) / decimal(100)
+    vat-divisor = vat-multiplier / decimal(100)
   }
+
+  let gross-amount = decimal(0)
+  let net-amount = decimal(0)
+  let vat-amount = decimal(0)
 
   if net-price-node.len() > 0 {
     // we have to calculate net -> gross
-    net-price = decimal(net-price-node.first().children.first())
+    net-price = calc.round(decimal(net-price-node.first().children.first()), digits: 2)
+    net-amount = calc.round(net-price * quantity, digits: 2)
+    vat-amount = calc.round(net-amount * vat-divisor, digits: 2)
+
+    gross-amount = net-amount + vat-amount
     gross-price = net-price
     if vat-multiplier > 0 {
-      gross-price = decimal(net-price * vat-divisor)
+      gross-price = calc.round(decimal(net-price * (1 + vat-divisor)), digits: 2)
     }
   } else {
     // we have to calculate gross -> net
-    gross-price = decimal(gross-price-node.first().children.first())
+    gross-price = calc.round(decimal(gross-price-node.first().children.first()), digits: 2)
+    gross-amount = calc.round(gross-price * quantity, digits: 2)
+    net-amount = calc.round(gross-amount / (1 + vat-divisor), digits: 2)
+    vat-amount = gross-amount - net-amount
     net-price = gross-price
     if vat-divisor > 0 {
-      net-price = decimal(gross-price / vat-divisor)
+      net-price = calc.round(decimal(gross-price / (1 + vat-divisor)), digits: 2)
     }
   }
-  let gross-amount = gross-price * quantity
-  let net-amount = net-price * quantity
-  let vat-amount = (gross-amount) - (net-amount)
+
   return (
     net: calc.round(net-price, digits: 2),
     gross: calc.round(gross-price, digits: 2),

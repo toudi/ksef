@@ -9,12 +9,18 @@
     header_items.push([Data sprzedaży])
     header_items.push([#{ extract(invoice, "Fa.P_6") }])
   }
+
+  let is_correction = extract(invoice, "Fa.RodzajFaktury") == "KOR"
   grid(
     columns: 1,
     align: horizon,
-    [= Faktura VAT],
-    v(0.2em),
+    row-gutter: 0.3em,
+    [= #if is_correction { [Faktura korygująca] } else { [Faktura VAT] }],
+    v(0.5em),
     [=== #{ extract(invoice, "Fa.P_2") }],
+    if is_correction {
+      [Numer faktury korygowanej: #{ text(extract(invoice, "Fa.DaneFaKorygowanej.NrFaKorygowanej"), weight: "bold") }]
+    },
     v(3em),
     [#{
       table(
