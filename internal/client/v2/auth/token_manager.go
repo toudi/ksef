@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	endpointAuthTokenRefresh     = "/api/v2/auth/token/refresh"
+	endpointAuthTokenRefresh     = "/v2/auth/token/refresh"
 	FlagDoNotRestoreTokens       = "no-restore-tokens"
 	FlagExitAfterPersistingToken = "exit-after-persisting-token"
 )

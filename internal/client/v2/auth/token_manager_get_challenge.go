@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	endpointAuthChallenge = "/api/v2/auth/challenge"
+	endpointAuthChallenge = "/v2/auth/challenge"
 )
 
 func (t *TokenManager) getAuthChallenge(ctx context.Context) (*validator.AuthChallenge, error) {

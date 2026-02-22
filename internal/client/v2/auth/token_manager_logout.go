@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	endpointLogout = "/api/v2/auth/sessions/%s"
+	endpointLogout = "/v2/auth/sessions/%s"
 )
 
 func (t *TokenManager) Logout(sessionRefNo string) error {

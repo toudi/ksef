@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const endpointRateLimits = "/api/v2/rate-limits"
+const endpointRateLimits = "/v2/rate-limits"
 
 type RateLimitsEntry struct {
 	PerSecond int `json:"perSecond"`

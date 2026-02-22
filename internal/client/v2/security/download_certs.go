@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-const endpointDownloadCertificates = "/api/v2/security/public-key-certificates"
+const endpointDownloadCertificates = "/v2/security/public-key-certificates"
 
 type certificateRow struct {
 	Certificate string          `json:"certificate"`

@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	endpointCreatePerson = "/api/v2/testdata/person"
+	endpointCreatePerson = "/v2/testdata/person"
 )
 
 type BindNipToPeselRequest struct {

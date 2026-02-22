@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-const endpointSessionClose = "/api/v2/sessions/online/%s/close"
+const endpointSessionClose = "/v2/sessions/online/%s/close"
 
 func (s *Session) closeUploadSession(ctx context.Context, us *uploadSession) error {
 	_, err := s.httpClient.Request(

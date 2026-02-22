@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-const endpointSessionInvoices = "/api/v2/sessions/%s/invoices"
+const endpointSessionInvoices = "/v2/sessions/%s/invoices"
 
 const (
 	BuyerTypeNIP      = "Nip"

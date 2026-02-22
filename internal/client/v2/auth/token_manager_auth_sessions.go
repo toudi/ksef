@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	endpointAuthSessions = "/api/v2/auth/sessions"
+	endpointAuthSessions = "/v2/auth/sessions"
 )
 
 var (

@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	endpointInvoicesExport       = "/api/v2/invoices/exports"
-	endpointInvoicesExportStatus = "/api/v2/invoices/exports/%s"
+	endpointInvoicesExport       = "/v2/invoices/exports"
+	endpointInvoicesExportStatus = "/v2/invoices/exports/%s"
 )
 
 const (

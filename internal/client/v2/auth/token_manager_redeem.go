@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	endpointAuthTokenRedeem = "/api/v2/auth/token/redeem"
+	endpointAuthTokenRedeem = "/v2/auth/token/redeem"
 )
 
 func (t *TokenManager) redeemTokens(ctx context.Context) error {
@@ -20,6 +20,7 @@ func (t *TokenManager) redeemTokens(ctx context.Context) error {
 		Headers:         map[string]string{"Authorization": "Bearer " + t.validationReference.AuthenticationToken.Token},
 		Dest:            &tokens,
 		DestContentType: http.JSON,
+		ExpectedStatus:  baseHttp.StatusOK,
 	}, endpointAuthTokenRedeem)
 	if err != nil {
 		logging.AuthLogger.Error("unable to redeem token", "err", err)

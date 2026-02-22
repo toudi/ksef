@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	endpointBatchSessionInit  = "/api/v2/sessions/batch"
-	endpointBatchSessionClose = "/api/v2/sessions/batch/%s/close"
+	endpointBatchSessionInit  = "/v2/sessions/batch"
+	endpointBatchSessionClose = "/v2/sessions/batch/%s/close"
 )
 
 var (

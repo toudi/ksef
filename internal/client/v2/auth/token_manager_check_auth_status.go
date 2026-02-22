@@ -9,12 +9,12 @@ import (
 )
 
 const (
-	endpointAuthStatus        = "/api/v2/auth/%s"
+	endpointAuthStatus        = "/v2/auth/%s"
 	authStatusCodeSuccess int = 200
 )
 
 func (t *TokenManager) checkAuthStatus(ctx context.Context) error {
-	var authHeaders = map[string]string{
+	authHeaders := map[string]string{
 		"Authorization": "Bearer " + t.validationReference.AuthenticationToken.Token,
 	}
 

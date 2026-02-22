@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	endpointInitializeSession    = "/api/v2/sessions/online"
-	endpointSessionUploadInvoice = "/api/v2/sessions/online/%s/invoices"
+	endpointInitializeSession    = "/v2/sessions/online"
+	endpointSessionUploadInvoice = "/v2/sessions/online/%s/invoices"
 )
 
 type uploadSessionRequest struct {
@@ -67,7 +67,6 @@ func (s *Session) initialize(ctx context.Context, invoiceFormCode types.InvoiceF
 		},
 		endpointInitializeSession,
 	)
-
 	if err != nil {
 		return nil, err
 	}

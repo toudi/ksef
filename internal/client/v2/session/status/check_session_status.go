@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-const endpointSessionStatus = "/api/v2/sessions/%s"
+const endpointSessionStatus = "/v2/sessions/%s"
 
 func (sc *SessionStatusChecker) CheckSessionStatus(
 	ctx context.Context,

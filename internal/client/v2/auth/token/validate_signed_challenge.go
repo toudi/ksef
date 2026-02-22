@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	endpointValidateSignedChallenge = "/api/v2/auth/xades-signature"
+	endpointValidateSignedChallenge = "/v2/auth/xades-signature"
 )
 
 func validateSignedChallenge(ctx context.Context, httpClient *http.Client, signedChallenge io.Reader, success func(resp validator.ValidationReference)) error {

@@ -18,6 +18,10 @@ var (
 	errProcessingDownloadedInvoice = errors.New("error processing downloaded invoice")
 )
 
+const (
+	endpointInvoicesMetadata = "/v2/invoices/query/metadata"
+)
+
 func (sd *simpleDownloader) fetchInvoices(
 	ctx context.Context,
 	req downloadertypes.InvoiceListRequest,

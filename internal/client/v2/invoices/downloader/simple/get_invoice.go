@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	endpointDownloadInvoice = "/api/v2/invoices/ksef/%s"
+	endpointDownloadInvoice = "/v2/invoices/ksef/%s"
 )
 
 func (sd *simpleDownloader) downloadInvoice(
