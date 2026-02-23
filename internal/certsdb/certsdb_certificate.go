@@ -130,7 +130,20 @@ func (c *Certificate) SignContent(content []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	digest := r.Bytes()
-	digest = append(digest, s.Bytes()...)
+
+	// a fix for situations where either r or s would have leading
+	// 0 bytes which would yield a shorter final buffer.
+	// with FillBytes we're always filling up to the whole content,
+	// padding with zero bytes if required.
+	// also, for reference:
+	// https://github.com/golang-jwt/jwt/blob/main/ecdsa.go#L127
+	curveByteSize := (ecPrivKey.Curve.Params().BitSize + 7) / 8
+	digest := make([]byte, 2*curveByteSize)
+	r.FillBytes(digest[:curveByteSize])
+	s.FillBytes(digest[curveByteSize:])
+
+	// digest := make([]byte, ecPrivKey.Params().BitSize)
+	// digest := r.Bytes()
+	// digest = append(digest, s.Bytes()...)
 	return digest, nil
 }
