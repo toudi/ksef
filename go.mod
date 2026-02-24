@@ -20,16 +20,17 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/wamuir/svg-qr-code v0.0.0-20210725140500-9525ec975db7
 	github.com/xuri/excelize/v2 v2.8.0
-	github.com/zalando/go-keyring v0.2.3
+	github.com/zalando/go-keyring v0.2.6
 	golang.org/x/crypto v0.22.0
 	golang.org/x/term v0.37.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
+	al.essio.dev/pkg/shellescape v1.5.1 // indirect
 	github.com/alessio/shellescape v1.4.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.2.0 // indirect
-	github.com/danieljoos/wincred v1.2.0 // indirect
+	github.com/danieljoos/wincred v1.2.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
