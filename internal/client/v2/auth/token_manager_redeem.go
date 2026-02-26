@@ -27,15 +27,7 @@ func (t *TokenManager) redeemTokens(ctx context.Context) error {
 		return err
 	}
 
-	t.updateAuthorizationToken(
-		tokens.AuthorizationToken.Token,
-		func() {
-			t.sessionTokens = &tokens
-			if err := t.persistTokens(); err != nil {
-				logging.AuthLogger.Error("unable to persist tokens", "err", err)
-			}
-		},
-	)
+	t.updateSessionTokens(&tokens)
 
 	if t.vip.GetBool(FlagExitAfterPersistingToken) {
 		t.finished = true

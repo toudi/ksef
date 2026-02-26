@@ -11,7 +11,7 @@ type Limiter struct {
 	limits []RateLimit
 }
 
-func (l *Limiter) Wait() {
+func (l *Limiter) Wait() time.Duration {
 	var allowed bool = false
 	var waitTime time.Duration
 	var now time.Time
@@ -39,6 +39,8 @@ func (l *Limiter) Wait() {
 	for limitIdx := range l.limits {
 		l.limits[limitIdx].buffer.Push(now)
 	}
+
+	return waitTime
 }
 
 func NewLimiter(limits []RateLimit) *Limiter {

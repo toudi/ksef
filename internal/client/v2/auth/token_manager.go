@@ -42,8 +42,7 @@ type TokenManager struct {
 	challengeValidator  validator.AuthChallengeValidator
 	finished            bool
 	sessionTokens       *SessionTokens
-	updateChannel       chan TokenUpdate
-	mutex               sync.RWMutex
+	mutex               sync.Mutex
 	httpClient          *http.Client
 	validationReference *validator.ValidationReference
 	done                chan struct{}
@@ -78,7 +77,6 @@ func NewTokenManager(
 	}
 
 	tm := &TokenManager{
-		updateChannel:      make(chan TokenUpdate),
 		httpClient:         httpClient,
 		challengeValidator: challengeValidator,
 		done:               make(chan struct{}),
@@ -106,52 +104,60 @@ func (t *TokenManager) GetAuthorizationToken(timeout ...time.Duration) (string, 
 		timeout = []time.Duration{15 * time.Second}
 	}
 
-	// so this temporary channel is for retrieving the *current* token
-	tokenChan := make(chan string, 1)
-	// defer close(tokenChan)
+	deadline := time.Now().Add(timeout[0])
+	for time.Now().Before(deadline) {
+		t.mutex.Lock()
+		sessionTokens := t.sessionTokens
+		t.mutex.Unlock()
 
-	ctx, cancel := context.WithTimeout(context.Background(), timeout[0])
-	defer cancel()
+		if sessionTokens != nil && sessionTokens.AuthorizationToken != nil {
+			return sessionTokens.AuthorizationToken.Token, nil
+		}
 
-	go t.readToken(tokenChan)
+		logging.AuthLogger.Debug("GetAuthorizationToken - awaiting token")
 
-	select {
-	case <-ctx.Done():
-		return "", ErrTimeoutReadingToken
-	case tokenUpdate := <-t.updateChannel:
-		return tokenUpdate.Token, tokenUpdate.Err
-	case token := <-tokenChan:
-		return token, nil
+		time.Sleep(500 * time.Millisecond)
 	}
+
+	return "", ErrTimeoutReadingToken
 }
 
-// read token from memory. if it exists, push it to tokenChan
-func (t *TokenManager) readToken(tokenChan chan string) {
-	t.mutex.RLock()
-	defer t.mutex.RUnlock()
-
-	token := t.sessionTokens
-	if token != nil && token.AuthorizationToken != nil {
-		tokenChan <- token.AuthorizationToken.Token
-	}
-}
-
-func (t *TokenManager) updateAuthorizationToken(authToken string, commit func()) {
+func (t *TokenManager) updateAuthorizationToken(authToken *TokenInfo) {
 	logging.AuthLogger.Debug("updateAuthorizationToken()")
-	// first send an update to update channel as it doesn't require acquiring a lock
-	// which means that the above GetAuthorizationToken function cal capture it
-	// in the select loop
-	t.updateChannel <- TokenUpdate{
-		Token: authToken,
-	}
-
-	// t.validationReference = nil
+	defer logging.AuthLogger.Debug("updateAuthorizationToken() - finish")
 
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	// callback that has a guarantee of being executed withing mutex lock
-	logging.AuthLogger.Debug("updateAuthorizationToken() - call commit function")
-	commit()
-	logging.AuthLogger.Debug("updateAuthorizationToken() - finish")
+	canSafelyPersistTokens := t.sessionTokens != nil
+
+	if t.sessionTokens == nil {
+		t.sessionTokens = &SessionTokens{}
+	}
+
+	t.sessionTokens.AuthorizationToken = authToken
+
+	if canSafelyPersistTokens {
+		logging.AuthLogger.Debug("updateAuthorizationToken() - try to persist tokens")
+		if err := t.persistTokens(); err != nil {
+			logging.AuthLogger.Error("unable to persist tokens", "err", err)
+		}
+		logging.AuthLogger.Debug("updateAuthorizationToken() - tokens successfully persisted")
+	}
+}
+
+func (t *TokenManager) updateSessionTokens(tokens *SessionTokens) {
+	logging.AuthLogger.Debug("updateSessionTokens()")
+	defer logging.AuthLogger.Debug("updateSessionTokens() - finish")
+
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
+	t.sessionTokens = tokens
+
+	logging.AuthLogger.Debug("updateSessionTokens() - try to persist tokens")
+	if err := t.persistTokens(); err != nil {
+		logging.AuthLogger.Error("unable to persist tokens", "err", err)
+	}
+	logging.AuthLogger.Debug("updateSessionTokens() - tokens successfully persisted")
 }

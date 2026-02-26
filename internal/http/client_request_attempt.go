@@ -56,9 +56,11 @@ func (rb *Client) requestAttempt(
 
 	// call rate limiter if possible - but before initializing context with timeout.
 	// otherwise the request timeout would hit due to rate limiting.
+	var rateLimitWaitTime time.Duration
+
 	if rb.rateLimiter != nil {
 		logger.Debug("calling rateLimiter.Wait()", "operationId", config.OperationId)
-		rb.rateLimiter.Wait(config.OperationId)
+		rateLimitWaitTime = rb.rateLimiter.Wait(config.OperationId)
 	}
 
 	if config.Timeout.Abs() == 0 {
@@ -115,6 +117,20 @@ func (rb *Client) requestAttempt(
 	}
 
 	if bearerToken != "" {
+		// now, just because there may have been a delay caused by rate limiter - let's refresh
+		// the access token.
+		// this is especially important if there was a significant wait time - like 50 minutes or so.
+		// the bearerToken != "" serves another purpose - we know that rb.AuthTokenRetrieverFunc
+		// is not empty and we don't have to check for that.
+		// also, if there was no delay induced by the rate limiter - no point in re-fetching the
+		// token
+		if rateLimitWaitTime.Seconds() > 0 {
+			logger.Debug("fetching AuthToken one more time because there was a rate limiter-induced delay")
+			bearerToken, err = rb.AuthTokenRetrieverFunc()
+			if err != nil {
+				return nil, err
+			}
+		}
 		req.Header.Set("Authorization", "Bearer "+bearerToken)
 	}
 

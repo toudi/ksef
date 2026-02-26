@@ -61,9 +61,7 @@ func (t *TokenManager) Run() {
 				if now.Before(t.sessionTokens.RefreshToken.ExpiresAt) {
 					newToken, err := t.refreshAccessToken(ctx, t.sessionTokens.RefreshToken.Token)
 					if err == nil {
-						t.updateAuthorizationToken(newToken.Token, func() {
-							t.sessionTokens.AuthorizationToken = newToken
-						})
+						t.updateAuthorizationToken(newToken)
 					}
 				} else {
 					logger.Warn("too late to refresh token. request new challenge")
