@@ -38,10 +38,16 @@ func (t *TokenManager) Run() {
 		go t.beginAuth(ctx, logger)
 	}
 
+	var lastDebugEvent time.Time
+
 	for !t.finished {
 		select {
 		case now := <-ticker.C:
-			logger.Debug("event loop tick")
+			// do not be so noisy about loop tick reporting
+			if now.Sub(lastDebugEvent) > time.Duration(1*time.Minute) {
+				logger.Debug("event loop tick")
+				lastDebugEvent = now
+			}
 			// let's check if we have to refresh the session token
 			if t.sessionTokens == nil {
 				if t.validationReference == nil {

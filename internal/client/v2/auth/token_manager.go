@@ -146,7 +146,7 @@ func (t *TokenManager) updateAuthorizationToken(authToken *TokenInfo) {
 	}
 }
 
-func (t *TokenManager) updateSessionTokens(tokens *SessionTokens) {
+func (t *TokenManager) updateSessionTokens(tokens *SessionTokens, persist bool) {
 	logging.AuthLogger.Debug("updateSessionTokens()")
 	defer logging.AuthLogger.Debug("updateSessionTokens() - finish")
 
@@ -155,9 +155,11 @@ func (t *TokenManager) updateSessionTokens(tokens *SessionTokens) {
 
 	t.sessionTokens = tokens
 
-	logging.AuthLogger.Debug("updateSessionTokens() - try to persist tokens")
-	if err := t.persistTokens(); err != nil {
-		logging.AuthLogger.Error("unable to persist tokens", "err", err)
+	if persist {
+		logging.AuthLogger.Debug("updateSessionTokens() - try to persist tokens")
+		if err := t.persistTokens(); err != nil {
+			logging.AuthLogger.Error("unable to persist tokens", "err", err)
+		}
+		logging.AuthLogger.Debug("updateSessionTokens() - tokens successfully persisted")
 	}
-	logging.AuthLogger.Debug("updateSessionTokens() - tokens successfully persisted")
 }

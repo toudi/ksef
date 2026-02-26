@@ -1,7 +1,6 @@
 package ratelimiter
 
 import (
-	"ksef/internal/logging"
 	"time"
 
 	"github.com/samber/lo"
@@ -11,7 +10,7 @@ type Limiter struct {
 	limits []RateLimit
 }
 
-func (l *Limiter) Wait() time.Duration {
+func (l *Limiter) Wait(progress func(sleepTime, remaining time.Duration)) time.Duration {
 	var allowed bool = false
 	var waitTime time.Duration
 	var now time.Time
@@ -30,8 +29,7 @@ func (l *Limiter) Wait() time.Duration {
 			}
 		}
 		if waitTime > 0 {
-			logging.HTTPLogger.Debug("Rate limit exceeded; waiting for next slot", "sleep", waitTime)
-			time.Sleep(waitTime)
+			sleepWithProgressFunc(waitTime, progress)
 		}
 	}
 

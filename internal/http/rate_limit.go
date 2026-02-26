@@ -24,7 +24,9 @@ func (rl *RequestRateLimit) limitsKey(operationId string) string {
 func (rl *RequestRateLimit) Wait(operationId string) time.Duration {
 	limitsKey := rl.limitsKey(operationId)
 	rl.logger.Debug("using rate limits slot to determine rate limit", "key", limitsKey)
-	return rl.limits[limitsKey].Wait()
+	return rl.limits[limitsKey].Wait(func(sleepFor, remaining time.Duration) {
+		rl.logger.Debug("rate limit exceeded", "sleepFor", sleepFor, "remaining", remaining)
+	})
 }
 
 // this function is essentially a hacky way of rewriting time that last request was made

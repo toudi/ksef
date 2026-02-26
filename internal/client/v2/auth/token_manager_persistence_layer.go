@@ -100,17 +100,10 @@ func (tm *TokenManager) restoreTokens(ctx context.Context) error {
 	canBeUsed, refreshed := tm.validateSessionTokens(ctx, &sessionTokens)
 	if canBeUsed {
 		logger.Debug("tokeny mogą być użyte ponownie")
-		tm.sessionTokens = &sessionTokens
-		if refreshed {
-			if err = tm.persistTokens(); err != nil {
-				logger.Error("błąd zapisu odświeżonych tokenów", "err", err)
-				return err
-			}
-		}
+		tm.updateSessionTokens(&sessionTokens, refreshed)
 		if tm.vip.GetBool(FlagExitAfterPersistingToken) {
 			tm.finished = true
 		}
-		tm.updateAuthorizationToken(sessionTokens.AuthorizationToken)
 		return nil
 	}
 	logger.Debug("tokeny nie mogą być użyte ponownie - usuwam z pęku kluczy")

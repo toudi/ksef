@@ -27,7 +27,7 @@ func (t *TokenManager) redeemTokens(ctx context.Context) error {
 		return err
 	}
 
-	t.updateSessionTokens(&tokens)
+	t.updateSessionTokens(&tokens, true)
 
 	if t.vip.GetBool(FlagExitAfterPersistingToken) {
 		t.finished = true
