@@ -4,28 +4,29 @@ import (
 	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
 	"ksef/internal/invoicesdb"
-	"ksef/internal/invoicesdb/config"
+	downloaderconfig "ksef/internal/invoicesdb/downloader/config"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-var syncCommand = &cobra.Command{
-	Use:   "sync",
-	Short: "synchronizuj faktury z KSeF",
-	RunE:  syncInvoicesRun,
+var downloadCommand = &cobra.Command{
+	Use:   "download",
+	Short: "pobierz nowe faktury z KSeF",
+	RunE:  downloadRun,
 }
 
 func init() {
-	flagSet := syncCommand.Flags()
+	flagSet := downloadCommand.Flags()
 	flags.NIP(flagSet)
-	config.SyncFlags(flagSet)
+	downloaderconfig.DownloaderFlags(flagSet, "")
 	runtime.CertProfileFlag(flagSet)
-	InvoicesCommand.AddCommand(syncCommand)
+
+	InvoicesCommand.AddCommand(downloadCommand)
 }
 
-func syncInvoicesRun(cmd *cobra.Command, args []string) error {
+func downloadRun(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
 	if err := runtime.CheckNIPIsSet(vip); err != nil {
 		return err
@@ -40,17 +41,17 @@ func syncInvoicesRun(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	defer ksefClient.Close()
 
 	invoicesDB, err := invoicesdb.OpenForNIP(nip, vip, invoicesdb.WithKSeFClient(ksefClient))
 	if err != nil {
 		return err
 	}
-	if err = invoicesDB.Sync(
-		cmd.Context(),
-		vip,
-	); err != nil {
+
+	downloaderConfig, err := downloaderconfig.GetDownloaderConfig(vip, "")
+	if err != nil {
 		return err
 	}
 
-	return ksefClient.WaitForTokenManagerLoop()
+	return invoicesDB.DownloadInvoices(cmd.Context(), vip, downloaderConfig)
 }

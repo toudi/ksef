@@ -21,7 +21,7 @@ import (
 
 var errDownloadingInvoices = errors.New("error downloading invoices")
 
-func (i *InvoicesDB) downloadInvoices(
+func (i *InvoicesDB) DownloadInvoices(
 	ctx context.Context,
 	vip *viper.Viper,
 	cfg invoiceTypes.DownloadParams,

@@ -4,6 +4,7 @@ import (
 	"ksef/cmd/ksef/flags"
 	annualregistry "ksef/internal/invoicesdb/annual-registry"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
+	"ksef/internal/runtime"
 	"strconv"
 	"time"
 
@@ -21,12 +22,14 @@ var rehashCommand = &cobra.Command{
 func init() {
 	flagSet := rehashCommand.Flags()
 	flags.NIP(flagSet)
-	rehashCommand.MarkFlagRequired(flags.FlagNameNIP)
 	InvoicesCommand.AddCommand(rehashCommand)
 }
 
 func rehashRegistryRun(cmd *cobra.Command, args []string) error {
 	vip := viper.GetViper()
+	if err := runtime.CheckNIPIsSet(vip); err != nil {
+		return err
+	}
 
 	yearInt, err := strconv.Atoi(args[0])
 	if err != nil {

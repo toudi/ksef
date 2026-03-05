@@ -34,7 +34,7 @@ type StatusCheckerConfig struct {
 func StatusCheckerFlags(flagSet *pflag.FlagSet) {
 	flagSet.Bool(cfgKeyStatusWait, false, "czekaj na przetworzenie sesji")
 	flagSet.Duration(cfgKeyStatusWaitTimeout, defaultWaitTimeout, "maksymalny czas oczekiwania na przetworzenie sesji")
-	flagSet.Bool(cfgKeyInvoicePdf, false, "drukuj faktury do PDF")
+	flagSet.Bool(cfgKeyInvoicePdf, false, "generuj PDF dla faktur pomyślnie przesłanych do KSeF")
 	flagSet.Bool(cfgKeyUPODownload, false, "pobierz UPO po przetworzeniu sesji")
 	flagSet.Bool(cfgKeyUPOPdf, false, "konwertuj UPO do PDF")
 	flagSet.Duration(cfgKeyUPOTimeout, defaultWaitTimeout, "Maksymalny czas oczekiwania na rezultat pobrania UPO")

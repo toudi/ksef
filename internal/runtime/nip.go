@@ -9,16 +9,25 @@ import (
 )
 
 var (
-	cfgKeyNip        = "nip"
-	errValidatingNIP = errors.New("błąd walidacji numeru NIP")
+	cfgKeyNip          = "nip"
+	errValidatingNIP   = errors.New("błąd walidacji numeru NIP")
+	errNIPNotPopulated = errors.New("numer NIP jest wymagany")
 )
+
+func CheckNIPIsSet(vip *viper.Viper) error {
+	rawNIP := vip.GetString(cfgKeyNip)
+	if rawNIP == "" {
+		return errNIPNotPopulated
+	}
+	return nil
+}
 
 func GetNIP(vip *viper.Viper) (string, error) {
 	nipValidator, err := GetNIPValidator(vip)
 	if err != nil {
 		return "", err
 	}
-	rawNIP := viper.GetString(cfgKeyNip)
+	rawNIP := vip.GetString(cfgKeyNip)
 	return rawNIP, nipValidator(rawNIP)
 }
 

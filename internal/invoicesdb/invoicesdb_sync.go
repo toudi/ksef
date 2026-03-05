@@ -53,7 +53,7 @@ func (i *InvoicesDB) Sync(ctx context.Context, vip *viper.Viper) error {
 
 	// step 3. download invoices
 	logger.Info("pobieram faktury")
-	if err = i.downloadInvoices(
+	if err = i.DownloadInvoices(
 		ctx,
 		vip,
 		syncConfig.Downloader,

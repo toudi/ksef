@@ -23,13 +23,15 @@ func init() {
 	uploaderconfig.UploaderFlags(uploadCommand.Flags())
 	statuscheckerconfig.StatusCheckerFlags(uploadCommand.Flags())
 	flags.NIP(uploadCommand.Flags())
-	uploadCommand.MarkFlagRequired(flags.FlagNameNIP)
 	runtime.CertProfileFlag(uploadCommand.Flags())
 	InvoicesCommand.AddCommand(uploadCommand)
 }
 
 func uploadInvoicesRun(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
+	if err := runtime.CheckNIPIsSet(vip); err != nil {
+		return err
+	}
 	ksefClient, err := client.InitClient(cmd)
 	if err != nil {
 		return err
