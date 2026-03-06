@@ -13,7 +13,7 @@ import (
 
 const (
 	flagIncremental = "incremental"
-	flagPDF         = "pdf"
+	flagPDF         = "invoice.pdf"
 	flagStartDate   = "start-date"
 	flagEndDate     = "end-date"
 	flagPageSize    = "page-size"
