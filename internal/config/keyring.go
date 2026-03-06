@@ -1,121 +1,25 @@
 package config
 
 import (
-	"errors"
-	"fmt"
-	"os"
-	"strings"
-	"syscall"
-
-	kr "ksef/internal/keyring"
+	"ksef/internal/flags"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"golang.org/x/term"
 )
-
-type KeyringEngine string
-
-const (
-	cfgKeyKeyringEngine             = "keyring.engine"
-	cfgKeyKeyringFileLocation       = "keyring.file.path"
-	cfgKeyKeyringFileBuffered       = "keyring.file.buffered"
-	cfgKeyKeyringFileAskPassword    = "keyring.file.ask-password"
-	cfgKeyKeyringFilePasswordFile   = "keyring.file.password-file"
-	cfgKeyKeyringFilePasswordEnvVar = "keyring.file.password-env-var"
-	keyringEngineSystem             = "system"
-	keyringEngineFile               = "file"
-)
-
-var (
-	errInvalidKeyringConfig               = errors.New("invalid keyring configuration")
-	ErrEmptyPassword                      = errors.New("keyring password is empty")
-	ErrEitherEnvVarOrPasswordFileRequired = errors.New("either env variable or password file have to be specified")
-	ErrPasswordFilePermissionsTooWide     = errors.New("uprawnienia pliku hasła są zbyt szerokie. ustaw je na 0600")
-)
-
-type Keyring struct {
-	Engine KeyringEngine
-	File   *kr.FileBasedKeyringConfig
-}
 
 func init() {
-	viper.SetDefault(cfgKeyKeyringEngine, keyringEngineSystem)
+	viper.SetDefault(flags.CfgKeyKeyringEngine, flags.KeyringEngineSystem)
 }
 
-func FileKeyringFlags(flags *pflag.FlagSet) {
-	flags.String(cfgKeyKeyringFileLocation, "", "ścieżka do keyringu opartego o plik")
-	flags.Bool(cfgKeyKeyringFileAskPassword, false, "pytaj o hasło do keyringu na wejściu standardowym (stdin)")
-	flags.Bool(cfgKeyKeyringFileBuffered, false, "buforuj keyring w pamięci")
-	flags.String(cfgKeyKeyringFilePasswordFile, "", "ścieżka do pliku z hasłem keyringu")
-	flags.String(cfgKeyKeyringFilePasswordEnvVar, "", "nazwa zmiennej środowiskowej która zawiera hasło do keyringu")
+func FileKeyringFlags(flagSet *pflag.FlagSet) {
+	flagSet.String(flags.CfgKeyKeyringFileLocation, "", "ścieżka do keyringu opartego o plik")
+	flagSet.Bool(flags.CfgKeyKeyringFileAskPassword, false, "pytaj o hasło do keyringu na wejściu standardowym (stdin)")
+	flagSet.Bool(flags.CfgKeyKeyringFileBuffered, false, "buforuj keyring w pamięci")
+	flagSet.String(flags.CfgKeyKeyringFilePasswordFile, "", "ścieżka do pliku z hasłem keyringu")
+	flagSet.String(flags.CfgKeyKeyringFilePasswordEnvVar, "", "nazwa zmiennej środowiskowej która zawiera hasło do keyringu")
 }
 
-func KeyringFlags(flags *pflag.FlagSet) {
-	flags.String(cfgKeyKeyringEngine, "system", "silnik keyringu")
-	FileKeyringFlags(flags)
-}
-
-func GetFileBasedKeyringConfig(vip *viper.Viper) (*kr.FileBasedKeyringConfig, error) {
-	cfg := &kr.FileBasedKeyringConfig{
-		Path:     viper.GetString(cfgKeyKeyringFileLocation),
-		Buffered: viper.GetBool(cfgKeyKeyringFileBuffered),
-	}
-	if vip.GetBool(cfgKeyKeyringFileAskPassword) {
-		// we have to ask user for the password
-		fmt.Printf("podaj hasło do keyringu: \n")
-		bytePassword, err := term.ReadPassword(int(syscall.Stdin))
-		if err != nil {
-			return nil, err
-		}
-		cfg.Password = string(bytePassword)
-	} else {
-		envVarName := vip.GetString(cfgKeyKeyringFilePasswordEnvVar)
-		passFile := vip.GetString(cfgKeyKeyringFilePasswordFile)
-
-		if envVarName == "" && passFile == "" {
-			return nil, errors.Join(errInvalidKeyringConfig, ErrEitherEnvVarOrPasswordFileRequired)
-		}
-
-		if envVarName != "" {
-			// password will be provided via env variable
-			cfg.Password = os.Getenv(envVarName)
-		} else {
-			// password will be provided via file.
-			// let's make sure that it has permissions set to 0600 - otherwise let's bail out
-			stat, err := os.Stat(passFile)
-			if err != nil {
-				return nil, err
-			}
-			if stat.Mode() != 0600 {
-				return nil, errors.Join(errInvalidKeyringConfig, ErrPasswordFilePermissionsTooWide)
-			}
-			passwordBytes, err := os.ReadFile(passFile)
-			if err != nil {
-				return nil, err
-			}
-			cfg.Password = string(passwordBytes)
-		}
-	}
-
-	if cfg.Password == "" {
-		return nil, errors.Join(errInvalidKeyringConfig, ErrEmptyPassword)
-	}
-	cfg.Password = strings.TrimSpace(cfg.Password)
-	return cfg, nil
-}
-
-func KeyringConfig(vip *viper.Viper) (Keyring, error) {
-	var err error
-	keyringConfig := Keyring{
-		Engine: KeyringEngine(vip.GetString(cfgKeyKeyringEngine)),
-	}
-
-	if keyringConfig.Engine == keyringEngineFile {
-		if keyringConfig.File, err = GetFileBasedKeyringConfig(vip); err != nil {
-			return keyringConfig, err
-		}
-	}
-
-	return keyringConfig, nil
+func KeyringFlags(flagSet *pflag.FlagSet) {
+	flagSet.String(flags.CfgKeyKeyringEngine, "system", "silnik keyringu")
+	FileKeyringFlags(flagSet)
 }

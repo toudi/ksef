@@ -8,6 +8,7 @@ import (
 	"ksef/internal/client/v2/auth/validator"
 	"ksef/internal/client/v2/auth/xades"
 	"ksef/internal/http"
+	kr "ksef/internal/keyring"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
 	"os"
@@ -31,6 +32,7 @@ type TokenHandler struct {
 	mode                mode
 	challengeDumpPath   string
 	signedChallengeFile string
+	keyring             kr.Keyring
 }
 
 func NewAuthHandler(vip *viper.Viper, initializers ...initializerFunc) validator.AuthChallengeValidator {
@@ -136,7 +138,7 @@ func (e *TokenHandler) ValidateChallenge(ctx context.Context, challenge validato
 	}
 	// great. now we can sign it using the certificate
 	var signedDocument bytes.Buffer
-	if err = xades.SignAuthChallenge(sourceDocument, certificate, &signedDocument); err != nil {
+	if err = xades.SignAuthChallenge(sourceDocument, certificate, e.keyring, &signedDocument); err != nil {
 		return err
 	}
 	// perfect. final step - let's post it to the validation endpoint

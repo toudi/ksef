@@ -52,7 +52,7 @@ func dumpKeyringToFileRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	fileKeyringCfg, err := config.GetFileBasedKeyringConfig(vip)
+	fileKeyringCfg, err := keyring.GetFileBasedKeyringConfig(vip)
 	if err != nil {
 		return err
 	}
