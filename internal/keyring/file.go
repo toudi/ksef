@@ -7,7 +7,6 @@ import (
 	"crypto/rand"
 	"errors"
 	"io"
-	"ksef/internal/config"
 	"ksef/internal/logging"
 	"os"
 	"strings"
@@ -16,8 +15,14 @@ import (
 )
 
 // file-based keyring implementation
+type FileBasedKeyringConfig struct {
+	Path     string // path to the keyring itself
+	Buffered bool
+	Password string // password to file
+}
+
 type FileBasedKeyring struct {
-	cfg      *config.FileBasedKeyringConfig
+	cfg      *FileBasedKeyringConfig
 	contents map[string]string
 	dirty    bool
 }
@@ -33,7 +38,7 @@ func keyName(bucket, nip, key string) string {
 	return strings.Join([]string{bucket, nip, key}, "|")
 }
 
-func NewFileBasedKeyring(config *config.FileBasedKeyringConfig) (*FileBasedKeyring, error) {
+func NewFileBasedKeyring(config *FileBasedKeyringConfig) (*FileBasedKeyring, error) {
 	logging.KeyringLogger.Debug("file-based keyring initialization")
 	var err error
 	kr := &FileBasedKeyring{

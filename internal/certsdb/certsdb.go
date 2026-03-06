@@ -2,6 +2,7 @@ package certsdb
 
 import (
 	"errors"
+	"ksef/internal/keyring"
 	"ksef/internal/runtime"
 	"ksef/internal/utils"
 	"os"
@@ -49,6 +50,8 @@ type CertificatesDB struct {
 	env string
 	// pointer to viper so that we can read preferred cert ID
 	vip *viper.Viper
+	// keyring interface since we're encrypting private keys and passwords are stored there
+	keyring keyring.Keyring
 }
 
 func (cdb *CertificatesDB) Certs() []*Certificate {

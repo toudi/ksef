@@ -7,6 +7,8 @@ import (
 	"strings"
 	"syscall"
 
+	kr "ksef/internal/keyring"
+
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"golang.org/x/term"
@@ -32,15 +34,9 @@ var (
 	ErrPasswordFilePermissionsTooWide     = errors.New("uprawnienia pliku hasła są zbyt szerokie. ustaw je na 0600")
 )
 
-type FileBasedKeyringConfig struct {
-	Path     string // path to the keyring itself
-	Buffered bool
-	Password string // password to file
-}
-
 type Keyring struct {
 	Engine KeyringEngine
-	File   *FileBasedKeyringConfig
+	File   *kr.FileBasedKeyringConfig
 }
 
 func init() {
@@ -60,8 +56,8 @@ func KeyringFlags(flags *pflag.FlagSet) {
 	FileKeyringFlags(flags)
 }
 
-func GetFileBasedKeyringConfig(vip *viper.Viper) (*FileBasedKeyringConfig, error) {
-	var cfg = &FileBasedKeyringConfig{
+func GetFileBasedKeyringConfig(vip *viper.Viper) (*kr.FileBasedKeyringConfig, error) {
+	cfg := &kr.FileBasedKeyringConfig{
 		Path:     viper.GetString(cfgKeyKeyringFileLocation),
 		Buffered: viper.GetBool(cfgKeyKeyringFileBuffered),
 	}
@@ -111,7 +107,7 @@ func GetFileBasedKeyringConfig(vip *viper.Viper) (*FileBasedKeyringConfig, error
 
 func KeyringConfig(vip *viper.Viper) (Keyring, error) {
 	var err error
-	var keyringConfig = Keyring{
+	keyringConfig := Keyring{
 		Engine: KeyringEngine(vip.GetString(cfgKeyKeyringEngine)),
 	}
 
