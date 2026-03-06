@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	kr "ksef/internal/keyring"
 	"log"
 	"math/big"
 	"time"
@@ -13,10 +14,10 @@ import (
 
 // based on https://go.dev/src/crypto/tls/generate_cert.go
 
-func (c *CertificatesDB) GenerateSelfSignedCert(subject pkix.Name) error {
+func (c *CertificatesDB) GenerateSelfSignedCert(subject pkix.Name, keyring kr.Keyring) error {
 	var err error
 
-	var validFor = time.Duration(10 * 365 * 24 * time.Hour) // 10 years
+	validFor := time.Duration(10 * 365 * 24 * time.Hour) // 10 years
 	// let's start by generating EC private key
 	// _, priv, err = ed25519.GenerateKey(rand.Reader)
 	// private, err := rsa.GenerateKey(rand.Reader, 2048)
@@ -32,7 +33,7 @@ func (c *CertificatesDB) GenerateSelfSignedCert(subject pkix.Name) error {
 		return err
 	}
 
-	var issuedAt = time.Now().Truncate(24 * time.Hour)
+	issuedAt := time.Now().Truncate(24 * time.Hour)
 
 	template := x509.Certificate{
 		Subject:      subject,
@@ -63,7 +64,7 @@ func (c *CertificatesDB) GenerateSelfSignedCert(subject pkix.Name) error {
 			newCert.Usage = []Usage{UsageAuthentication}
 			newCert.ValidFrom = template.NotBefore
 			newCert.ValidTo = template.NotAfter
-			if err = newCert.SavePKey(private); err != nil {
+			if err = newCert.SavePKey(private, keyring); err != nil {
 				return err
 			}
 			if err = newCert.SaveCert(derBytes); err != nil {

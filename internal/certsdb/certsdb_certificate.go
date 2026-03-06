@@ -1,6 +1,7 @@
 package certsdb
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/sha256"
@@ -8,6 +9,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	kr "ksef/internal/keyring"
 	"os"
 	"path"
 	"path/filepath"
@@ -72,7 +74,7 @@ func (c Certificate) Expired() bool {
 	return c.ValidTo.Before(now)
 }
 
-func (c *Certificate) SavePKey(privateKey *ecdsa.PrivateKey) error {
+func (c *Certificate) SavePKey(privateKey *ecdsa.PrivateKey, keyring kr.Keyring) error {
 	privateKeyFile, err := os.Create(c.PrivateKeyFilename())
 	if err != nil {
 		return err
@@ -82,7 +84,11 @@ func (c *Certificate) SavePKey(privateKey *ecdsa.PrivateKey) error {
 	if err != nil {
 		return err
 	}
-	return pem.Encode(privateKeyFile, &pem.Block{Type: "PRIVATE KEY", Bytes: privateKeyBytes})
+	var pemBytesBuffer bytes.Buffer
+	if err = pem.Encode(&pemBytesBuffer, &pem.Block{Type: "PRIVATE KEY", Bytes: privateKeyBytes}); err != nil {
+		return err
+	}
+	return c.encryptPrivateKeyBytes(pemBytesBuffer.Bytes(), privateKeyFile, keyring)
 }
 
 func (c *Certificate) SaveCert(derBytes []byte) error {
@@ -98,10 +104,9 @@ func (c *Certificate) SaveCert(derBytes []byte) error {
 	})
 }
 
-func (c *Certificate) SignContent(content []byte) ([]byte, error) {
+func (c *Certificate) SignContent(content []byte, keyring kr.Keyring) ([]byte, error) {
 	// we can only do it if we have a private key
-	pkeyFilename := c.PrivateKeyFilename()
-	privKeyBytes, err := os.ReadFile(pkeyFilename)
+	privKeyBytes, err := c.readPrivateKeyBytes(keyring)
 	if err != nil {
 		return nil, err
 	}

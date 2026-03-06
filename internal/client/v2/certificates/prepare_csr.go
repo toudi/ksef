@@ -9,11 +9,12 @@ import (
 	"encoding/asn1"
 	"encoding/base64"
 	"ksef/internal/certsdb"
+	kr "ksef/internal/keyring"
 )
 
 type EnrollmentType string
 
-func (m *Manager) PrepareEnrollmentCSR(data *EnrollmentsData, usage certsdb.Usage, nip string) error {
+func (m *Manager) PrepareEnrollmentCSR(data *EnrollmentsData, usage certsdb.Usage, nip string, keyring kr.Keyring) error {
 	template := &x509.CertificateRequest{
 		Subject: pkix.Name{
 			CommonName: data.CommonName,
@@ -58,7 +59,7 @@ func (m *Manager) PrepareEnrollmentCSR(data *EnrollmentsData, usage certsdb.Usag
 	return m.certsDB.AddCert(func(newCert *certsdb.Certificate) error {
 		newCert.EnvironmentId = m.env
 		var err error
-		if err = newCert.SavePKey(private); err != nil {
+		if err = newCert.SavePKey(private, keyring); err != nil {
 			return err
 		}
 		newCert.NIP = []string{nip}
