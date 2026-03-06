@@ -6,6 +6,7 @@ import (
 	"ksef/internal/invoicesdb"
 	statuscheckerconfig "ksef/internal/invoicesdb/status-checker/config"
 	uploaderconfig "ksef/internal/invoicesdb/uploader/config"
+	kr "ksef/internal/keyring"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
@@ -37,8 +38,18 @@ func uploadInvoicesRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 	defer ksefClient.Close()
+
+	keyring, err := kr.NewKeyring(vip)
+	if err != nil {
+		return err
+	}
+
 	// initialize the invoicesdb
-	invoicesDB, err := invoicesdb.NewInvoicesDB(vip, invoicesdb.WithKSeFClient(ksefClient))
+	invoicesDB, err := invoicesdb.NewInvoicesDB(
+		vip,
+		invoicesdb.WithKSeFClient(ksefClient),
+		invoicesdb.WithKeyring(keyring),
+	)
 	if err != nil {
 		return err
 	}

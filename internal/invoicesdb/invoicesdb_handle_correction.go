@@ -153,6 +153,7 @@ func (idb *InvoicesDB) handleCorrection(
 		inv,
 		monthlyregistry.InvoiceTypeIssued,
 		checksum,
+		idb.keyring,
 	); err != nil {
 		return err
 	}

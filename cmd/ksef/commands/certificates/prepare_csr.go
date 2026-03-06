@@ -4,6 +4,7 @@ import (
 	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
 	"ksef/internal/certsdb"
+	kr "ksef/internal/keyring"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
 
@@ -36,9 +37,14 @@ func init() {
 }
 
 func sendCsrs(cmd *cobra.Command, _ []string) error {
-	envId := runtime.GetEnvironmentId(viper.GetViper())
+	vip := viper.GetViper()
+	envId := runtime.GetEnvironmentId(vip)
 	nip, _ := cmd.Flags().GetString(flags.FlagNameNIP)
 	if cli, err = client.InitClient(cmd); err != nil {
+		return err
+	}
+	keyring, err := kr.NewKeyring(vip)
+	if err != nil {
 		return err
 	}
 	certsManager, err := cli.Certificates(envId)
@@ -52,13 +58,13 @@ func sendCsrs(cmd *cobra.Command, _ []string) error {
 	}
 	if prepareAuth, _ := cmd.Flags().GetBool(flagAuth); prepareAuth {
 		logging.CertsDBLogger.Debug("przygotowuję CSR dla certyfikatu autoryzacji")
-		if err = certsManager.PrepareEnrollmentCSR(ed, certsdb.UsageAuthentication, nip); err != nil {
+		if err = certsManager.PrepareEnrollmentCSR(ed, certsdb.UsageAuthentication, nip, keyring); err != nil {
 			return err
 		}
 	}
 	if prepareOffline, _ := cmd.Flags().GetBool(flagOffline); prepareOffline {
 		logging.CertsDBLogger.Debug("przygotowuję CSR dla certyfikatu offline")
-		if err = certsManager.PrepareEnrollmentCSR(ed, certsdb.UsageOffline, nip); err != nil {
+		if err = certsManager.PrepareEnrollmentCSR(ed, certsdb.UsageOffline, nip, keyring); err != nil {
 			return err
 		}
 	}

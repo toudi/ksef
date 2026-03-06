@@ -7,6 +7,8 @@ import (
 	"ksef/internal/client/v2/auth/xades"
 	"os"
 
+	kr "ksef/internal/keyring"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -27,8 +29,13 @@ func init() {
 }
 
 func signChallengeFile(cmd *cobra.Command, args []string) error {
+	vip := viper.GetViper()
 	challengeFile = args[0]
-	certsDB, err := certsdb.OpenOrCreate(viper.GetViper())
+	certsDB, err := certsdb.OpenOrCreate(vip)
+	if err != nil {
+		return err
+	}
+	keyring, err := kr.NewKeyring(vip)
 	if err != nil {
 		return err
 	}
@@ -46,5 +53,5 @@ func signChallengeFile(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	defer destFile.Close()
-	return xades.SignAuthChallenge(bytes.NewBuffer(challengeBytes), certFile, destFile)
+	return xades.SignAuthChallenge(bytes.NewBuffer(challengeBytes), certFile, keyring, destFile)
 }
