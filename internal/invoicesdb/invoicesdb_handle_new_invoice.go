@@ -35,6 +35,7 @@ func (idb *InvoicesDB) handleNewInvoice(
 		inv,
 		monthlyregistry.InvoiceTypeIssued,
 		checksum,
+		idb.keyring,
 	); err != nil {
 		return err
 	}
