@@ -8,10 +8,18 @@ import (
 	kr "ksef/internal/keyring"
 	"ksef/internal/utils"
 	"os"
+	"slices"
 )
 
 var encryptionHeader = []byte{
 	'E', 'P', 'K', 0x00, 0x99,
+}
+
+func (c *Certificate) IsEncryptable() bool {
+	// only these two types are actually encryptable (i.e. they contain private key)
+	return slices.ContainsFunc(c.Usage, func(u Usage) bool {
+		return u == UsageAuthentication || u == UsageOffline
+	})
 }
 
 // loadPrivateKey reads bytes of the underlying private key and
@@ -23,7 +31,8 @@ func (c *Certificate) readPrivateKeyBytes(keyring kr.Keyring) ([]byte, error) {
 	}
 
 	if bytes.HasPrefix(rawBytes, encryptionHeader) {
-		decryptionKey, err := c.loadEncryptionKey(keyring, c.UID)
+		var decryptionKey []byte
+		decryptionKey, err = c.loadEncryptionKey(keyring, c.UID)
 		if err != nil {
 			return nil, err
 		}
@@ -68,7 +77,7 @@ func (c *Certificate) encryptPrivateKeyBytes(pemBytes []byte, dest io.Writer, ke
 		return err
 	}
 	encryptedKeyBytes = bytes.Join([][]byte{encryptionHeader, encryptedKeyBytes}, nil)
-	_, err = io.Copy(dest, bytes.NewReader(pemBytes))
+	_, err = io.Copy(dest, bytes.NewReader(encryptedKeyBytes))
 	return err
 }
 
@@ -77,10 +86,18 @@ func (c *Certificate) EncryptPrivateKey(keyring kr.Keyring) error {
 	if err != nil {
 		return err
 	}
-	privateKeyFile, err := os.OpenFile(c.PrivateKeyFilename(), os.O_CREATE|os.O_WRONLY, 0600)
+	privateKeyFile, err := os.OpenFile(c.PrivateKeyFilename(), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
 	if err != nil {
 		return err
 	}
 	defer privateKeyFile.Close()
 	return c.encryptPrivateKeyBytes(privateKeyBytes, privateKeyFile, keyring)
+}
+
+func (c *Certificate) DecryptPrivateKey(keyring kr.Keyring) error {
+	privateKeyBytes, err := c.readPrivateKeyBytes(keyring)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(c.PrivateKeyFilename(), privateKeyBytes, 0600)
 }

@@ -32,7 +32,7 @@ func GCMAESEncrypt(plaintext, key []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	return aesgcm.Seal(nil, nonce, plaintext, nil), nil
+	return aesgcm.Seal(nonce, nonce, plaintext, nil), nil
 }
 
 func GCMAESDecrypt(ciphertext, key []byte) ([]byte, error) {

@@ -43,7 +43,10 @@ func downloadRun(cmd *cobra.Command, _ []string) error {
 	}
 	defer ksefClient.Close()
 
-	invoicesDB, err := invoicesdb.OpenForNIP(nip, vip, invoicesdb.WithKSeFClient(ksefClient))
+	invoicesDB, err := invoicesdb.OpenForNIP(
+		nip, vip,
+		invoicesdb.WithKSeFClient(ksefClient),
+	)
 	if err != nil {
 		return err
 	}
