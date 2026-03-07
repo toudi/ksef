@@ -2,12 +2,9 @@ package keyring
 
 import (
 	"bytes"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
 	"errors"
-	"io"
 	"ksef/internal/logging"
+	"ksef/internal/utils"
 	"os"
 	"strings"
 
@@ -148,18 +145,9 @@ func (f *FileBasedKeyring) loadKeyring() (map[string]string, error) {
 	if len(cipherText) < 12 {
 		return nil, errCorruptedKeyringFile
 	}
-	block, err := aes.NewCipher([]byte(f.cfg.Password))
+	plaintext, err := utils.GCMAESDecrypt(cipherText, []byte(f.cfg.Password))
 	if err != nil {
-		return nil, errors.Join(errUnableToInitializeCipher, err)
-	}
-	ciph, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, errors.Join(errUnableToInitializeCipher, err)
-	}
-	// first 12 bytes are the nonce
-	plaintext, err := ciph.Open(nil, cipherText[:12], cipherText[12:], nil)
-	if err != nil {
-		return nil, errors.Join(errDecryption, err)
+		return nil, err
 	}
 	keyringContents := make(map[string]string)
 	if err = yaml.NewDecoder(bytes.NewReader(plaintext)).Decode(&keyringContents); err != nil {
@@ -169,39 +157,22 @@ func (f *FileBasedKeyring) loadKeyring() (map[string]string, error) {
 }
 
 func (f *FileBasedKeyring) saveKeyring(contents map[string]string) error {
-	block, err := aes.NewCipher([]byte(f.cfg.Password))
-	if err != nil {
-		return err
-	}
-
-	aesgcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return err
-	}
-
-	// Never use more than 2^32 random nonces with a given key because of the risk of a repeat.
-	nonce := make([]byte, aesgcm.NonceSize())
-	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
-		return err
-	}
-
 	var plaintextBuffer bytes.Buffer
-	if err = yaml.NewEncoder(&plaintextBuffer).Encode(contents); err != nil {
+
+	if err := yaml.NewEncoder(&plaintextBuffer).Encode(contents); err != nil {
 		return err
 	}
 
-	ciphertext := aesgcm.Seal(nil, nonce, plaintextBuffer.Bytes(), nil)
+	ciphertext, err := utils.GCMAESEncrypt(plaintextBuffer.Bytes(), []byte(f.cfg.Password))
+	if err != nil {
+		return err
+	}
 
 	keyringFile, err := os.OpenFile(f.cfg.Path, os.O_CREATE|os.O_WRONLY, 0600)
 	if err != nil {
 		return err
 	}
 	defer keyringFile.Close()
-	logging.KeyringLogger.Debug("write nonce to file")
-	if _, err = keyringFile.Write(nonce); err != nil {
-		return err
-	}
-	logging.KeyringLogger.Debug("write encrypted content to file")
 	if _, err = keyringFile.Write(ciphertext); err != nil {
 		return err
 	}

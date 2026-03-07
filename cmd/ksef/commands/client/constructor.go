@@ -5,6 +5,8 @@ import (
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/client/v2/auth/token"
 
+	kr "ksef/internal/keyring"
+
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -24,11 +26,17 @@ func InitClient(cmd *cobra.Command, initializers ...v2.InitializerFunc) (*v2.API
 		return nil, err
 	}
 
+	keyring, err := kr.NewKeyring(vip)
+	if err != nil {
+		return nil, err
+	}
+
 	clientInitializers := []v2.InitializerFunc{
 		v2.WithAuthValidator(
 			token.NewAuthHandler(
 				vip,
 				token.WithCertsDB(certsDB),
+				token.WithKeyring(keyring),
 			),
 		),
 		v2.WithCertificatesDB(certsDB),

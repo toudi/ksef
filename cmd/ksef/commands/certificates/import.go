@@ -7,6 +7,7 @@ import (
 	"errors"
 	"ksef/cmd/ksef/flags"
 	"ksef/internal/certsdb"
+	kr "ksef/internal/keyring"
 	"ksef/internal/runtime"
 	"ksef/internal/utils"
 	"os"
@@ -65,6 +66,10 @@ func importCertificateRun(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
+	keyring, err := kr.NewKeyring(vip)
+	if err != nil {
+		return err
+	}
 
 	// check if the key is of type ECDSA - we don't support any other keys
 	privateKeyFile, _ := cmd.Flags().GetString(flagNamePrivateKey)
@@ -120,6 +125,12 @@ func importCertificateRun(cmd *cobra.Command, _ []string) error {
 			return errCopyingPKeyFile
 		}
 
+		// yeah, that's ugly - we're touching the disk twice. though it only has to be done once
+		// desperate times .. you know the drill
+		if err = newCert.EncryptPrivateKey(keyring); err != nil {
+			return err
+		}
+
 		if err = utils.CopyFile(
 			certificateFile, newCert.Filename(),
 		); err != nil {
@@ -135,6 +146,10 @@ func importCertificateRun(cmd *cobra.Command, _ []string) error {
 
 		return nil
 	}); err != nil {
+		return err
+	}
+
+	if err = keyring.Close(); err != nil {
 		return err
 	}
 
