@@ -1,8 +1,6 @@
 module ksef
 
-go 1.24.0
-
-toolchain go1.24.2
+go 1.26.1
 
 require (
 	github.com/alexeyco/simpletable v1.0.0
@@ -28,7 +26,6 @@ require (
 
 require (
 	al.essio.dev/pkg/shellescape v1.5.1 // indirect
-	github.com/alessio/shellescape v1.4.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.2.0 // indirect
 	github.com/danieljoos/wincred v1.2.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
