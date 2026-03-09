@@ -101,6 +101,10 @@ func (j *JPK) populatePreamble(root *xml.Node) {
 	if j.sjs.FormMeta.Subject != nil {
 		for subjectType, typeValues := range j.sjs.FormMeta.Subject {
 			for keyName, keyValue := range typeValues.(map[string]any) {
+				// TODO: this should probably be moved to the generator itself
+				if strings.HasPrefix(keyName, "edt:") {
+					root.SetValue("JPK.#xmlns:edt", jpk_v7m_3.EdtNamespace)
+				}
 				root.SetValue("JPK.Podmiot1."+subjectType+"."+keyName, fmt.Sprintf("%v", keyValue))
 			}
 		}

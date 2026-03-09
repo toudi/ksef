@@ -14,13 +14,17 @@ func (node *Node) DumpToWriter(file io.Writer, indent int) error {
 	tailPrefix := ""
 	var err error
 
-	fmt.Fprintf(file, "%s<%s", prefix, node.Name)
+	name := node.Name
+	if node.Namespace != "" {
+		name = node.Namespace + ":" + node.Name
+	}
+	fmt.Fprintf(file, "%s<%s", prefix, name)
 
 	if node.Attribs != nil {
 		// unfortunetely we have to rely on this hack since iterating over maps is
 		// non-deterministic in go by design. and we need a deterministic order in
 		// order to achieve the same checksum
-		var attribNames = lo.Keys(node.Attribs)
+		attribNames := lo.Keys(node.Attribs)
 		slices.Sort(attribNames)
 
 		var attribs []string
@@ -44,7 +48,7 @@ func (node *Node) DumpToWriter(file io.Writer, indent int) error {
 			}
 		}
 	}
-	fmt.Fprintf(file, "%s</%s>\n", tailPrefix, node.Name)
+	fmt.Fprintf(file, "%s</%s>\n", tailPrefix, name)
 
 	return nil
 }

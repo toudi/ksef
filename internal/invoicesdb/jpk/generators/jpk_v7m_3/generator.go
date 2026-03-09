@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+const (
+	EdtNamespace = "http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2022/09/13/eD/DefinicjeTypy/"
+)
+
 // if there is more than one generator than maybe we need to extract it to a common interface or something
 func Document() *xml.Node {
 	root := &xml.Node{Name: "JPK"}
