@@ -10,7 +10,9 @@ import (
 )
 
 const (
-	xpathIssued = "//Faktura/Fa/P_1"
+	xpathIssued     = "//Faktura/Fa/P_1"
+	xpathIssuerNIP  = "//Faktura/Podmiot1/DaneIdentyfikacyjne/NIP"
+	xpathIssuerName = "//Faktura/Podmiot1/DaneIdentyfikacyjne/Nazwa"
 )
 
 func ProcessInvoice(
@@ -20,7 +22,9 @@ func ProcessInvoice(
 	manager interfaces.JPKManager,
 ) error {
 	maps.Copy(dest.Attributes, map[string]string{
-		"DataZakupu": invoiceXML.FindElement(xpathIssued).Text(),
+		"DataZakupu":    invoiceXML.FindElement(xpathIssued).Text(),
+		"NrDostawcy":    invoiceXML.FindElement(xpathIssuerNIP).Text(),
+		"NazwaDostawcy": invoiceXML.FindElement(xpathIssuerName).Text(),
 	})
 	return nil
 }
