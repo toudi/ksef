@@ -4,6 +4,7 @@ import (
 	"errors"
 	"ksef/cmd/ksef/flags"
 	"ksef/internal/invoicesdb/jpk"
+	"ksef/internal/runtime"
 	"strconv"
 	"time"
 
@@ -29,12 +30,14 @@ func checkMonthArgs(cmd *cobra.Command, args []string) error {
 func init() {
 	flagSet := JPKCommand.Flags()
 	flags.NIP(flagSet)
-	JPKCommand.MarkFlagRequired(flags.FlagNameNIP)
 	JPKCommand.AddCommand(jpkExclude, jpk50PercVAT, jpkFixedAssets, jpkClearFlags, jpkDumpItems)
 }
 
 func generateJPK(cmd *cobra.Command, args []string) error {
 	vip := viper.GetViper()
+	if err := runtime.CheckNIPIsSet(vip); err != nil {
+		return err
+	}
 	var month time.Time = time.Now().Local().AddDate(0, -1, 0)
 	if len(args) > 0 {
 		yearNum, err := strconv.Atoi(args[0])
