@@ -3,7 +3,6 @@ package generators
 import (
 	"fmt"
 	"ksef/internal/interfaces"
-	"ksef/internal/sei/generators/fa_2"
 	"ksef/internal/sei/generators/fa_3_1"
 )
 
@@ -57,6 +56,5 @@ func Generator(id string) (interfaces.Generator, error) {
 }
 
 func init() {
-	registerGenerator("fa-2", fa_2.GeneratorFactory())
 	registerGenerator("fa-3_1.0", fa_3_1.GeneratorFactory())
 }
