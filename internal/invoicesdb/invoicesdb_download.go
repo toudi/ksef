@@ -29,11 +29,7 @@ func (i *InvoicesDB) DownloadInvoices(
 	// not sure if that's the "proper" way to do it, but let's just always use persistent time
 	// and download invoices for all subjects. this way we can be incremental about it.
 	tmpDownloadParams := invoiceTypes.DownloadParams{
-		SubjectTypes: []invoiceTypes.SubjectType{
-			invoiceTypes.SubjectTypeRecipient,
-			invoiceTypes.SubjectTypePayer,
-			invoiceTypes.SubjectTypeAuthorized,
-		},
+		SubjectTypes:  cfg.SubjectTypes,
 		PageSize:      cfg.PageSize,
 		UseExportMode: cfg.UseExportMode,
 	}
@@ -63,7 +59,7 @@ func (i *InvoicesDB) DownloadInvoices(
 		// get rid of end range initially ..
 		tmpDownloadParams.EndDate = cfg.EndDate
 
-		if idx < len(monthsRange)-2 {
+		if idx < len(monthsRange)-1 {
 			// unless there's a next month waiting to be processed - then we can easily determine
 			// the end of the range.
 			tmpDownloadParams.EndDate = &monthsRange[idx+1]
