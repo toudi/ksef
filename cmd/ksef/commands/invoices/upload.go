@@ -6,6 +6,8 @@ import (
 	"ksef/internal/invoicesdb"
 	statuscheckerconfig "ksef/internal/invoicesdb/status-checker/config"
 	uploaderconfig "ksef/internal/invoicesdb/uploader/config"
+	kr "ksef/internal/keyring"
+	"ksef/internal/logging"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
@@ -32,7 +34,15 @@ func uploadInvoicesRun(cmd *cobra.Command, _ []string) error {
 	if err := runtime.CheckNIPIsSet(vip); err != nil {
 		return err
 	}
-	ksefClient, err := client.InitClient(cmd, vip)
+
+	keyring, err := kr.NewKeyring(vip)
+	if err != nil {
+		logging.SeiLogger.Error("błąd inicjalizacji keyringu", "err", err)
+		return err
+	}
+	defer keyring.Close()
+
+	ksefClient, err := client.InitClient(cmd, vip, keyring)
 	if err != nil {
 		return err
 	}

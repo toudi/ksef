@@ -5,6 +5,8 @@ import (
 	"ksef/cmd/ksef/flags"
 	"ksef/internal/invoicesdb"
 	downloaderconfig "ksef/internal/invoicesdb/downloader/config"
+	kr "ksef/internal/keyring"
+	"ksef/internal/logging"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
@@ -47,7 +49,14 @@ func downloadRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	ksefClient, err := client.InitClient(cmd, vip)
+	keyring, err := kr.NewKeyring(vip)
+	if err != nil {
+		logging.SeiLogger.Error("błąd inicjalizacji keyringu", "err", err)
+		return err
+	}
+	defer keyring.Close()
+
+	ksefClient, err := client.InitClient(cmd, vip, keyring)
 	if err != nil {
 		return err
 	}

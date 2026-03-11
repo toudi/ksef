@@ -3,6 +3,8 @@ package certificates
 import (
 	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
+	kr "ksef/internal/keyring"
+	"ksef/internal/logging"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
@@ -23,7 +25,14 @@ func init() {
 }
 
 func syncEnrollments(cmd *cobra.Command, _ []string) error {
-	if cli, err = client.InitClient(cmd, viper.GetViper()); err != nil {
+	keyring, err := kr.NewKeyring(viper.GetViper())
+	if err != nil {
+		logging.SeiLogger.Error("błąd inicjalizacji keyringu", "err", err)
+		return err
+	}
+	defer keyring.Close()
+
+	if cli, err = client.InitClient(cmd, viper.GetViper(), keyring); err != nil {
 		return err
 	}
 	certsManager, err := cli.Certificates(runtime.GetEnvironmentId(viper.GetViper()))

@@ -5,6 +5,7 @@ import (
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/invoicesdb"
 	downloaderconfig "ksef/internal/invoicesdb/downloader/config"
+	kr "ksef/internal/keyring"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
 	"sync"
@@ -30,6 +31,13 @@ func downloadRunParalell(cmd *cobra.Command, baseViper *viper.Viper, numWorkers 
 		return err
 	}
 
+	keyring, err := kr.NewKeyring(baseViper)
+	if err != nil {
+		logging.SeiLogger.Error("błąd inicjalizacji keyringu", "err", err)
+		return err
+	}
+	defer keyring.Close()
+
 	// now let's determine if there is less nip's to process than number of
 	// declared workers. if so - let's decrement it to not waste resources
 	if len(nipNumbers) < numWorkers {
@@ -43,7 +51,7 @@ func downloadRunParalell(cmd *cobra.Command, baseViper *viper.Viper, numWorkers 
 	errChannel := make(chan downloadError)
 
 	for range numWorkers {
-		go downloadWorker(cmd, &wg, baseViper, downloaderConfig, nipChannel, errChannel)
+		go downloadWorker(cmd, &wg, baseViper, downloaderConfig, keyring, nipChannel, errChannel)
 	}
 
 	// start the error listening function
@@ -83,6 +91,7 @@ func downloadWorker(
 	wg *sync.WaitGroup,
 	baseViper *viper.Viper,
 	downloaderConfig invoices.DownloadParams,
+	keyring kr.Keyring,
 	nipChannel <-chan string,
 	errorsChannel chan<- downloadError,
 ) {
@@ -92,7 +101,7 @@ func downloadWorker(
 		vip := cloneViper(baseViper)
 		runtime.SetNIP(vip, nip)
 
-		if err := doDownload(cmd, vip, nip, downloaderConfig); err != nil {
+		if err := doDownload(cmd, vip, nip, downloaderConfig, keyring); err != nil {
 			errorsChannel <- downloadError{
 				NIP: nip,
 				err: err,
@@ -111,8 +120,9 @@ func doDownload(
 	vip *viper.Viper,
 	nip string,
 	downloaderConfig invoices.DownloadParams,
+	keyring kr.Keyring,
 ) error {
-	ksefClient, err := client.InitClient(cmd, vip)
+	ksefClient, err := client.InitClient(cmd, vip, keyring)
 	if err != nil {
 		return err
 	}

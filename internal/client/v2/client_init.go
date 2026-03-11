@@ -9,6 +9,7 @@ import (
 	ratelimits "ksef/internal/client/v2/rate-limits"
 	"ksef/internal/http"
 	httpClient "ksef/internal/http"
+	kr "ksef/internal/keyring"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
 
@@ -28,6 +29,7 @@ type APIClient struct {
 	runTokenManager     bool
 	tokenManagerStarted bool
 	vip                 *viper.Viper
+	keyring             kr.Keyring
 }
 
 type InitializerFunc func(c *APIClient)
@@ -51,7 +53,7 @@ func NewClient(ctx context.Context, vip *viper.Viper, options ...InitializerFunc
 
 	if client.authChallengeValidator != nil {
 		var err error
-		if client.tokenManager, err = auth.NewTokenManager(ctx, vip, client.authChallengeValidator); err != nil {
+		if client.tokenManager, err = auth.NewTokenManager(ctx, vip, client.authChallengeValidator, client.keyring); err != nil {
 			return nil, err
 		}
 		if client.runTokenManager {
@@ -97,6 +99,12 @@ func WithAuthValidator(validator validator.AuthChallengeValidator) func(client *
 func WithCertificatesDB(certsDB *certsdb.CertificatesDB) func(client *APIClient) {
 	return func(client *APIClient) {
 		client.certsDB = certsDB
+	}
+}
+
+func WithKeyring(keyring kr.Keyring) func(client *APIClient) {
+	return func(client *APIClient) {
+		client.keyring = keyring
 	}
 }
 
