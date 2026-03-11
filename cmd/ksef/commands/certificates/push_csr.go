@@ -23,7 +23,7 @@ func init() {
 }
 
 func syncEnrollments(cmd *cobra.Command, _ []string) error {
-	if cli, err = client.InitClient(cmd); err != nil {
+	if cli, err = client.InitClient(cmd, viper.GetViper()); err != nil {
 		return err
 	}
 	certsManager, err := cli.Certificates(runtime.GetEnvironmentId(viper.GetViper()))

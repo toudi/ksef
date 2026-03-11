@@ -9,8 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func InitClient(cmd *cobra.Command, initializers ...v2.InitializerFunc) (*v2.APIClient, error) {
-	vip := viper.GetViper()
+func InitClient(cmd *cobra.Command, vip *viper.Viper, initializers ...v2.InitializerFunc) (*v2.APIClient, error) {
 	var err error
 
 	var cli *v2.APIClient

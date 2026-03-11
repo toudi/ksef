@@ -38,7 +38,7 @@ func init() {
 func sendCsrs(cmd *cobra.Command, _ []string) error {
 	envId := runtime.GetEnvironmentId(viper.GetViper())
 	nip, _ := cmd.Flags().GetString(flags.FlagNameNIP)
-	if cli, err = client.InitClient(cmd); err != nil {
+	if cli, err = client.InitClient(cmd, viper.GetViper()); err != nil {
 		return err
 	}
 	certsManager, err := cli.Certificates(envId)

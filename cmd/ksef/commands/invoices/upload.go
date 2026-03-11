@@ -32,7 +32,7 @@ func uploadInvoicesRun(cmd *cobra.Command, _ []string) error {
 	if err := runtime.CheckNIPIsSet(vip); err != nil {
 		return err
 	}
-	ksefClient, err := client.InitClient(cmd)
+	ksefClient, err := client.InitClient(cmd, vip)
 	if err != nil {
 		return err
 	}

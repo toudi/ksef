@@ -11,6 +11,11 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	flagNameWorkersLong  = "workers"
+	flagNameWorkersShort = "w"
+)
+
 var downloadCommand = &cobra.Command{
 	Use:   "download",
 	Short: "pobierz nowe faktury z KSeF",
@@ -22,12 +27,17 @@ func init() {
 	flags.NIP(flagSet)
 	downloaderconfig.DownloaderFlags(flagSet, "")
 	runtime.CertProfileFlag(flagSet)
+	flagSet.IntP(flagNameWorkersLong, flagNameWorkersShort, 0, "Ilość workerów (domyślnie 0; wartość > 0 oznacza ilość współbieżnych wątków pobierających faktury dla wszystkich zarejestrowanych numerów NIP)")
 
 	InvoicesCommand.AddCommand(downloadCommand)
 }
 
 func downloadRun(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
+	workers := vip.GetInt(flagNameWorkersLong)
+	if workers > 0 {
+		return downloadRunParalell(cmd, vip, workers)
+	}
 	if err := runtime.CheckNIPIsSet(vip); err != nil {
 		return err
 	}
@@ -37,7 +47,7 @@ func downloadRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	ksefClient, err := client.InitClient(cmd)
+	ksefClient, err := client.InitClient(cmd, vip)
 	if err != nil {
 		return err
 	}
@@ -54,4 +64,13 @@ func downloadRun(cmd *cobra.Command, _ []string) error {
 	}
 
 	return invoicesDB.DownloadInvoices(cmd.Context(), vip, downloaderConfig)
+}
+
+func cloneViper(src *viper.Viper) *viper.Viper {
+	newViper := viper.New()
+	for _, key := range src.AllKeys() {
+		newViper.Set(key, src.Get(key))
+	}
+
+	return newViper
 }

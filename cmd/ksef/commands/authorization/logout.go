@@ -25,7 +25,7 @@ func logout(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
 	vip.Set(auth.FlagExitAfterPersistingToken, "true")
 
-	cli, err := client.InitClient(cmd)
+	cli, err := client.InitClient(cmd, vip)
 	if err != nil {
 		return err
 	}

@@ -40,7 +40,7 @@ func init() {
 
 func importRun(cmd *cobra.Command, args []string) error {
 	vip := viper.GetViper()
-	ksefClient, err := client.InitClient(cmd, v2.WithoutTokenManager())
+	ksefClient, err := client.InitClient(cmd, vip, v2.WithoutTokenManager())
 	if err != nil {
 		return errors.Join(errClientInit, err)
 	}

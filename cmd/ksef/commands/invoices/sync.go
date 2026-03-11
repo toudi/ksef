@@ -36,7 +36,7 @@ func syncInvoicesRun(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	ksefClient, err := client.InitClient(cmd)
+	ksefClient, err := client.InitClient(cmd, vip)
 	if err != nil {
 		return err
 	}
