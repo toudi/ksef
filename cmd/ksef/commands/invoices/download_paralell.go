@@ -125,8 +125,5 @@ func doDownload(
 		return err
 	}
 
-	logging.DownloadLogger.Info("calling invoicesDB.DownloadInvoices", "nip", nip)
-	err = invoicesDB.DownloadInvoices(cmd.Context(), vip, downloaderConfig)
-	logging.DownloadLogger.Info("result", "err", err, "nip", nip)
-	return err
+	return invoicesDB.DownloadInvoices(cmd.Context(), vip, downloaderConfig)
 }

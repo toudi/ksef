@@ -73,6 +73,15 @@ func GetDownloaderConfig(vip *viper.Viper, prefix string) (params invoices.Downl
 	params.Incremental = vip.GetBool(prefixedFlag(prefix, flagIncremental))
 	params.PDF = vip.GetBool(prefixedFlag(prefix, flagPDF))
 	params.SubjectTypes = subjectTypes
+	if params.SubjectTypes == nil {
+		// if no invoice types were selected - initialize to all possible values.
+		// otherwise, it will be initialized to what the user selected.
+		params.SubjectTypes = []invoices.SubjectType{
+			invoices.SubjectTypeRecipient,
+			invoices.SubjectTypePayer,
+			invoices.SubjectTypeAuthorized,
+		}
+	}
 	params.PageSize = vip.GetInt(prefixedFlag(prefix, flagPageSize))
 	dateRangeType := vip.GetString(prefixedFlag(prefix, flagDateType))
 	params.DateType = invoices.DateRangeType(dateRangeType)
