@@ -40,5 +40,8 @@ func NewDownloader(
 }
 
 func (sd *smartDownloader) Close() error {
+	if sd.exportDownloader != nil {
+		return sd.exportDownloader.Close()
+	}
 	return nil
 }
