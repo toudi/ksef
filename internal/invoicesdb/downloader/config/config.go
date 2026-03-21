@@ -12,13 +12,14 @@ import (
 )
 
 const (
-	flagIncremental = "incremental"
-	flagPDF         = "invoice.pdf"
-	flagStartDate   = "start-date"
-	flagEndDate     = "end-date"
-	flagPageSize    = "page-size"
-	flagDateType    = "date-type"
-	flagUseExport   = "use-export-mode"
+	flagIncremental  = "incremental"
+	flagPDF          = "invoice.pdf"
+	flagStartDate    = "start-date"
+	flagEndDate      = "end-date"
+	flagPageSize     = "page-size"
+	flagDateType     = "date-type"
+	flagUseExport    = "use-export-mode"
+	flagUseSmartMode = "use-smart-mode"
 )
 
 var subjectTypes []invoices.SubjectType
@@ -61,6 +62,7 @@ func DownloaderFlags(flagSet *pflag.FlagSet, prefix string) {
 		string(invoices.DateTypeStorage),
 	}), prefixedFlag(prefix, flagDateType), "typ daty używany do odpytywania listy faktur")
 	flagSet.Bool(prefixedFlag(prefix, flagUseExport), false, "używaj eksportu faktur do pobierania")
+	flagSet.Bool(prefixedFlag(prefix, flagUseSmartMode), false, "używaj inteligentnego trybu pobierania (detekcja czy potrzebny jest tryb eksportu)")
 
 	flagSet.SortFlags = false
 }
@@ -70,9 +72,22 @@ func GetDownloaderConfig(vip *viper.Viper, prefix string) (params invoices.Downl
 		prefixedFlag(prefix, flagUseExport),
 		vip.GetBool(runtime.CfgKeyUseExportModeForDownloading),
 	)
+	vip.SetDefault(
+		prefixedFlag(prefix, flagUseSmartMode),
+		vip.GetBool(runtime.CfgKeyUseSmartMode),
+	)
 	params.Incremental = vip.GetBool(prefixedFlag(prefix, flagIncremental))
 	params.PDF = vip.GetBool(prefixedFlag(prefix, flagPDF))
 	params.SubjectTypes = subjectTypes
+	if params.SubjectTypes == nil {
+		// if no invoice types were selected - initialize to all possible values.
+		// otherwise, it will be initialized to what the user selected.
+		params.SubjectTypes = []invoices.SubjectType{
+			invoices.SubjectTypeRecipient,
+			invoices.SubjectTypePayer,
+			invoices.SubjectTypeAuthorized,
+		}
+	}
 	params.PageSize = vip.GetInt(prefixedFlag(prefix, flagPageSize))
 	dateRangeType := vip.GetString(prefixedFlag(prefix, flagDateType))
 	params.DateType = invoices.DateRangeType(dateRangeType)
@@ -93,6 +108,7 @@ func GetDownloaderConfig(vip *viper.Viper, prefix string) (params invoices.Downl
 		params.EndDate = &parsedEndDate
 	}
 	params.UseExportMode = vip.GetBool(prefixedFlag(prefix, flagUseExport))
+	params.UseSmartMode = vip.GetBool(prefixedFlag(prefix, flagUseSmartMode))
 
 	return params, nil
 }

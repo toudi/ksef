@@ -105,3 +105,7 @@ func (l *Limiter) ReplaceLastEntry() {
 		limiter.buffer.ReplaceLastEntry(now)
 	}
 }
+
+func (l *Limiter) Limits() []RateLimit {
+	return l.limits
+}

@@ -139,3 +139,10 @@ func (rb *Client) SetRateLimiter(limiter *RequestRateLimit) {
 		}
 	}
 }
+
+func (rb *Client) GetLimit(operationId string, slot time.Duration) (int, error) {
+	if rb.rateLimiter == nil {
+		return 0, errLimitNotFound
+	}
+	return rb.rateLimiter.GetLimit(operationId, slot)
+}

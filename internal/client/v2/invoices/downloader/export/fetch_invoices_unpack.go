@@ -8,7 +8,7 @@ import (
 	"ksef/internal/logging"
 )
 
-func (ed *exportDownloader) downloadAndExtract(
+func (ed *ExportDownloader) downloadAndExtract(
 	ctx context.Context,
 	cipher *encryption.Cipher,
 	exportRequest exportRequest,
