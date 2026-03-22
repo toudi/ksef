@@ -56,6 +56,7 @@ func NewTokenManager(
 	ctx context.Context,
 	vip *viper.Viper,
 	challengeValidator validator.AuthChallengeValidator,
+	keyring keyring.Keyring,
 ) (*TokenManager, error) {
 	environment := runtime.GetEnvironment(vip)
 	httpClient := http.NewClient(environment.API)
@@ -66,11 +67,6 @@ func NewTokenManager(
 		}
 	}
 
-	keyring, err := keyring.NewKeyring(vip)
-	if err != nil {
-		logging.AuthLogger.Error("unable to initialize keyring", "err", err)
-		return nil, err
-	}
 	certsDB, err := certsdb.OpenOrCreate(vip)
 	if err != nil {
 		return nil, err
