@@ -14,7 +14,7 @@ type InvoiceDownloader interface {
 			invoice invoices.InvoiceMetadata,
 			content bytes.Buffer,
 		) error,
-	) (err error)
+	) error
 
 	Close() error
 }

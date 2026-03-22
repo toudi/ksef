@@ -1,13 +1,12 @@
 package simple
 
 import (
-	downloaderinterface "ksef/internal/client/v2/invoices/downloader/interface"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/http"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 )
 
-type simpleDownloader struct {
+type SimpleDownloader struct {
 	httpClient *http.Client
 	registry   *monthlyregistry.Registry
 	params     invoices.DownloadParams
@@ -17,14 +16,14 @@ func NewDownloader(
 	httpClient *http.Client,
 	registry *monthlyregistry.Registry,
 	params invoices.DownloadParams,
-) downloaderinterface.InvoiceDownloader {
-	return &simpleDownloader{
+) *SimpleDownloader {
+	return &SimpleDownloader{
 		httpClient: httpClient,
 		registry:   registry,
 		params:     params,
 	}
 }
 
-func (d *simpleDownloader) Close() error {
+func (d *SimpleDownloader) Close() error {
 	return nil
 }

@@ -20,7 +20,7 @@ var (
 	errInvalidStatusRequest    = errors.New("błędne zapytanie o status")
 )
 
-func (ed *exportDownloader) fetchInvoices(
+func (ed *ExportDownloader) fetchInvoices(
 	ctx context.Context,
 	cipher *encryption.Cipher,
 	exportRequest exportRequest,
@@ -71,7 +71,7 @@ func (ed *exportDownloader) fetchInvoices(
 	return ed.downloadAndExtract(ctx, cipher, exportRequest, exportStatus, invoiceReady)
 }
 
-func (ed *exportDownloader) pollForExportStatus(
+func (ed *ExportDownloader) pollForExportStatus(
 	ctx context.Context, referenceNumber string,
 ) (*exportStatusResponse, bool, error) {
 	var esResp exportStatusResponse
