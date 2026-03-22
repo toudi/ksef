@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"ksef/cmd/ksef/flags"
 	"ksef/internal/client/v2/auth"
+	kr "ksef/internal/keyring"
+	"ksef/internal/logging"
 
 	"github.com/alexeyco/simpletable"
 	"github.com/spf13/cobra"
@@ -32,10 +34,18 @@ func getSessions(cmd *cobra.Command, _ []string) error {
 
 	vip := viper.GetViper()
 
+	keyring, err := kr.NewKeyring(vip)
+	if err != nil {
+		logging.SeiLogger.Error("błąd inicjalizacji keyringu", "err", err)
+		return err
+	}
+	defer keyring.Close()
+
 	tokenManager, err = auth.NewTokenManager(
 		cmd.Context(),
 		vip,
 		nil,
+		keyring,
 	)
 	if err != nil {
 		return err

@@ -15,15 +15,14 @@ import (
 
 var errFetchingInvoicesWithExport = errors.New("error fetching invoices with export endpoint")
 
-func (ed *exportDownloader) Download(
+func (ed *ExportDownloader) Download(
 	ctx context.Context,
 	invoiceReady func(
 		subjectType invoices.SubjectType,
 		invoice invoices.InvoiceMetadata,
 		content bytes.Buffer,
 	) error,
-) (err error) {
-	// first we have to prepare the export request
+) error {
 	for _, subjectType := range ed.params.SubjectTypes {
 		cipher, err := encryption.CipherInit(32)
 		if err != nil {
@@ -69,16 +68,9 @@ func (ed *exportDownloader) Download(
 			return err
 		}
 
-		if err = ed.fetchInvoices(
-			ctx,
-			cipher,
-			req,
-			resp,
-			invoiceReady,
-		); err != nil {
+		if err := ed.fetchInvoices(ctx, cipher, req, resp, invoiceReady); err != nil {
 			return errors.Join(errFetchingInvoicesWithExport, err)
 		}
-
 	}
 
 	return nil

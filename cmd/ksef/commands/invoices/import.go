@@ -8,6 +8,8 @@ import (
 	invoicesdbconfig "ksef/internal/invoicesdb/config"
 	statuscheckerconfig "ksef/internal/invoicesdb/status-checker/config"
 	uploaderconfig "ksef/internal/invoicesdb/uploader/config"
+	kr "ksef/internal/keyring"
+	"ksef/internal/logging"
 	"ksef/internal/runtime"
 	inputprocessors "ksef/internal/sei/input_processors"
 
@@ -42,7 +44,15 @@ func init() {
 
 func importRun(cmd *cobra.Command, args []string) error {
 	vip := viper.GetViper()
-	ksefClient, err := client.InitClient(cmd, v2.WithoutTokenManager())
+
+	keyring, err := kr.NewKeyring(vip)
+	if err != nil {
+		logging.SeiLogger.Error("błąd inicjalizacji keyringu", "err", err)
+		return err
+	}
+	defer keyring.Close()
+
+	ksefClient, err := client.InitClient(cmd, vip, keyring, v2.WithoutTokenManager())
 	if err != nil {
 		return errors.Join(errClientInit, err)
 	}

@@ -5,10 +5,17 @@ import (
 	"ksef/cmd/ksef/flags"
 	"ksef/internal/invoicesdb"
 	downloaderconfig "ksef/internal/invoicesdb/downloader/config"
+	kr "ksef/internal/keyring"
+	"ksef/internal/logging"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+)
+
+const (
+	flagNameWorkersLong  = "workers"
+	flagNameWorkersShort = "w"
 )
 
 var downloadCommand = &cobra.Command{
@@ -22,12 +29,17 @@ func init() {
 	flags.NIP(flagSet)
 	downloaderconfig.DownloaderFlags(flagSet, "")
 	runtime.CertProfileFlag(flagSet)
+	flagSet.IntP(flagNameWorkersLong, flagNameWorkersShort, 0, "Ilość workerów (domyślnie 0; wartość > 0 oznacza ilość współbieżnych wątków pobierających faktury dla wszystkich zarejestrowanych numerów NIP)")
 
 	InvoicesCommand.AddCommand(downloadCommand)
 }
 
 func downloadRun(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
+	workers := vip.GetInt(flagNameWorkersLong)
+	if workers > 0 {
+		return downloadRunParalell(cmd, vip, workers)
+	}
 	if err := runtime.CheckNIPIsSet(vip); err != nil {
 		return err
 	}
@@ -37,7 +49,14 @@ func downloadRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	ksefClient, err := client.InitClient(cmd)
+	keyring, err := kr.NewKeyring(vip)
+	if err != nil {
+		logging.SeiLogger.Error("błąd inicjalizacji keyringu", "err", err)
+		return err
+	}
+	defer keyring.Close()
+
+	ksefClient, err := client.InitClient(cmd, vip, keyring)
 	if err != nil {
 		return err
 	}
@@ -57,4 +76,13 @@ func downloadRun(cmd *cobra.Command, _ []string) error {
 	}
 
 	return invoicesDB.DownloadInvoices(cmd.Context(), vip, downloaderConfig)
+}
+
+func cloneViper(src *viper.Viper) *viper.Viper {
+	newViper := viper.New()
+	for _, key := range src.AllKeys() {
+		newViper.Set(key, src.Get(key))
+	}
+
+	return newViper
 }

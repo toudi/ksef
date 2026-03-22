@@ -8,6 +8,7 @@ type DownloadParams struct {
 	Incremental   bool
 	PDF           bool
 	UseExportMode bool
+	UseSmartMode  bool
 	SubjectTypes  []SubjectType
 	DateType      DateRangeType
 	StartDate     time.Time

@@ -5,6 +5,7 @@ import (
 	"ksef/internal/invoice"
 	"ksef/internal/logging"
 	"ksef/internal/money"
+	"ksef/internal/sei/constants"
 	"strconv"
 	"strings"
 )
@@ -32,6 +33,10 @@ type Parser struct {
 	LineHandler      HookFunc
 	InvoiceReadyFunc func(invoice *invoice.Invoice) error
 	invoice          *invoice.Invoice
+	nonEmptyFile     bool
+	// a special edge case for csv input where we specify the "common" invoice attributes at the top of the file.
+	// this then creates a problem because if there are no actual invoices what we could end up with would be
+	// an empty invoice that would contain only the preamble and nothing else - and we don't want to import that.
 }
 
 func (p *Parser) ProcessLine(fields []string) error {
@@ -51,6 +56,9 @@ func (p *Parser) ProcessLine(fields []string) error {
 	if len(fields) > 1 && strings.ToLower(fields[0]) == section {
 		p.state = stateParseHeaders
 		p.section = fields[1]
+		if strings.ToLower(p.section) == constants.SectionInvoice {
+			p.nonEmptyFile = true
+		}
 	} else if p.state == stateParseHeaders {
 		p.state = stateParseData
 		// if _, exists := p.headerMap[p.section]; !exists {
@@ -116,9 +124,11 @@ func (p *Parser) ProcessLine(fields []string) error {
 }
 
 func (p *Parser) InvoiceReady() error {
-	if p.InvoiceReadyFunc != nil {
+	if p.InvoiceReadyFunc != nil && p.nonEmptyFile {
 		return p.InvoiceReadyFunc(p.invoice)
 	}
+
+	p.nonEmptyFile = false
 
 	return nil
 }

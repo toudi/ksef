@@ -1,10 +1,13 @@
 package http
 
 import (
+	"errors"
 	ratelimiter "ksef/internal/utils/rate-limiter"
 	"log/slog"
 	"time"
 )
+
+var errLimitNotFound = errors.New("limit not found")
 
 type RequestRateLimit struct {
 	limits map[string]*ratelimiter.Limiter
@@ -44,4 +47,20 @@ func NewRequestRateLimit(logger *slog.Logger, limits map[string]*ratelimiter.Lim
 		logger: logger,
 		limits: limits,
 	}
+}
+
+func (rl *RequestRateLimit) GetLimit(operationId string, slot time.Duration) (int, error) {
+	limitsKey := rl.limitsKey(operationId)
+	limiter, exists := rl.limits[limitsKey]
+	if !exists {
+		return 0, errLimitNotFound
+	}
+
+	for _, limit := range limiter.Limits() {
+		if limit.Slot == slot {
+			return limit.Limit, nil
+		}
+	}
+
+	return 0, errLimitNotFound
 }

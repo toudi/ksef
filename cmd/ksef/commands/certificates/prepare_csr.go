@@ -40,7 +40,15 @@ func sendCsrs(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
 	envId := runtime.GetEnvironmentId(vip)
 	nip, _ := cmd.Flags().GetString(flags.FlagNameNIP)
-	if cli, err = client.InitClient(cmd); err != nil {
+
+	keyring, err := kr.NewKeyring(viper.GetViper())
+	if err != nil {
+		logging.SeiLogger.Error("unable to initialize keyring", "err", err)
+		return err
+	}
+	defer keyring.Close()
+
+	if cli, err = client.InitClient(cmd, viper.GetViper(), keyring); err != nil {
 		return err
 	}
 	keyring, err := kr.NewKeyring(vip)
