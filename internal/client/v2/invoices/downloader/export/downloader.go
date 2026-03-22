@@ -2,7 +2,6 @@ package export
 
 import (
 	"ksef/internal/certsdb"
-	downloaderinterface "ksef/internal/client/v2/invoices/downloader/interface"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/http"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
@@ -10,7 +9,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-type exportDownloader struct {
+type ExportDownloader struct {
 	vip            *viper.Viper
 	httpClient     *http.Client
 	registry       *monthlyregistry.Registry
@@ -25,8 +24,8 @@ func NewDownloader(
 	httpClient *http.Client,
 	registry *monthlyregistry.Registry,
 	params invoices.DownloadParams,
-) downloaderinterface.InvoiceDownloader {
-	return &exportDownloader{
+) *ExportDownloader {
+	return &ExportDownloader{
 		vip:        vip,
 		certsDB:    certsDB,
 		httpClient: httpClient,
@@ -35,7 +34,7 @@ func NewDownloader(
 	}
 }
 
-func (ed *exportDownloader) Close() error {
+func (ed *ExportDownloader) Close() error {
 	if ed.archiveHandler != nil {
 		return ed.archiveHandler.Close()
 	}

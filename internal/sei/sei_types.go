@@ -12,7 +12,6 @@ type ParsedInvoice struct {
 }
 
 func (p *ParsedInvoice) ToXML(generationTime time.Time, dst io.Writer) error {
-	p.Invoice.GenerationTime = time.Now().Local()
 	// ok so basically with this trick we can temporarily override the generation time.
 	// this is important because when we're re-parsing the same file we need to
 	// understand if we've already sent the invoice over to KSeF or not. But this is

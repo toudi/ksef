@@ -14,7 +14,7 @@ const (
 	endpointDownloadInvoice = "/v2/invoices/ksef/%s"
 )
 
-func (sd *simpleDownloader) downloadInvoice(
+func (sd *SimpleDownloader) downloadInvoice(
 	ctx context.Context,
 	invoiceMeta invoices.InvoiceMetadata,
 	dest *bytes.Buffer,
