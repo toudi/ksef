@@ -185,19 +185,10 @@ func (f *FileBasedKeyring) saveKeyring(contents map[string]string) error {
 		return err
 	}
 
-	ciphertext := aesgcm.Seal(nil, nonce, plaintextBuffer.Bytes(), nil)
+	ciphertext := aesgcm.Seal(nonce, nonce, plaintextBuffer.Bytes(), nil)
 
-	keyringFile, err := os.OpenFile(f.cfg.Path, os.O_CREATE|os.O_WRONLY, 0600)
-	if err != nil {
-		return err
-	}
-	defer keyringFile.Close()
-	logging.KeyringLogger.Debug("write nonce to file")
-	if _, err = keyringFile.Write(nonce); err != nil {
-		return err
-	}
-	logging.KeyringLogger.Debug("write encrypted content to file")
-	if _, err = keyringFile.Write(ciphertext); err != nil {
+	if err = os.WriteFile(f.cfg.Path, ciphertext, 0600); err != nil {
+		logging.KeyringLogger.Error("error writing keyring to disk", "err", err)
 		return err
 	}
 	return nil
