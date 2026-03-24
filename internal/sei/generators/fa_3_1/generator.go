@@ -3,8 +3,6 @@ package fa_3_1
 import (
 	"ksef/internal/interfaces"
 	"ksef/internal/sei/generators/fa"
-	"ksef/internal/xml"
-	"time"
 )
 
 func GeneratorFactory() interfaces.Generator {
@@ -29,11 +27,4 @@ func GeneratorFactory() interfaces.Generator {
 		}),
 		fa.WithElementOrdering(FA_3_1ChildrenOrder),
 	)
-}
-
-var fa_3_1_hooks = fa.GeneratorHooks{
-	PostProcess: func(root *xml.Node) error {
-		root.SetValue("Faktura.Naglowek.DataWytworzeniaFa", time.Now().Local().Format(time.RFC3339))
-		return nil
-	},
 }
