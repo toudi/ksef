@@ -9,7 +9,7 @@ import (
 	"github.com/samber/lo"
 )
 
-func isPreferred(cert Certificate, preferredCertProfile string) bool {
+func (cert Certificate) MatchesProfile(preferredCertProfile string) bool {
 	return cert.ProfileName == preferredCertProfile || cert.UID == preferredCertProfile || cert.SerialNumber == preferredCertProfile
 }
 
@@ -26,9 +26,9 @@ func (cdb *CertificatesDB) GetByUsage(usage Usage, nip string) (Certificate, err
 			// if there is a preferred certificate ID, we should always make it so that
 			// it ends up at the top of the slice
 			if preferredCertProfile != "" {
-				if isPreferred(a, preferredCertProfile) {
+				if a.MatchesProfile(preferredCertProfile) {
 					return -1
-				} else if isPreferred(b, preferredCertProfile) {
+				} else if b.MatchesProfile(preferredCertProfile) {
 					return 1
 				}
 			} else {

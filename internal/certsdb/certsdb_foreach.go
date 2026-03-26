@@ -1,6 +1,9 @@
 package certsdb
 
-import "slices"
+import (
+	"iter"
+	"slices"
+)
 
 func (cdb *CertificatesDB) ForEach(
 	lookup func(cert Certificate) bool,
@@ -23,6 +26,20 @@ func (cdb *CertificatesDB) ForEach(
 	}
 
 	return nil
+}
+
+func (cdb *CertificatesDB) Filter(
+	lookup func(cert Certificate) bool,
+) iter.Seq[Certificate] {
+	return func(yield func(Certificate) bool) {
+		for _, cert := range cdb.certs {
+			if lookup(*cert) {
+				if !yield(*cert) {
+					return
+				}
+			}
+		}
+	}
 }
 
 func (cdb *CertificatesDB) FetchUIDsByNIP(nip string) (uids []string) {

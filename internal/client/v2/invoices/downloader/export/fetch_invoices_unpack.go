@@ -5,7 +5,6 @@ import (
 	"context"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/encryption"
-	"ksef/internal/logging"
 )
 
 func (ed *ExportDownloader) downloadAndExtract(
@@ -20,26 +19,26 @@ func (ed *ExportDownloader) downloadAndExtract(
 	) error,
 ) error {
 	var err error
-	ed.archiveHandler, err = NewExportArchiveHandler(cipher)
+	ed.archiveHandler, err = NewExportArchiveHandler(cipher, ed.logger)
 	if err != nil {
 		return err
 	}
-	logging.DownloadLogger.Debug("archiveHandler::DownloadExportFile")
+	ed.logger.Debug("archiveHandler::DownloadExportFile")
 	if err = ed.archiveHandler.DownloadExportFile(ctx, statusResponse); err != nil {
 		return err
 	}
 
 	var invoiceContent bytes.Buffer
-	logging.DownloadLogger.Debug("Liczba faktur w archiwum", "count", len(ed.archiveHandler.contents.Invoices))
+	ed.logger.Debug("Liczba faktur w archiwum", "count", len(ed.archiveHandler.contents.Invoices))
 
 	for _, invoice := range ed.archiveHandler.contents.Invoices {
-		logging.DownloadLogger.Debug("Odczytuję fakturę z archiwum", "KSeFRefNo", invoice.KSeFNumber)
+		ed.logger.Debug("Odczytuję fakturę z archiwum", "KSeFRefNo", invoice.KSeFNumber)
 		if err = ed.archiveHandler.ReadInvoice(invoice.KSeFNumber, &invoiceContent); err != nil {
-			logging.DownloadLogger.Error("Błąd odczytu faktury", "err", err)
+			ed.logger.Error("Błąd odczytu faktury", "err", err)
 			return err
 		}
 
-		logging.DownloadLogger.Debug("call invoiceReady")
+		ed.logger.Debug("call invoiceReady")
 		if err = invoiceReady(
 			exportRequest.Filters.SubjectType,
 			invoice,

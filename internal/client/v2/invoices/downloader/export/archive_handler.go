@@ -4,7 +4,7 @@ import (
 	"context"
 	"ksef/internal/encryption"
 	"ksef/internal/http"
-	"ksef/internal/logging"
+	"log/slog"
 	"os"
 )
 
@@ -12,21 +12,24 @@ type archiveHandler struct {
 	workDir  string
 	cipher   *encryption.Cipher
 	contents *archiveContents
+	logger   *slog.Logger
 }
 
 func NewExportArchiveHandler(
 	cipher *encryption.Cipher,
+	logger *slog.Logger,
 ) (*archiveHandler, error) {
 	tmpDir, err := os.MkdirTemp("", "ksef-export-*")
 	if err != nil {
 		return nil, err
 	}
 
-	logging.DownloadLogger.Debug("katalog roboczy dla pobranego eksportu", "dir", tmpDir)
+	logger.Debug("katalog roboczy dla pobranego eksportu", "dir", tmpDir)
 
 	return &archiveHandler{
 		workDir: tmpDir,
 		cipher:  cipher,
+		logger:  logger,
 	}, nil
 }
 
@@ -37,16 +40,16 @@ func (ah *archiveHandler) DownloadExportFile(
 	unauthedClient := http.NewClient("")
 
 	for _, part := range statusResponse.Package.Parts {
-		logging.DownloadLogger.Info("Rozpoczynam pobieranie paczki", "part", part.OrdinalNumber)
+		ah.logger.Info("Rozpoczynam pobieranie paczki", "part", part.OrdinalNumber)
 		if err := ah.downloadPart(ctx, part, unauthedClient); err != nil {
 			return err
 		}
-		logging.DownloadLogger.Info("Rozszyfrowuję paczkę", "part", part.OrdinalNumber)
+		ah.logger.Info("Rozszyfrowuję paczkę", "part", part.OrdinalNumber)
 		if err := ah.decryptPart(part); err != nil {
 			return err
 		}
 	}
-	logging.DownloadLogger.Info("Wszystkie paczki pobrane i rozszyfrowane. łączę archiwum")
+	ah.logger.Info("Wszystkie paczki pobrane i rozszyfrowane. łączę archiwum")
 	if err := ah.concatenateParts(statusResponse.Package.Parts); err != nil {
 		return err
 	}
@@ -59,10 +62,10 @@ func (ah *archiveHandler) DownloadExportFile(
 }
 
 func (ah *archiveHandler) Close() error {
-	logging.DownloadLogger.Debug("Zamykam archiwum ZIP")
+	ah.logger.Debug("Zamykam archiwum ZIP")
 	if err := ah.contents.zipReader.Close(); err != nil {
 		return err
 	}
-	logging.DownloadLogger.Debug("Usuwam katalog roboczy", "dir", ah.workDir)
+	ah.logger.Debug("Usuwam katalog roboczy", "dir", ah.workDir)
 	return os.RemoveAll(ah.workDir)
 }

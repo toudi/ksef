@@ -20,7 +20,8 @@ func (sd *smartDownloader) downloadWithSimple(
 	if sd.simpleDownloader == nil {
 		sd.simpleDownloader = simple.NewDownloader(
 			sd.httpClient, sd.registry, sd.params,
+			sd.logger,
 		)
 	}
-	return sd.simpleDownloader.DownloadInvoices(ctx, invoicesMetadata, subjectType, invoiceReady)
+	return sd.simpleDownloader.DownloadInvoices(ctx, invoicesMetadata, subjectType, invoiceReady, sd.logger)
 }

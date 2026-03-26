@@ -8,11 +8,11 @@ import (
 	"ksef/internal/client/v2/types/invoices"
 	invoiceTypes "ksef/internal/client/v2/types/invoices"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
-	"ksef/internal/logging"
 	"ksef/internal/pdf"
 	pdfconfig "ksef/internal/pdf/config"
 	"ksef/internal/runtime"
 	"ksef/internal/utils"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -25,6 +25,7 @@ func (i *InvoicesDB) DownloadInvoices(
 	ctx context.Context,
 	vip *viper.Viper,
 	cfg invoiceTypes.DownloadParams,
+	logger *slog.Logger,
 ) (err error) {
 	// not sure if that's the "proper" way to do it, but let's just always use persistent time
 	// and download invoices for all subjects. this way we can be incremental about it.
@@ -72,13 +73,14 @@ func (i *InvoicesDB) DownloadInvoices(
 			i.certsDB,
 			tmpDownloadParams,
 			registry,
+			logger,
 		)
 
 		if err = downloader.Download(
 			ctx,
 			func(subjectType invoices.SubjectType, invoice invoiceTypes.InvoiceMetadata, content bytes.Buffer) error {
 				if registry.ContainsHash(invoice.Checksum()) {
-					logging.DownloadLogger.Info("Ta faktura już znajduje się w rejestrze", "KSeFRefNo", invoice.KSeFNumber, "checksum", invoice.Checksum())
+					logger.Info("Ta faktura już znajduje się w rejestrze", "KSeFRefNo", invoice.KSeFNumber, "checksum", invoice.Checksum())
 					return nil
 				}
 				targetFilename := registry.GetDestFileNameForAPIInvoice(subjectType, invoice)

@@ -7,7 +7,7 @@ import (
 	"ksef/internal/client/v2/invoices/downloader/metadata"
 	"ksef/internal/client/v2/types/invoices"
 	types "ksef/internal/client/v2/types/invoices"
-	"ksef/internal/logging"
+	"log/slog"
 )
 
 var (
@@ -20,6 +20,7 @@ func (sd *SimpleDownloader) DownloadInvoices(
 	metadataPage *types.InvoiceMetadataResponse,
 	subjectType invoices.SubjectType,
 	invoiceReady func(subjectType invoices.SubjectType, invoiceMeta invoices.InvoiceMetadata, content bytes.Buffer) error,
+	logger *slog.Logger,
 ) (err error) {
 	var (
 		finished             bool
@@ -31,7 +32,7 @@ func (sd *SimpleDownloader) DownloadInvoices(
 		// fetch all of the invoices from the page.
 		for _, invoice := range metadataPage.Invoices {
 			if sd.registry.ContainsHash(invoice.Checksum()) {
-				logging.DownloadLogger.Info("Ta faktura już została pobrana", "hash", invoice.Checksum())
+				logger.Info("Ta faktura już została pobrana", "hash", invoice.Checksum())
 				continue
 			}
 

@@ -24,6 +24,7 @@ func (ed *ExportDownloader) Download(
 	) error,
 ) error {
 	for _, subjectType := range ed.params.SubjectTypes {
+		logger := ed.logger.With("subjectType", subjectType)
 		cipher, err := encryption.CipherInit(32)
 		if err != nil {
 			return err
@@ -68,7 +69,7 @@ func (ed *ExportDownloader) Download(
 			return err
 		}
 
-		if err := ed.fetchInvoices(ctx, cipher, req, resp, invoiceReady); err != nil {
+		if err := ed.fetchInvoices(ctx, cipher, req, resp, invoiceReady, logger); err != nil {
 			return errors.Join(errFetchingInvoicesWithExport, err)
 		}
 	}

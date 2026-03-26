@@ -8,6 +8,7 @@ import (
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/http"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
+	"log/slog"
 
 	"github.com/spf13/viper"
 )
@@ -18,6 +19,7 @@ type smartDownloader struct {
 	httpClient *http.Client
 	registry   *monthlyregistry.Registry
 	params     invoices.DownloadParams
+	logger     *slog.Logger
 	// downloader instances (for reusing)
 	simpleDownloader *simple.SimpleDownloader
 	exportDownloader *export.ExportDownloader
@@ -29,6 +31,7 @@ func NewDownloader(
 	httpClient *http.Client,
 	registry *monthlyregistry.Registry,
 	params invoices.DownloadParams,
+	logger *slog.Logger,
 ) downloaderinterface.InvoiceDownloader {
 	return &smartDownloader{
 		vip:        vip,
@@ -36,6 +39,7 @@ func NewDownloader(
 		httpClient: httpClient,
 		registry:   registry,
 		params:     params,
+		logger:     logger,
 	}
 }
 

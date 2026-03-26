@@ -9,6 +9,7 @@ import (
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/http"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
+	"log/slog"
 
 	"github.com/spf13/viper"
 )
@@ -19,18 +20,19 @@ func NewInvoiceDownloader(
 	httpClient *http.Client,
 	downloadParams invoices.DownloadParams,
 	registry *monthlyregistry.Registry,
+	logger *slog.Logger,
 ) downloaderinterface.InvoiceDownloader {
 	if downloadParams.UseSmartMode {
 		return smart.NewDownloader(
-			vip, certsDB, httpClient, registry, downloadParams,
+			vip, certsDB, httpClient, registry, downloadParams, logger,
 		)
 	}
 	if downloadParams.UseExportMode {
 		return export.NewDownloader(
-			vip, certsDB, httpClient, registry, downloadParams,
+			vip, certsDB, httpClient, registry, downloadParams, logger,
 		)
 	}
 	return simple.NewDownloader(
-		httpClient, registry, downloadParams,
+		httpClient, registry, downloadParams, logger,
 	)
 }

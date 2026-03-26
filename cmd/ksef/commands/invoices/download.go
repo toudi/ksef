@@ -72,7 +72,10 @@ func downloadRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	return invoicesDB.DownloadInvoices(cmd.Context(), vip, downloaderConfig)
+	return invoicesDB.DownloadInvoices(
+		cmd.Context(), vip, downloaderConfig,
+		logging.DownloadLogger.With("nip", nip),
+	)
 }
 
 func cloneViper(src *viper.Viper) *viper.Viper {

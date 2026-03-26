@@ -57,6 +57,7 @@ func (i *InvoicesDB) Sync(ctx context.Context, vip *viper.Viper) error {
 		ctx,
 		vip,
 		syncConfig.Downloader,
+		logging.DownloadLogger,
 	); err != nil {
 		return errors.Join(errUnableToDownloadInvoices, err)
 	}

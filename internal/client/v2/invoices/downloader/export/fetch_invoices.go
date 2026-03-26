@@ -9,8 +9,8 @@ import (
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/encryption"
 	"ksef/internal/http"
-	"ksef/internal/logging"
 	"ksef/internal/runtime"
+	"log/slog"
 	baseHTTP "net/http"
 	"time"
 )
@@ -30,6 +30,7 @@ func (ed *ExportDownloader) fetchInvoices(
 		invoice invoices.InvoiceMetadata,
 		content bytes.Buffer,
 	) error,
+	logger *slog.Logger,
 ) error {
 	// first - wait until status is "ready"
 	ctxTimeout, ctxTimeoutCancel := context.WithTimeout(ctx, 10*time.Minute)
@@ -50,10 +51,10 @@ func (ed *ExportDownloader) fetchInvoices(
 	for !exportStatusReady {
 		select {
 		case <-ctxTimeout.Done():
-			logging.DownloadLogger.Error("Przekroczono czas oczekiwania na eksport")
+			logger.Error("Przekroczono czas oczekiwania na eksport")
 			return errTimeoutWaitingForExport
 		case <-statusPoller.C:
-			logging.DownloadLogger.Info("Czekam na wygenerowanie eksportu faktur", "refNo", exportResponse.ReferenceNumber)
+			logger.Info("Czekam na wygenerowanie eksportu faktur", "refNo", exportResponse.ReferenceNumber)
 			exportStatus, exportStatusReady, err = ed.pollForExportStatus(ctx, exportResponse.ReferenceNumber)
 			if err != nil {
 				return err
@@ -62,11 +63,11 @@ func (ed *ExportDownloader) fetchInvoices(
 	}
 
 	if exportStatus.Package.InvoiceCount == 0 {
-		logging.DownloadLogger.Info("Brak faktur w paczce.")
+		logger.Info("Brak faktur w paczce.")
 		return nil
 	}
 
-	logging.DownloadLogger.Info("Eksport faktur gotowy. Przystępuję do pobierania faktur")
+	logger.Info("Eksport faktur gotowy. Przystępuję do pobierania faktur")
 
 	return ed.downloadAndExtract(ctx, cipher, exportRequest, exportStatus, invoiceReady)
 }

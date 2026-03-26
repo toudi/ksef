@@ -1,18 +1,23 @@
 package invoices
 
 import (
+	"errors"
 	"ksef/cmd/ksef/commands/client"
+	"ksef/internal/certsdb"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/invoicesdb"
 	downloaderconfig "ksef/internal/invoicesdb/downloader/config"
 	kr "ksef/internal/keyring"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
+	"slices"
 	"sync"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+var errOpeningCertsDB = errors.New("błąd otwierania bazy certyfikatów")
 
 type downloadError struct {
 	NIP string
@@ -20,10 +25,29 @@ type downloadError struct {
 }
 
 func downloadRunParalell(cmd *cobra.Command, baseViper *viper.Viper, numWorkers int) error {
-	// let's collect NIP's
-	nipNumbers, err := invoicesdb.GetAllNIPs(baseViper)
+	// let's collect NIP's.
+	// We can retrieve them from the certsDB and also pass the preferredCertProfile.
+	// So effectively what we're doing is we're filtering available certs and for each
+	// discovered cert we're iterating over the NIP numbers it handles.
+	certsDB, err := certsdb.OpenOrCreate(baseViper)
 	if err != nil {
-		return err
+		return errors.Join(errOpeningCertsDB, err)
+	}
+
+	var nipNumbers []string
+	preferredProfile := runtime.GetPreferredCertProfile(baseViper)
+
+	for cert := range certsDB.Filter(func(cert certsdb.Certificate) bool {
+		if !slices.Contains(cert.Usage, certsdb.UsageAuthentication) {
+			return false
+		}
+		return preferredProfile == "" || cert.MatchesProfile(preferredProfile)
+	}) {
+		for _, nip := range cert.NIP {
+			if !slices.Contains(nipNumbers, nip) {
+				nipNumbers = append(nipNumbers, nip)
+			}
+		}
 	}
 
 	downloaderConfig, err := downloaderconfig.GetDownloaderConfig(baseViper, "")
@@ -135,5 +159,8 @@ func doDownload(
 		return err
 	}
 
-	return invoicesDB.DownloadInvoices(cmd.Context(), vip, downloaderConfig)
+	return invoicesDB.DownloadInvoices(
+		cmd.Context(), vip, downloaderConfig,
+		logging.DownloadLogger.With("nip", nip),
+	)
 }

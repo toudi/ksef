@@ -22,6 +22,7 @@ func (sd *smartDownloader) downloadWithExport(
 			sd.httpClient,
 			sd.registry,
 			sd.params,
+			sd.logger,
 		)
 	}
 	return sd.exportDownloader.Download(ctx, invoiceReady)

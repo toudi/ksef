@@ -6,7 +6,6 @@ import (
 	"errors"
 	"ksef/internal/client/v2/invoices/downloader/metadata"
 	"ksef/internal/client/v2/types/invoices"
-	"ksef/internal/logging"
 )
 
 var errFetchingInvoices = errors.New("error fetching invoices")
@@ -20,7 +19,7 @@ func (sd *SimpleDownloader) Download(
 	) error,
 ) error {
 	for _, subjectType := range sd.params.SubjectTypes {
-		logger := logging.DownloadLogger.With("subjectType", subjectType)
+		logger := sd.logger.With("subjectType", subjectType)
 		logger.Debug("fetch invoices list", "start timestamp", sd.params.StartDate)
 
 		metadataPage, err := metadata.InvoicesMetadataPage(
@@ -39,6 +38,7 @@ func (sd *SimpleDownloader) Download(
 			metadataPage,
 			subjectType,
 			invoiceReady,
+			logger,
 		); err != nil {
 			return err
 		}

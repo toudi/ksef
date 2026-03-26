@@ -17,7 +17,7 @@ func (cdb *CertificatesDB) AddInternalIDsToCertificate(
 ) error {
 	return cdb.ForEach(
 		func(cert Certificate) bool {
-			return cert.UID == certificateId || cert.SerialNumber == certificateId || cert.ProfileName == certificateId
+			return cert.MatchesProfile(certificateId)
 		},
 		func(cert *Certificate) error {
 			for internalId := range internalIds {
@@ -40,7 +40,7 @@ func (cdb *CertificatesDB) RemoveInternalIdsFromCertificate(
 ) error {
 	return cdb.ForEach(
 		func(cert Certificate) bool {
-			return cert.UID == certificateId || cert.SerialNumber == certificateId || cert.ProfileName == certificateId
+			return cert.MatchesProfile(certificateId)
 		},
 		func(cert *Certificate) error {
 			// create a temporary set so that we don't reallocate memory over and over
