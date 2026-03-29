@@ -7,6 +7,7 @@ import (
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/token"
+	kr "ksef/internal/keyring"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -38,6 +39,12 @@ func dumpAuthChallenge(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	keyring, err := kr.NewKeyring(vip)
+	if err != nil {
+		return err
+	}
+	defer keyring.Close()
+
 	output, err := cmd.Flags().GetString(flagOutput)
 	if output == "" || err != nil {
 		return fmt.Errorf("nie podano pliku wyjścia")
@@ -48,7 +55,12 @@ func dumpAuthChallenge(cmd *cobra.Command, _ []string) error {
 		token.WithDumpChallenge(output),
 		token.WithCertsDB(certsDB),
 	)
-	cli, err := v2.NewClient(cmd.Context(), vip, v2.WithAuthValidator(authValidator))
+	cli, err := v2.NewClient(
+		cmd.Context(),
+		vip,
+		v2.WithAuthValidator(authValidator),
+		v2.WithKeyring(keyring),
+	)
 	if err != nil {
 		return err
 	}

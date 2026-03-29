@@ -1,6 +1,9 @@
 package token
 
-import "ksef/internal/certsdb"
+import (
+	"ksef/internal/certsdb"
+	kr "ksef/internal/keyring"
+)
 
 type initializerFunc = func(handler *TokenHandler)
 
@@ -21,5 +24,11 @@ func WithSignedChallengeFile(signedChallengeFile string) initializerFunc {
 	return func(handler *TokenHandler) {
 		handler.mode = modeUseSignedFile
 		handler.signedChallengeFile = signedChallengeFile
+	}
+}
+
+func WithKeyring(keyring kr.Keyring) initializerFunc {
+	return func(handler *TokenHandler) {
+		handler.keyring = keyring
 	}
 }

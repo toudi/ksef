@@ -9,6 +9,7 @@ import (
 	"errors"
 	"io"
 	"ksef/internal/certsdb"
+	kr "ksef/internal/keyring"
 	"os"
 	"strings"
 	"time"
@@ -37,8 +38,8 @@ type TemplateVars struct {
 	}
 }
 
-func SignAuthChallenge(challenge io.Reader, cert certsdb.Certificate, dest io.Writer) error {
-	var templateVars = TemplateVars{
+func SignAuthChallenge(challenge io.Reader, cert certsdb.Certificate, keyring kr.Keyring, dest io.Writer) error {
+	templateVars := TemplateVars{
 		SigningTime: time.Now().UTC(),
 	}
 	templateVars.Certificate.Hash = make([]byte, 32)
@@ -112,7 +113,7 @@ func SignAuthChallenge(challenge io.Reader, cert certsdb.Certificate, dest io.Wr
 	// 2. calculate the signature of the document. We will use signedInfo node as our
 	// input hash
 	var signature []byte
-	if signature, err = cert.SignContent([]byte(signedInfo)); err != nil {
+	if signature, err = cert.SignContent([]byte(signedInfo), keyring); err != nil {
 		return err
 	}
 

@@ -47,8 +47,13 @@ func uploadInvoicesRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 	defer ksefClient.Close()
+
 	// initialize the invoicesdb
-	invoicesDB, err := invoicesdb.NewInvoicesDB(vip, invoicesdb.WithKSeFClient(ksefClient))
+	invoicesDB, err := invoicesdb.NewInvoicesDB(
+		vip,
+		invoicesdb.WithKSeFClient(ksefClient),
+		invoicesdb.WithKeyring(keyring),
+	)
 	if err != nil {
 		return err
 	}

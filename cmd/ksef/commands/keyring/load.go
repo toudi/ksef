@@ -21,7 +21,7 @@ func init() {
 func loadKeyringFromFileRun(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
 
-	fileKeyringCfg, err := config.GetFileBasedKeyringConfig(vip)
+	fileKeyringCfg, err := keyring.GetFileBasedKeyringConfig(vip)
 	if err != nil {
 		return err
 	}

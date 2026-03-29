@@ -6,6 +6,7 @@ import (
 	"errors"
 	"ksef/cmd/ksef/flags"
 	"ksef/internal/certsdb"
+	kr "ksef/internal/keyring"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
@@ -50,6 +51,11 @@ func generateSelfSignedCert(cmd *cobra.Command, _ []string) error {
 	}
 	defer certsDB.Save()
 
+	keyring, err := kr.NewKeyring(vip)
+	if err != nil {
+		return err
+	}
+
 	pesel, err := cmd.Flags().GetString(flags.FlagNamePESEL)
 	if err != nil {
 		return err
@@ -90,5 +96,5 @@ func generateSelfSignedCert(cmd *cobra.Command, _ []string) error {
 
 	}
 
-	return certsDB.GenerateSelfSignedCert(subject)
+	return certsDB.GenerateSelfSignedCert(subject, keyring)
 }

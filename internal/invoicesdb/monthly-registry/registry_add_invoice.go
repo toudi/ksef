@@ -5,6 +5,7 @@ import (
 	"errors"
 	"ksef/internal/certsdb"
 	"ksef/internal/client/v2/types/invoices"
+	kr "ksef/internal/keyring"
 	"ksef/internal/runtime"
 	"ksef/internal/sei"
 )
@@ -19,6 +20,7 @@ func (r *Registry) AddInvoice(
 	inv *sei.ParsedInvoice,
 	invoiceType InvoiceType,
 	checksum string,
+	keyring kr.Keyring,
 ) error {
 	// check if the invoice with this checksum already exists
 	if r.ContainsHash(checksum) {
@@ -72,6 +74,7 @@ func (r *Registry) AddInvoice(
 			environment.QRCode,
 			inv,
 			certificate,
+			keyring,
 		); err != nil {
 			return errors.Join(errUnableToGenerateQRCode, err)
 		}

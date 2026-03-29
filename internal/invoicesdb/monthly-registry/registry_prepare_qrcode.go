@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"ksef/internal/certsdb"
+	kr "ksef/internal/keyring"
 	"ksef/internal/sei"
 	"net/url"
 	"strings"
@@ -49,6 +50,7 @@ func (i *Invoice) generateCertificateQRCode(
 	qrcodeURL string,
 	parsed *sei.ParsedInvoice,
 	certificate certsdb.Certificate,
+	keyring kr.Keyring,
 ) (string, error) {
 	checksumBytes, err := hex.DecodeString(i.Checksum)
 	if err != nil {
@@ -73,7 +75,7 @@ func (i *Invoice) generateCertificateQRCode(
 		base64.RawURLEncoding.EncodeToString(checksumBytes),
 	)
 	// now that we have signing content we can sign it with certificate
-	signature, err := certificate.SignContent([]byte(signingContent))
+	signature, err := certificate.SignContent([]byte(signingContent), keyring)
 	if err != nil {
 		return "", err
 	}
