@@ -165,15 +165,11 @@ func (f *FileBasedKeyring) saveKeyring(contents map[string]string) error {
 
 	ciphertext, err := utils.GCMAESEncrypt(plaintextBuffer.Bytes(), []byte(f.cfg.Password))
 	if err != nil {
+		logging.KeyringLogger.Error("error encrypting keyring contents", "err", err)
 		return err
 	}
-
-	keyringFile, err := os.OpenFile(f.cfg.Path, os.O_CREATE|os.O_WRONLY, 0600)
-	if err != nil {
-		return err
-	}
-	defer keyringFile.Close()
-	if _, err = keyringFile.Write(ciphertext); err != nil {
+	if err = os.WriteFile(f.cfg.Path, ciphertext, 0600); err != nil {
+		logging.KeyringLogger.Error("error writing keyring to disk", "err", err)
 		return err
 	}
 	return nil
