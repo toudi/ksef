@@ -51,10 +51,6 @@ func sendCsrs(cmd *cobra.Command, _ []string) error {
 	if cli, err = client.InitClient(cmd, viper.GetViper(), keyring); err != nil {
 		return err
 	}
-	keyring, err := kr.NewKeyring(vip)
-	if err != nil {
-		return err
-	}
 	certsManager, err := cli.Certificates(envId)
 	if err != nil {
 		return err

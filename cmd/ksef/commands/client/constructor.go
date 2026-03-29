@@ -6,13 +6,16 @@ import (
 	"ksef/internal/client/v2/auth/token"
 	kr "ksef/internal/keyring"
 
-	kr "ksef/internal/keyring"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-func InitClient(cmd *cobra.Command, vip *viper.Viper, keyring kr.Keyring, initializers ...v2.InitializerFunc) (*v2.APIClient, error) {
+func InitClient(
+	cmd *cobra.Command,
+	vip *viper.Viper,
+	keyring kr.Keyring,
+	initializers ...v2.InitializerFunc,
+) (*v2.APIClient, error) {
 	var err error
 
 	var cli *v2.APIClient
@@ -22,11 +25,6 @@ func InitClient(cmd *cobra.Command, vip *viper.Viper, keyring kr.Keyring, initia
 		return nil
 	}
 	certsDB, err := certsdb.OpenOrCreate(vip)
-	if err != nil {
-		return nil, err
-	}
-
-	keyring, err := kr.NewKeyring(vip)
 	if err != nil {
 		return nil, err
 	}

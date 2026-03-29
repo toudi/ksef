@@ -13,8 +13,6 @@ import (
 	"ksef/internal/runtime"
 	inputprocessors "ksef/internal/sei/input_processors"
 
-	kr "ksef/internal/keyring"
-
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -57,11 +55,6 @@ func importRun(cmd *cobra.Command, args []string) error {
 		return errors.Join(errClientInit, err)
 	}
 	defer ksefClient.Close()
-
-	keyring, err := kr.NewKeyring(vip)
-	if err != nil {
-		return err
-	}
 
 	// initialize the invoicesdb
 	invoicesDB, err := invoicesdb.NewInvoicesDB(
