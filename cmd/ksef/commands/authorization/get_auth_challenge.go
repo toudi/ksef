@@ -54,6 +54,7 @@ func dumpAuthChallenge(cmd *cobra.Command, _ []string) error {
 		vip,
 		token.WithDumpChallenge(output),
 		token.WithCertsDB(certsDB),
+		token.WithKeyring(keyring),
 	)
 	cli, err := v2.NewClient(
 		cmd.Context(),

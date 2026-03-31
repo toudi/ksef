@@ -56,7 +56,12 @@ func login(cmd *cobra.Command, args []string) error {
 		token.WithKeyring(keyring),
 	)
 
-	cli, err := v2.NewClient(cmd.Context(), vip, v2.WithAuthValidator(authValidator))
+	cli, err := v2.NewClient(
+		cmd.Context(),
+		vip,
+		v2.WithAuthValidator(authValidator),
+		v2.WithKeyring(keyring),
+	)
 	if err != nil {
 		return err
 	}
