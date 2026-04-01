@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"ksef/cmd/ksef/flags"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/runtime"
@@ -22,7 +23,10 @@ const (
 	flagUseSmartMode = "use-smart-mode"
 )
 
-var subjectTypes []invoices.SubjectType
+var (
+	subjectTypes              []invoices.SubjectType
+	errEndDateBeforeStartDate = errors.New("end-date is set in the past with regards to start-date")
+)
 
 func prefixedFlag(prefix string, flagName string) string {
 	if prefix != "" {
@@ -104,6 +108,9 @@ func GetDownloaderConfig(vip *viper.Viper, prefix string) (params invoices.Downl
 		parsedEndDate, err := utils.ParseTimeFromString(endDate)
 		if err != nil {
 			return params, err
+		}
+		if parsedEndDate.Before(params.StartDate) {
+			return params, errEndDateBeforeStartDate
 		}
 		params.EndDate = &parsedEndDate
 	}
