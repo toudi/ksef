@@ -9,9 +9,10 @@ import (
 )
 
 var (
-	cfgKeyNip          = "nip"
-	errValidatingNIP   = errors.New("błąd walidacji numeru NIP")
-	errNIPNotPopulated = errors.New("numer NIP jest wymagany")
+	cfgKeyNip               = "nip"
+	errValidatingNIP        = errors.New("błąd walidacji numeru NIP")
+	errNIPNotPopulated      = errors.New("numer NIP jest wymagany")
+	errAtLeastOneNIPRequied = errors.New("przynajmniej jeden numer NIP jest wymagany")
 )
 
 func CheckNIPIsSet(vip *viper.Viper) error {
@@ -65,6 +66,10 @@ func GetNIPSlice(vip *viper.Viper) ([]string, error) {
 			return nil, errors.Join(errValidatingNIP, errors.New(nip))
 		}
 		nipSlice = append(nipSlice, nip)
+	}
+
+	if len(nipSlice) == 0 {
+		return nil, errAtLeastOneNIPRequied
 	}
 
 	return nipSlice, nil
