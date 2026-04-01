@@ -1,6 +1,7 @@
 package keyring
 
 import (
+	"strings"
 	"ksef/internal/logging"
 
 	zalandoKeyring "github.com/zalando/go-keyring"
@@ -25,7 +26,10 @@ func (s *SystemKeyring) Get(bucket string, nip string, key string) (string, erro
 	value, err := zalandoKeyring.Get(serviceName(bucket, key), nip)
 	if err == zalandoKeyring.ErrNotFound {
 		err = ErrNotFound
+	} else if err != nil && strings.HasPrefix(err.Error(), "failed to unlock correct collection") {
+		err = ErrPermissionDenied
 	}
+
 	return value, err
 }
 

@@ -12,3 +12,4 @@ type Keyring interface {
 }
 
 var ErrNotFound = errors.New("key not found")
+var ErrPermissionDenied = errors.New("permission denied to read key")
