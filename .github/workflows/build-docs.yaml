@@ -51,7 +51,7 @@ jobs:
           switches: -avzr --delete
           path: docs/v2/public/
           remote_path: ${{ secrets.DOCS_REMOTE_PATH }}
-          remote_host: ksef.po-godzinach.info
+          remote_host: ${{ secrets.DOCS_REMOTE_HOST }}
           remote_user: ${{ secrets.DOCS_REMOTE_USER }}
           remote_port: ${{ secrets.DOCS_REMOTE_PORT }}
           remote_key: ${{ secrets.DOCS_DEPLOYMENT_KEY }}
