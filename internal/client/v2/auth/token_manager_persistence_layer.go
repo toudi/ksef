@@ -79,7 +79,7 @@ func (tm *TokenManager) restoreTokens(ctx context.Context) error {
 		logger.Error("nie udało się odczytać certyfikatu", "err", err)
 	}
 	tokens, err := tm.keyring.Get(string(gateway), nip, keyring.SessionTokensKey(authCert.UID))
-	if err != nil && err != keyring.ErrNotFound {
+	if err != nil && err != keyring.ErrNotFound && err != keyring.ErrPermissionDenied {
 		logger.Error("błąd odczytu tokenów", "err", err)
 		return err
 	}
