@@ -9,6 +9,7 @@ import (
 	"ksef/internal/invoicesdb/config"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	subjectsettings "ksef/internal/invoicesdb/subject-settings"
+	kr "ksef/internal/keyring"
 	"time"
 
 	"github.com/spf13/viper"
@@ -30,6 +31,7 @@ type InvoicesDB struct {
 	subjectSettings *subjectsettings.SubjectSettings
 
 	certsDB *certsdb.CertificatesDB // for retrieving offline certificate
+	keyring kr.Keyring              // for accessing private keys
 	vip     *viper.Viper
 	// for sync only
 	prefix string
@@ -118,6 +120,12 @@ func WithKSeFClient(client *v2.APIClient) func(idb *InvoicesDB) {
 func WithoutInitializingPrefix() func(idb *InvoicesDB) {
 	return func(idb *InvoicesDB) {
 		idb.skipPrefixInitialization = true
+	}
+}
+
+func WithKeyring(keyring kr.Keyring) func(idb *InvoicesDB) {
+	return func(idb *InvoicesDB) {
+		idb.keyring = keyring
 	}
 }
 

@@ -65,13 +65,13 @@ func sendCsrs(cmd *cobra.Command, _ []string) error {
 	}
 	if prepareAuth, _ := cmd.Flags().GetBool(flagAuth); prepareAuth {
 		logging.CertsDBLogger.Debug("przygotowuję CSR dla certyfikatu autoryzacji")
-		if err = certsManager.PrepareEnrollmentCSR(ed, certsdb.UsageAuthentication, nip); err != nil {
+		if err = certsManager.PrepareEnrollmentCSR(ed, certsdb.UsageAuthentication, nip, keyring); err != nil {
 			return err
 		}
 	}
 	if prepareOffline, _ := cmd.Flags().GetBool(flagOffline); prepareOffline {
 		logging.CertsDBLogger.Debug("przygotowuję CSR dla certyfikatu offline")
-		if err = certsManager.PrepareEnrollmentCSR(ed, certsdb.UsageOffline, nip); err != nil {
+		if err = certsManager.PrepareEnrollmentCSR(ed, certsdb.UsageOffline, nip, keyring); err != nil {
 			return err
 		}
 	}

@@ -6,6 +6,7 @@ import (
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/token"
+	kr "ksef/internal/keyring"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
@@ -37,6 +38,12 @@ func login(cmd *cobra.Command, args []string) error {
 	}
 	runtime.SetNIP(vip, nip)
 
+	keyring, err := kr.NewKeyring(vip)
+	if err != nil {
+		return err
+	}
+	defer keyring.Close()
+
 	certsDB, err := certsdb.OpenOrCreate(vip)
 	if err != nil {
 		return err
@@ -46,9 +53,15 @@ func login(cmd *cobra.Command, args []string) error {
 		vip,
 		token.WithSignedChallengeFile(signedChallengeFile),
 		token.WithCertsDB(certsDB),
+		token.WithKeyring(keyring),
 	)
 
-	cli, err := v2.NewClient(cmd.Context(), vip, v2.WithAuthValidator(authValidator))
+	cli, err := v2.NewClient(
+		cmd.Context(),
+		vip,
+		v2.WithAuthValidator(authValidator),
+		v2.WithKeyring(keyring),
+	)
 	if err != nil {
 		return err
 	}

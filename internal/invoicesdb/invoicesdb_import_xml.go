@@ -120,6 +120,7 @@ func (i *InvoicesDB) importXMLInvoices(
 			parsedInvoice,
 			monthlyregistry.InvoiceTypeIssued,
 			checksum,
+			i.keyring,
 		); err != nil {
 			return err
 		}

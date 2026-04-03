@@ -9,6 +9,7 @@ import (
 	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/token"
 	"ksef/internal/client/v2/auth/validator"
+	kr "ksef/internal/keyring"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
@@ -42,14 +43,20 @@ func authSessionDebug(cmd *cobra.Command, _ []string) error {
 	var nip string
 
 	var err error
+	var keyring kr.Keyring
+
+	keyring, err = kr.NewKeyring(vip)
+	if err != nil {
+		return err
+	}
+	defer keyring.Close()
 
 	// there are couple of modes here:
 	// 1. if the user passed path to a signed file - let's use it
 	var initializerFuncs []func(handler *token.TokenHandler)
 
 	if signedFile != "" {
-		_, nip, err = challenge.GetNIPFromChallengeFile(signedFile)
-		if err != nil {
+		if _, _, err = challenge.GetNIPFromChallengeFile(signedFile); err != nil {
 			return err
 		}
 		initializerFuncs = append(initializerFuncs, token.WithSignedChallengeFile(signedFile))
@@ -67,9 +74,16 @@ func authSessionDebug(cmd *cobra.Command, _ []string) error {
 		initializerFuncs = append(initializerFuncs, token.WithCertsDB(certsDB))
 	}
 
+	initializerFuncs = append(initializerFuncs, token.WithKeyring(keyring))
+
 	authValidator = token.NewAuthHandler(vip, initializerFuncs...)
 
-	cli, err := v2.NewClient(cmd.Context(), vip, v2.WithAuthValidator(authValidator))
+	cli, err := v2.NewClient(
+		cmd.Context(),
+		vip,
+		v2.WithAuthValidator(authValidator),
+		v2.WithKeyring(keyring),
+	)
 	if err != nil {
 		return err
 	}

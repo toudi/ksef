@@ -55,11 +55,13 @@ func importRun(cmd *cobra.Command, args []string) error {
 		return errors.Join(errClientInit, err)
 	}
 	defer ksefClient.Close()
+
 	// initialize the invoicesdb
 	invoicesDB, err := invoicesdb.NewInvoicesDB(
 		vip,
 		invoicesdb.WithKSeFClient(ksefClient),
 		invoicesdb.WithoutInitializingPrefix(),
+		invoicesdb.WithKeyring(keyring),
 	)
 	if err != nil {
 		return errors.Join(errInvoicesDBInit, err)

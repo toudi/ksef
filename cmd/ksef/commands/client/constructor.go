@@ -10,7 +10,12 @@ import (
 	"github.com/spf13/viper"
 )
 
-func InitClient(cmd *cobra.Command, vip *viper.Viper, keyring kr.Keyring, initializers ...v2.InitializerFunc) (*v2.APIClient, error) {
+func InitClient(
+	cmd *cobra.Command,
+	vip *viper.Viper,
+	keyring kr.Keyring,
+	initializers ...v2.InitializerFunc,
+) (*v2.APIClient, error) {
 	var err error
 
 	var cli *v2.APIClient
@@ -30,6 +35,7 @@ func InitClient(cmd *cobra.Command, vip *viper.Viper, keyring kr.Keyring, initia
 			token.NewAuthHandler(
 				vip,
 				token.WithCertsDB(certsDB),
+				token.WithKeyring(keyring),
 			),
 		),
 		v2.WithCertificatesDB(certsDB),
