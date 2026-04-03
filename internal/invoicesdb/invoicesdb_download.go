@@ -56,8 +56,12 @@ func (i *InvoicesDB) DownloadInvoices(
 
 		// initialize starting cutoff for downloading invoices
 		tmpDownloadParams.StartDate = registry.SyncParams.LastTimestamp
+		// however, if the range from monthsRange would indicate otherwise - prefer it.
+		if month.Before(tmpDownloadParams.StartDate) {
+			tmpDownloadParams.StartDate = month
+		}
 		// get rid of end range initially ..
-		tmpDownloadParams.EndDate = cfg.EndDate
+		tmpDownloadParams.EndDate = nil
 
 		if idx < len(monthsRange)-1 {
 			// unless there's a next month waiting to be processed - then we can easily determine
@@ -142,14 +146,23 @@ func (i *InvoicesDB) DownloadInvoices(
 
 func generateMonthsRange(startDate time.Time, endDate *time.Time) []time.Time {
 	today := time.Now().Local()
-	if endDate != nil {
+
+	return generateMonthsRangeAtTime(today, startDate, endDate)
+}
+
+func generateMonthsRangeAtTime(today time.Time, startDate time.Time, endDate *time.Time) []time.Time {
+	if endDate != nil && !endDate.IsZero() {
 		today = *endDate
 	}
 
 	var monthsRange []time.Time
-	for startDate.Before(today) {
+
+	for !startDate.After(today) {
 		monthsRange = append(monthsRange, startDate)
+		// calculate the date at next month
 		startDate = startDate.AddDate(0, 1, 0)
+		// and truncate it at the first day of the month
+		startDate = startDate.AddDate(0, 0, -startDate.Day()+1)
 	}
 
 	return monthsRange

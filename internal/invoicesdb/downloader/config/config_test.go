@@ -10,6 +10,8 @@ import (
 
 func TestDownloaderConfig(t *testing.T) {
 	t.Run("make sure it does not fail when endDate != nil", func(t *testing.T) {
+		t.Parallel()
+
 		vip := viper.New()
 		vip.Set(flagEndDate, "2026-02-05")
 		vip.Set(flagStartDate, "2026-02-04")
@@ -24,6 +26,8 @@ func TestDownloaderConfig(t *testing.T) {
 	})
 
 	t.Run("allow time as input as well", func(t *testing.T) {
+		t.Parallel()
+
 		vip := viper.New()
 		vip.Set(flagStartDate, "2026-02-05")
 		vip.Set(flagEndDate, "2026-02-06T13:14:15Z")
@@ -34,5 +38,16 @@ func TestDownloaderConfig(t *testing.T) {
 
 		require.NotNil(t, params.EndDate)
 		require.Equal(t, expectedEndDate, *params.EndDate)
+	})
+
+	t.Run("do not allow endDate set before startDate", func(t *testing.T) {
+		t.Parallel()
+
+		vip := viper.New()
+		vip.Set(flagStartDate, "2026-02-05")
+		vip.Set(flagEndDate, "2026-02-01")
+
+		_, err := GetDownloaderConfig(vip, "")
+		require.Equal(t, errEndDateBeforeStartDate, err)
 	})
 }
