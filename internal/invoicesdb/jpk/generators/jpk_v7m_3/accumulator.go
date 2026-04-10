@@ -11,20 +11,6 @@ type FormFields struct {
 	VatField  string
 }
 
-var vatRateToFields = map[types.VatRate]FormFields{
-	types.VatRateZw:      {BaseField: "P_10"},
-	types.VatRateNpI:     {BaseField: "P_11"},
-	types.VatRateNpII:    {BaseField: "P_12"},
-	types.VatRateZeroKR:  {BaseField: "P_13"},
-	types.VatRateZeroWDT: {BaseField: "P_21"},
-	types.VatRateZeroEX:  {BaseField: "P_22"},
-	types.VatRate5:       {BaseField: "P_15", VatField: "P_16"},
-	types.VatRate7:       {BaseField: "P_17", VatField: "P_18"},
-	types.VatRate8:       {BaseField: "P_17", VatField: "P_18"},
-	types.VatRate22:      {BaseField: "P_19", VatField: "P_20"},
-	types.VatRate23:      {BaseField: "P_19", VatField: "P_20"},
-}
-
 type fieldToAmountRegistry map[string]money.MonetaryValue
 
 func (far fieldToAmountRegistry) accumulate(fields []string) money.MonetaryValue {
