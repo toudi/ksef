@@ -1,4 +1,4 @@
-package jpk
+package manager
 
 import (
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
@@ -46,4 +46,12 @@ func WithMonthlyRegistry(registry *monthlyregistry.Registry) func(*JPKManager) e
 
 		return nil
 	}
+}
+
+func (m *JPKManager) GetSettings() *subjectsettings.JPKSettings {
+	if m.ss != nil {
+		return m.ss.JPK
+	}
+
+	return nil
 }

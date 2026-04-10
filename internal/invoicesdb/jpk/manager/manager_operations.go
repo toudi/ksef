@@ -1,4 +1,4 @@
-package jpk
+package manager
 
 import (
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
