@@ -66,7 +66,25 @@ func (i *InvoicesDB) DownloadInvoices(
 		if idx < len(monthsRange)-1 {
 			// unless there's a next month waiting to be processed - then we can easily determine
 			// the end of the range.
-			tmpDownloadParams.EndDate = &monthsRange[idx+1]
+			// ..
+			// .. however because the API date range is inclusive - we've got to subtract 1 second
+			// to end up at the last possible timestamp of `startDate` (ideally we should have actually
+			// subtract less than that but the API clearly states that it accepts ISO-8601 which only
+			// accepts full seconds)
+			tmpTime := monthsRange[idx+1].Add(-time.Second)
+			// because of the 1 second hack and because user can actually give us the last possible timestamp
+			// let's make a sanity check over this - there's hardly any point for running the whole
+			// download machinery for an empty range:
+			if tmpTime.Equal(tmpDownloadParams.StartDate) {
+				logging.DownloadLogger.Warn(
+					"Pusty zakres dla pobierania faktur",
+					"startDate", tmpDownloadParams.StartDate,
+					"endDate", tmpTime,
+				)
+				continue
+			}
+
+			tmpDownloadParams.EndDate = &tmpTime
 		}
 
 		lastTimestampPerRegistry[registry] = registry.SyncParams.LastTimestamp
@@ -145,24 +163,36 @@ func (i *InvoicesDB) DownloadInvoices(
 }
 
 func generateMonthsRange(startDate time.Time, endDate *time.Time) []time.Time {
-	today := time.Now().Local()
+	today := time.Now()
 
 	return generateMonthsRangeAtTime(today, startDate, endDate)
 }
 
 func generateMonthsRangeAtTime(today time.Time, startDate time.Time, endDate *time.Time) []time.Time {
+	// that is quite important - basically we do not control user input with regards to timezone.
+	// theoretically we could - like we could just bail out with an error if they give an UTC
+	// as this can get nasty with regards to last day + near midnight cases, but instead of
+	// doing that let's just convert all of the dates to be within the same timezone.
+	// if the user does not provide any timezone then .Now() will fallback to local timezone anyway
+	today = today.In(startDate.Location())
+
 	if endDate != nil && !endDate.IsZero() {
-		today = *endDate
+		today = (*endDate).In(startDate.Location())
 	}
 
-	var monthsRange []time.Time
+	monthsRange := []time.Time{}
 
 	for !startDate.After(today) {
 		monthsRange = append(monthsRange, startDate)
-		// calculate the date at next month
+
+		// calculate the first day of next month.
+		// In order to do that correctly we have to first override the day at `startDate` to 1. The
+		// reason for that is - if somebody gives us a number that would be very close to the end
+		// of the month (e.g. 25+) when we add +1 month we'd actually skip an entire month.
+		// Therefore zeroing the time and overriding the day gives us safety
+		startDate = time.Date(startDate.Year(), startDate.Month(), 1, 0, 0, 0, 0, startDate.Location())
+		// add one month
 		startDate = startDate.AddDate(0, 1, 0)
-		// and truncate it at the first day of the month
-		startDate = startDate.AddDate(0, 0, -startDate.Day()+1)
 	}
 
 	return monthsRange

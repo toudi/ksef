@@ -31,6 +31,10 @@ func TestTimeParsingFromString(t *testing.T) {
 			input:    "2026-02-05T13:14:15Z",
 			expected: time.Date(2026, 2, 5, 13, 14, 15, 0, time.UTC),
 		},
+		{
+			input:    "2026-01-31T23:59:59.00Z",
+			expected: time.Date(2026, 1, 31, 23, 59, 59, 0, time.UTC),
+		},
 	} {
 		t.Run(test.input, func(t *testing.T) {
 			parsed, err := utils.ParseTimeFromString(test.input)
