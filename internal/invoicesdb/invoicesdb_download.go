@@ -39,7 +39,7 @@ func (i *InvoicesDB) DownloadInvoices(
 	lastTimestampPerRegistry := make(map[*monthlyregistry.Registry]time.Time)
 	// just to be on the safe side - let's always try to download invoices for the
 	// last month as well.
-	monthsRange := generateMonthsRange(i.today, cfg.EndDate)
+	monthsRange := generateMonthsRange(utils.StartOfMonth(i.today), cfg.EndDate)
 
 	if !cfg.StartDate.IsZero() {
 		monthsRange = generateMonthsRange(cfg.StartDate, cfg.EndDate)

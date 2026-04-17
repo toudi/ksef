@@ -87,3 +87,33 @@ func TestMonthRange(t *testing.T) {
 		})
 	}
 }
+
+func TestStartOfMonth(t *testing.T) {
+	type testCase struct {
+		input    time.Time
+		expected time.Time
+	}
+
+	warsawTime, _ := time.LoadLocation("Europe/Warsaw")
+
+	for _, test := range []testCase{
+		{
+			input:    time.Time{},
+			expected: time.Time{},
+		},
+		{
+			input:    time.Date(2026, 4, 16, 14, 15, 16, 0, time.UTC),
+			expected: time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC),
+		},
+		{
+			input:    time.Date(2026, 4, 16, 14, 15, 16, 0, warsawTime),
+			expected: time.Date(2026, 4, 1, 0, 0, 0, 0, warsawTime),
+		},
+	} {
+		t.Run(fmt.Sprintf("%v", test.input), func(t *testing.T) {
+			t.Parallel()
+
+			require.Equal(t, test.expected, utils.StartOfMonth(test.input))
+		})
+	}
+}

@@ -11,7 +11,7 @@ func WithinMonthRange(timestamp time.Time, monthStart time.Time) bool {
 	// let's reconstruct monthStart to be set to *actual* month start. The reason being - this function
 	// will be used with timestamps loaded from invoices registries where the timestamps will fluctuate
 	// and they won't always be set to actual month starts:
-	monthStart = time.Date(monthStart.Year(), monthStart.Month(), 1, 0, 0, 0, 0, monthStart.Location())
+	monthStart = StartOfMonth(monthStart)
 	// calculate the last possible time of the month
 	// the -1 is so that we deduct 1 nanosecond and this will give us the last possible timestamp for the
 	// calendar month of `monthStart`
@@ -22,4 +22,8 @@ func WithinMonthRange(timestamp time.Time, monthStart time.Time) bool {
 	}
 
 	return true
+}
+
+func StartOfMonth(timestamp time.Time) time.Time {
+	return time.Date(timestamp.Year(), timestamp.Month(), 1, 0, 0, 0, 0, timestamp.Location())
 }
