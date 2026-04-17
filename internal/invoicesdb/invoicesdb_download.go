@@ -39,7 +39,7 @@ func (i *InvoicesDB) DownloadInvoices(
 	lastTimestampPerRegistry := make(map[*monthlyregistry.Registry]time.Time)
 	// just to be on the safe side - let's always try to download invoices for the
 	// last month as well.
-	monthsRange := i.monthsRange
+	monthsRange := generateMonthsRange(i.today, cfg.EndDate)
 
 	if !cfg.StartDate.IsZero() {
 		monthsRange = generateMonthsRange(cfg.StartDate, cfg.EndDate)
@@ -54,12 +54,38 @@ func (i *InvoicesDB) DownloadInvoices(
 			return err
 		}
 
-		// initialize starting cutoff for downloading invoices
-		tmpDownloadParams.StartDate = registry.SyncParams.LastTimestamp
-		// however, if the range from monthsRange would indicate otherwise - prefer it.
-		if month.Before(tmpDownloadParams.StartDate) {
-			tmpDownloadParams.StartDate = month
+		tmpDownloadParams.DateType = invoiceTypes.DateTypeStorage
+
+		// initialize starting cutoff with month start:
+		tmpDownloadParams.StartDate = month
+
+		// if possible, override it with last sync timestamp:
+		// (basically we're checking if the last timestamp is > start of month, however only if
+		// it is within the month range. The reason for that is if for whatever reason there's
+		// a wrong date persisted - i.e. from a different month due to a bug - we want to ignore
+		// it as it would lead to a faulty request
+		if registry.SyncParams != nil && utils.WithinMonthRange(
+			registry.SyncParams.LastTimestamp, month,
+		) {
+			// use .In(month.Location) because the registry persists timestamps in UTC
+			// however month comes from user entry, therefore we need to compare them with respect to
+			// the same timezone
+			// example: let's imagine that the registry saves something like
+			// 2026-03-20T12:34:56 Z (UTC)
+			// now, in order to get the first day of month this would be converted to
+			// 2026-03-01T00:00:00 Z (UTC)
+			// and now if user would pass just a date, without timezone, i.e. 2026-03-01
+			// then WithinMonthRange could actually return false if the local timezone is positively offset
+			// e.g. 2026-03-01T00:00:00 CET is actually 2026-02-28 UTC and therefore it would be out of range
+			// if we'd compare it with the above calculated month start. Which is clearly not users intent.
+			tmpDownloadParams.StartDate = registry.SyncParams.LastTimestamp.In(month.Location())
 		}
+
+		// last check. if the user explicitely requested a start date - let's prefer it (again, if it applies to the range)
+		if utils.WithinMonthRange(cfg.StartDate, tmpDownloadParams.StartDate) && cfg.StartDate.Before(tmpDownloadParams.StartDate) {
+			tmpDownloadParams.StartDate = cfg.StartDate
+		}
+
 		// get rid of end range initially ..
 		tmpDownloadParams.EndDate = nil
 

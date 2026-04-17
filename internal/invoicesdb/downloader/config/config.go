@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"ksef/cmd/ksef/flags"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/runtime"
@@ -57,7 +58,7 @@ func DownloaderFlags(flagSet *pflag.FlagSet, prefix string) {
 	})
 	flagSet.Bool(prefixedFlag(prefix, flagPDF), false, "generuj PDF dla pobranych faktur")
 	flagSet.BoolP(prefixedFlag(prefix, flagIncremental), "i", false, "pobieranie przyrostowe")
-	flagSet.String(prefixedFlag(prefix, flagStartDate), firstDayOfMonth.Format("2006-01-02"), "data początkowa")
+	flagSet.String(prefixedFlag(prefix, flagStartDate), "", fmt.Sprintf("data początkowa (domyślnie: %s)", firstDayOfMonth.Format("2006-01-02")))
 	flagSet.String(prefixedFlag(prefix, flagEndDate), "", "data końcowa")
 	flagSet.IntP(prefixedFlag(prefix, flagPageSize), "", 50, "liczba faktur na stronę odpowiedzi")
 	flagSet.Var(flags.StringChoice([]string{
@@ -98,24 +99,28 @@ func GetDownloaderConfig(vip *viper.Viper, prefix string) (params invoices.Downl
 	if params.Incremental || params.DateType == "" {
 		params.DateType = invoices.DateTypeStorage
 	}
-	startDate, err := utils.ParseTimeFromString(vip.GetString(prefixedFlag(prefix, flagStartDate)))
-	if err != nil {
-		return params, err
-	}
-	params.StartDate = startDate
-	endDate := vip.GetString(prefixedFlag(prefix, flagEndDate))
-	if endDate != "" {
-		parsedEndDate, err := utils.ParseTimeFromString(endDate)
+
+	params.UseExportMode = vip.GetBool(prefixedFlag(prefix, flagUseExport))
+	params.UseSmartMode = vip.GetBool(prefixedFlag(prefix, flagUseSmartMode))
+
+	if startDateString := vip.GetString(prefixedFlag(prefix, flagStartDate)); startDateString != "" {
+		startDate, err := utils.ParseTimeFromString(startDateString)
 		if err != nil {
 			return params, err
 		}
-		if parsedEndDate.Before(params.StartDate) {
-			return params, errEndDateBeforeStartDate
+		params.StartDate = startDate
+		endDate := vip.GetString(prefixedFlag(prefix, flagEndDate))
+		if endDate != "" {
+			parsedEndDate, err := utils.ParseTimeFromString(endDate)
+			if err != nil {
+				return params, err
+			}
+			if parsedEndDate.Before(params.StartDate) {
+				return params, errEndDateBeforeStartDate
+			}
+			params.EndDate = &parsedEndDate
 		}
-		params.EndDate = &parsedEndDate
 	}
-	params.UseExportMode = vip.GetBool(prefixedFlag(prefix, flagUseExport))
-	params.UseSmartMode = vip.GetBool(prefixedFlag(prefix, flagUseSmartMode))
 
 	return params, nil
 }
