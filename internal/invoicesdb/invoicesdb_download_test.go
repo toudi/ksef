@@ -67,6 +67,16 @@ func TestGenerateMonthsRange(t *testing.T) {
 				time.Date(2026, 4, 1, 0, 0, 0, 0, warsawTime),
 			},
 		},
+		{
+			today:     time.Date(2026, 4, 11, 12, 11, 10, 9, warsawTime),
+			startDate: time.Date(2026, 1, 31, 23, 59, 59, 0, time.UTC),
+			expected: []time.Time{
+				time.Date(2026, 1, 31, 23, 59, 59, 0, time.UTC),
+				time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC),
+				time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC),
+				time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC),
+			},
+		},
 	} {
 		t.Run(fmt.Sprintf("generateMonthsRange(%v, %v)", test.startDate, test.endDate), func(t *testing.T) {
 			t.Parallel()
