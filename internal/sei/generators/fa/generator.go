@@ -21,18 +21,22 @@ var defaultHooks = GeneratorHooks{
 // dzięki czemu nie będę musiał w nieskończoność kopiować generatora a jedyne co się zmieni
 // to wartości nagłówków
 type FAGenerator struct {
-	commonData map[string]string
+	commonData      map[string]string
+	commonArrayData map[string][]map[string]string
 	// niestety, ministerstwo używa typu sequence co oznacza, że musimy odpowiednio posortować
 	// elementy drzewa - inaczej dokument nie przejdzie walidacji
 	elementOrdering ElementOrdering
+	arrayElements   map[string]bool
 	hooks           GeneratorHooks
 	runTimestamp    time.Time
 }
 
 func New(initializers ...func(fa *FAGenerator)) *FAGenerator {
 	generator := &FAGenerator{
-		runTimestamp: time.Now().UTC(),
-		hooks:        defaultHooks,
+		runTimestamp:    time.Now().UTC(),
+		hooks:           defaultHooks,
+		commonArrayData: make(map[string][]map[string]string),
+		arrayElements:   make(map[string]bool),
 	}
 
 	for _, init := range initializers {
@@ -51,7 +55,8 @@ func (fg *FAGenerator) isCommonData(section string) bool {
 
 	return (sectionLower == constants.SectionInvoiceRoot ||
 		sectionLower == constants.SectionInvoiceHeader ||
-		strings.HasPrefix(sectionLower, constants.SectionInvoiceIssuer))
+		strings.HasPrefix(sectionLower, constants.SectionInvoiceIssuer) ||
+		sectionLower == constants.SectionSharedAttributes)
 }
 
 func (fg *FAGenerator) isItemSection(section string) bool {

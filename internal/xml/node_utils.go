@@ -5,6 +5,17 @@ import (
 	"strings"
 )
 
+func needsCDATA(s string) bool {
+	return strings.ContainsAny(s, "&<>")
+}
+
+func wrapCDATA(s string) string {
+	if needsCDATA(s) {
+		return "<![CDATA[" + s + "]]>"
+	}
+	return s
+}
+
 func (node *Node) GetChild(name string) (*Node, error) {
 	for _, child := range node.Children {
 		if child.Name == name {
@@ -130,7 +141,7 @@ func (node *Node) SetValue(path string, value string) {
 		}
 		target.Attribs[attribName] = value
 	} else {
-		target.Value = value
+		target.Value = wrapCDATA(value)
 	}
 }
 

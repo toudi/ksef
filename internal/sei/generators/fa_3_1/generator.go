@@ -25,6 +25,7 @@ func GeneratorFactory() interfaces.Generator {
 			"Faktura.Fa.Adnotacje.P_18A":                  "2", // mechanizm podzielonej płatności
 			"Faktura.Fa.Adnotacje.P_23":                   "2", // trójstronna faktura uproszczona
 		}),
+		fa.WithArrayElements(FA_3_1ArrayElements),
 		fa.WithElementOrdering(FA_3_1ChildrenOrder),
 	)
 }

@@ -1,6 +1,8 @@
 package invoice
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func (i *Invoice) AddItem(item *InvoiceItem) error {
 	if item.UnitPrice.Vat.Description == "" {
@@ -37,7 +39,6 @@ func (i *Invoice) adjustTotalAmount(amount Amount, vatDescription string) {
 	i.Total.Net += amount.Net
 	i.Total.Gross += amount.Gross
 	i.Total.VAT += amount.VAT
-
 }
 
 func (i *Invoice) AddCorrectedItem(oldItem, newItem *InvoiceItem) error {

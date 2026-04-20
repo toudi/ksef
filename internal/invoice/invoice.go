@@ -66,6 +66,7 @@ type Invoice struct {
 	TotalPerVATRate  map[string]Amount
 	Total            Amount
 	Attributes       map[string]string
+	ArrayElements    map[string][]map[string]string
 	Meta             map[string]any
 	BasedOnNetPrices bool
 	KSeFFlags        *KSeFFlags
@@ -75,6 +76,7 @@ func (i *Invoice) Clear() {
 	i.Items = make([]*InvoiceItem, 0)
 	i.TotalPerVATRate = make(map[string]Amount)
 	i.Attributes = make(map[string]string)
+	i.ArrayElements = make(map[string][]map[string]string)
 	i.Meta = make(map[string]any)
 	i.Total = Amount{}
 	i.KSeFFlags = &KSeFFlags{}

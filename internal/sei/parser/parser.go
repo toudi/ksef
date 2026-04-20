@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"errors"
 	"fmt"
 	"ksef/internal/invoice"
 	"ksef/internal/logging"
@@ -20,9 +21,11 @@ const (
 	lineWithData    = iota
 )
 
+var errMissingSectionName = errors.New("brak nazwy sekcji")
+
 var arrayNodes = map[string]bool{"Faktura.Fa.FaWiersze.FaWiersz": true}
 
-type HookFunc func(*invoice.Invoice, string, map[string]string, func() error) error
+type HookFunc func(*invoice.Invoice, bool, string, map[string]string, func() error) error
 
 const section string = "sekcja"
 
@@ -37,6 +40,7 @@ type Parser struct {
 	// a special edge case for csv input where we specify the "common" invoice attributes at the top of the file.
 	// this then creates a problem because if there are no actual invoices what we could end up with would be
 	// an empty invoice that would contain only the preamble and nothing else - and we don't want to import that.
+	commonMarker bool
 }
 
 func (p *Parser) ProcessLine(fields []string) error {
@@ -54,10 +58,18 @@ func (p *Parser) ProcessLine(fields []string) error {
 	}
 
 	if len(fields) > 1 && strings.ToLower(fields[0]) == section {
+		p.commonMarker = false
 		p.state = stateParseHeaders
 		p.section = fields[1]
 		if strings.ToLower(p.section) == constants.SectionInvoice {
 			p.nonEmptyFile = true
+		}
+		if strings.ToLower(p.section) == constants.SectionSharedAttributes {
+			if len(fields) != 3 {
+				return errMissingSectionName
+			}
+			p.commonMarker = true
+			p.section = fields[2]
 		}
 	} else if p.state == stateParseHeaders {
 		p.state = stateParseData
@@ -114,7 +126,7 @@ func (p *Parser) ProcessLine(fields []string) error {
 				delete(data, header)
 			}
 			// check if we need to create new invoice
-			if err = p.LineHandler(p.invoice, p.section, data, p.InvoiceReady); err != nil {
+			if err = p.LineHandler(p.invoice, p.commonMarker, p.section, data, p.InvoiceReady); err != nil {
 				return err
 			}
 		}

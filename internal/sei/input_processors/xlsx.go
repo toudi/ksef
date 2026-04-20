@@ -2,6 +2,7 @@ package inputprocessors
 
 import (
 	"fmt"
+	"io"
 	"ksef/internal/sei/constants"
 	"ksef/internal/sei/parser"
 	"strings"
@@ -22,7 +23,6 @@ func (x *XLSXDecoder) Process(sourceFile string, parser *parser.Parser) error {
 	var err error
 	var file *excelize.File
 	file, err = excelize.OpenFile(sourceFile)
-
 	if err != nil {
 		return err
 	}
@@ -33,7 +33,7 @@ func (x *XLSXDecoder) Process(sourceFile string, parser *parser.Parser) error {
 	}
 
 	// let's select the first sheet ..
-	var sheetName = file.GetSheetName(0)
+	sheetName := file.GetSheetName(0)
 	// unless there's a particular one that we should inspect
 	if x.config.SheetName != "" {
 		if _, err = file.GetSheetIndex(x.config.SheetName); err != nil {
@@ -63,5 +63,8 @@ func (x *XLSXDecoder) Process(sourceFile string, parser *parser.Parser) error {
 	// notify the parser that we've finished processing the file so there is
 	// definetely one unprocessed invoice within the file
 	return parser.InvoiceReady()
+}
 
+func (x *XLSXDecoder) ProcessReader(src io.Reader, parser *parser.Parser) error {
+	return errNotImplemented
 }
