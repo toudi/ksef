@@ -19,6 +19,15 @@ func (r *Registry) getInvoiceByRefNo(refNo string) (*Invoice, int) {
 	return nil, -1
 }
 
+func (r *Registry) GetInvoice(lookup func(Invoice) bool) *Invoice {
+	for _, invoice := range r.Invoices {
+		if lookup(*invoice) {
+			return invoice
+		}
+	}
+	return nil
+}
+
 func (r *Registry) GetInvoiceByChecksum(checksum string) *Invoice {
 	if index, exists := r.checksumIndex[checksum]; exists {
 		return r.Invoices[index]

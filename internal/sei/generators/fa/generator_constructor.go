@@ -17,3 +17,9 @@ func WithCommonData(commonData map[string]string) func(fa *FAGenerator) {
 		fa.commonData = commonData
 	}
 }
+
+func WithArrayElements(arrayElements map[string]bool) func(fa *FAGenerator) {
+	return func(fa *FAGenerator) {
+		fa.arrayElements = arrayElements
+	}
+}

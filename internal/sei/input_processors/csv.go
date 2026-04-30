@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/csv"
 	"fmt"
+	"io"
 	"ksef/internal/sei/constants"
 	"ksef/internal/sei/parser"
 	"os"
@@ -31,27 +32,16 @@ func CSVDecoder_Init(config csvConfig) (InputProcessor, error) {
 	return decoder, nil
 }
 
-func (c *CSVFormat) Process(sourceFile string, parser *parser.Parser) error {
-	// let's check if the file exists
-	var err error
-	if _, err := os.Stat(sourceFile); os.IsNotExist(err) {
-		return err
-	}
-	csvFile, err := os.Open(sourceFile)
-	if err != nil {
-		return err
-	}
-	defer csvFile.Close()
+func (c *CSVFormat) ProcessReader(src io.Reader, parser *parser.Parser) error {
+	scanner := bufio.NewScanner(src)
 
-	// we cannot use the "regular" csv reader because it assumes that each line has
-	// the same number of fields which is not applicable here.
-
-	scanner := bufio.NewScanner(csvFile)
-
-	var lineNo = 1
+	lineNo := 1
 
 	for scanner.Scan() {
 		line := scanner.Text()
+		if line == "" {
+			continue
+		}
 
 		csvReader := csv.NewReader(strings.NewReader(line))
 		if c.delimiter != "" {
@@ -89,6 +79,23 @@ func (c *CSVFormat) Process(sourceFile string, parser *parser.Parser) error {
 	return parser.InvoiceReady()
 }
 
+func (c *CSVFormat) Process(sourceFile string, parser *parser.Parser) error {
+	// let's check if the file exists
+	var err error
+	if _, err := os.Stat(sourceFile); os.IsNotExist(err) {
+		return err
+	}
+	csvFile, err := os.Open(sourceFile)
+	if err != nil {
+		return err
+	}
+	defer csvFile.Close()
+
+	// we cannot use the "regular" csv reader because it assumes that each line has
+	// the same number of fields which is not applicable here.
+	return c.ProcessReader(csvFile, parser)
+}
+
 func (c *CSVFormat) convertEncoding(data string) string {
 	if c.encodingConversion == nil {
 		c.prepareEncodingConversionTable()
@@ -107,12 +114,10 @@ func (c *CSVFormat) convertEncoding(data string) string {
 	}
 
 	return string(outputBytes)
-
 }
 
 func (c *CSVFormat) prepareEncodingConversionTable() {
 	fileBytes, err := os.ReadFile(c.encodingConversionFile)
-
 	if err != nil {
 		// log.Errorf("error opening encoding conversion file")
 		return

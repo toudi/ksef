@@ -34,18 +34,22 @@ func parseLevel(logLevel string) slog.Level {
 	}
 }
 
-func InitLogging(output string) error {
+func InitLogging(output string, vip *viper.Viper) error {
 	if output == "" {
 		return nil
 	}
 
 	var err error
-	loggingConfig := LoggingConfig(viper.GetViper())
+	loggingConfig := LoggingConfig(vip)
 
 	if output == "-" {
 		outputWriter = os.Stdout
 	} else {
-		outputFile, err = os.OpenFile(output, os.O_CREATE|os.O_RDWR, 0644)
+		var logFileFlag int = os.O_APPEND
+		if vip.GetBool(CfgKeyLogFileTruncate) {
+			logFileFlag = os.O_TRUNC
+		}
+		outputFile, err = os.OpenFile(output, os.O_CREATE|os.O_RDWR|logFileFlag, 0644)
 		if err != nil {
 			return fmt.Errorf("unable to open log file: %v", err)
 		}

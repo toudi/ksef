@@ -38,6 +38,7 @@ var (
 func init() {
 	runtime.SetEnvironment(viper.GetViper(), runtime.ProdEnvironmentId)
 	RootCommand.PersistentFlags().StringVarP(&logOutput, "log", "l", "-", "wyjście logowania (wartość - oznacza wyjście standardowe)")
+	RootCommand.PersistentFlags().Bool(logging.CfgKeyLogFileTruncate, false, "nadpisuj plik logu (domyślnie - dopisuj do istniejącego)")
 	RootCommand.PersistentFlags().StringVarP(&configFile, "config", "c", "config.yaml", "lokalizacja pliku konfiguracyjnego")
 	RootCommand.PersistentFlags().BoolFuncP("verbose", "v", "tryb verbose", func(s string) error {
 		logging.Verbose = true
@@ -86,7 +87,7 @@ func setContext(cmd *cobra.Command, _ []string) error {
 	}
 
 	if cmd.Use != "version" {
-		if err = logging.InitLogging(logOutput); err != nil {
+		if err = logging.InitLogging(logOutput, viper.GetViper()); err != nil {
 			fmt.Printf("[ ERROR ] Błąd inicjalizacji logowania: %v", err)
 			return err
 		}

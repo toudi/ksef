@@ -62,15 +62,8 @@ type InvoicesDB struct {
 func newInvoicesDB(vip *viper.Viper) *InvoicesDB {
 	// just so that we don't have to call time.Now() time and time again
 	today := time.Now().Local().Truncate(24 * time.Hour)
-	previousMonth := today.AddDate(0, -1, 0)
-	// the above line should take care for the most part, however there are
-	// edge cases like the 31'st day of the month. Go's time.AddDate does warn
-	// about this (i.e. when you call AddDate(0, -1, 0) on Dec 31, you will get
-	// Dec 1 in return). Since we do not care about the days, just the months - it's
-	// the easiest (albeit ugly) fix.
-	if previousMonth.Month() == today.Month() {
-		previousMonth = previousMonth.AddDate(0, 0, -1)
-	}
+	previousMonth := time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location()).AddDate(0, -1, 0)
+
 	monthsRange := []time.Time{
 		previousMonth, today,
 	}

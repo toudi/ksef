@@ -5,6 +5,7 @@ import (
 	"ksef/internal/invoice"
 	"ksef/internal/money"
 	"ksef/internal/xml"
+	"strings"
 	"time"
 )
 
@@ -14,6 +15,14 @@ import (
 // if this is not what you wish to do, then please use the line-based generator approach (either CSV or XLSX)
 func (fg *FAGenerator) InvoiceToXMLTree(invoice *invoice.Invoice) (*xml.Node, error) {
 	root := &xml.Node{Name: "Faktura"}
+
+	if err := fg.populateArrayItems(root, fg.commonArrayData); err != nil {
+		return nil, err
+	}
+
+	if err := fg.populateArrayItems(root, invoice.ArrayElements); err != nil {
+		return nil, err
+	}
 
 	root.SetValuesFromMap(fg.commonData)
 
@@ -100,4 +109,23 @@ func (fg *FAGenerator) InvoiceToXMLTree(invoice *invoice.Invoice) (*xml.Node, er
 	}
 
 	return root, nil
+}
+
+func (fg *FAGenerator) populateArrayItems(root *xml.Node, arrayElements map[string][]map[string]string) error {
+	for nodeName, dataRows := range arrayElements {
+		// so, `nodeName` is an array element, but at this point we've got no idea if the parent
+		// exists or not. the parent may or may not be an array element. let's locate it:
+		nodeNameParts := strings.Split(nodeName, ".")
+		nodeParentName := strings.Join(nodeNameParts[1:len(nodeNameParts)-1], ".")
+		leafName := nodeNameParts[len(nodeNameParts)-1]
+
+		parent, _ := root.CreateChild(nodeParentName, false)
+
+		for _, dataRow := range dataRows {
+			node, _ := parent.CreateChild(leafName, true)
+			node.SetValuesFromMap(dataRow)
+		}
+	}
+
+	return nil
 }

@@ -3,12 +3,12 @@ package inputprocessors
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"ksef/internal/sei/parser"
 	"os"
 )
 
-type JSONDecoder struct {
-}
+type JSONDecoder struct{}
 
 func JSONDecoder_Init() *JSONDecoder {
 	return &JSONDecoder{}
@@ -34,6 +34,10 @@ func (j *JSONDecoder) Process(sourceFile string, parser *parser.Parser) error {
 	} else {
 		return j.processSingleInvoiceSource(serializedInvoice, parser)
 	}
+}
+
+func (j *JSONDecoder) ProcessReader(src io.Reader, parser *parser.Parser) error {
+	return errNotImplemented
 }
 
 func (j *JSONDecoder) processSingleInvoiceSource(invoice map[string]interface{}, parser *parser.Parser) error {
