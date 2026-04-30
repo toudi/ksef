@@ -287,6 +287,7 @@ func setBackupPassword(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return errors.Join(errOpeningKeyring, err)
 	}
+	defer ring.Close()
 
 	var password string
 

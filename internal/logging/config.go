@@ -5,7 +5,8 @@ import (
 )
 
 const (
-	cfgKeyLogging = "logging"
+	cfgKeyLogging         = "logging"
+	CfgKeyLogFileTruncate = "log.file.truncate"
 )
 
 var defaultLogging = map[string]string{
