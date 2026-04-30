@@ -16,7 +16,7 @@ type Sales struct {
 func NewSales(processors []SaleInvoiceProcessor) *Sales {
 	return &Sales{
 		processors: processors,
-		VATAmounts: &types.VATAmounts{},
+		VATAmounts: types.VATAmounts_Init(),
 	}
 }
 
@@ -25,7 +25,8 @@ func (s *Sales) ProcessInvoice(
 	doc *etree.Document,
 ) error {
 	row := &SaleItem{
-		sales: s,
+		sales:      s,
+		VATAmounts: types.VATAmounts_Init(),
 	}
 
 	for _, processor := range s.processors {

@@ -43,7 +43,9 @@ func populateSprzedazWiersz(dest *xml.Node, row *absTypes.SaleItem, declaration 
 
 	// now that we've got required values populated let's populate the ones that we
 	// understand.
-	accumulator := &amountsAccmulator{}
+	accumulator := &amountsAccmulator{
+		values: make(map[string]money.MonetaryValue),
+	}
 
 	for vatRate, amounts := range row.VATAmounts.ByRate {
 		fields, exists := saleAttributesToDeclarationFields[types.SaleAttributes{VatRate: vatRate}]

@@ -7,7 +7,14 @@ import (
 
 type VATAmounts struct {
 	ByRate map[VatRate]*VATInfo
-	Total  VATInfo
+	Total  *VATInfo
+}
+
+func VATAmounts_Init() *VATAmounts {
+	return &VATAmounts{
+		Total:  &VATInfo{},
+		ByRate: make(map[VatRate]*VATInfo),
+	}
 }
 
 func (v *VATAmounts) Add(vatInfo *vat.VatInfo) error {
