@@ -77,6 +77,9 @@ invoices:
           AdresL1: ul. Wiśniowa 3/4
           AdresL2: 11-222 Chlebowo
       Fa:
+        Platnosc:
+          TerminPlatnosci:
+            Termin: 2026-02-16
         KodWaluty: PLN
         P_1: "2026-02-02"
         P_1M: Suwałki
@@ -270,6 +273,9 @@ const expectedInvoice2 = `
       <P_12>23</P_12>
     </FaWiersz>
     <Platnosc>
+      <TerminPlatnosci>
+        <Termin>2026-02-16</Termin>
+      </TerminPlatnosci>
       <FormaPlatnosci>6</FormaPlatnosci>
       <RachunekBankowy>
         <NrRB>1122334455</NrRB>

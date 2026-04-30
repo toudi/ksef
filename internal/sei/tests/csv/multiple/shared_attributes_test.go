@@ -41,7 +41,7 @@ const inputCSV = `
 
 "-- ignore --","pierwsza faktura jest nieopłacona, ale wartość '6' z sekcji 'shared-invoice-attributes' powinna się skopiować"
 "Sekcja","Faktura.Fa.Platnosc"
-"Zaplacono","DataZaplaty","TerminPlatnosci"
+"Zaplacono","DataZaplaty","TerminPlatnosci.Termin"
 "","","2026-04-15"
 
 "Sekcja","Faktura.Podmiot2.DaneIdentyfikacyjne",
@@ -152,7 +152,9 @@ const expectedInvoice1 = `
       <P_12>zw</P_12>
     </FaWiersz>
     <Platnosc>
-      <TerminPlatnosci>2026-04-15</TerminPlatnosci>
+      <TerminPlatnosci>
+        <Termin>2026-04-15</Termin>
+      </TerminPlatnosci>
       <FormaPlatnosci>6</FormaPlatnosci>
       <RachunekBankowy>
         <NrRB>11223344</NrRB>
