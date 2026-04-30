@@ -21,6 +21,7 @@ const (
 
 func (fg *FAGenerator) LineHandler(
 	inv *invoice.Invoice,
+	commonMarker bool,
 	section string,
 	data map[string]string,
 	invoiceReady func() error,
@@ -57,12 +58,38 @@ func (fg *FAGenerator) LineHandler(
 			return err
 		}
 	}
-	if fg.isCommonData(section) {
+
+	if commonMarker || fg.isCommonData(section) {
+		if isArray := fg.arrayElements[section]; isArray {
+			if _, exists := fg.commonArrayData[section]; !exists {
+				fg.commonArrayData[section] = make([]map[string]string, 0)
+			}
+			tmpMap := make(map[string]string)
+			for key, value := range data {
+				tmpMap[key] = value
+			}
+			fg.commonArrayData[section] = append(fg.commonArrayData[section], tmpMap)
+			return nil
+		}
 		for key, value := range data {
 			fg.commonData[section+"."+key] = value
 		}
 		return nil
-	} else if fg.isItemSection(section) {
+	}
+
+	if isArray := fg.arrayElements[section]; isArray {
+		if _, exists := inv.ArrayElements[section]; !exists {
+			inv.ArrayElements[section] = make([]map[string]string, 0)
+		}
+		tmpMap := make(map[string]string)
+		for key, value := range data {
+			tmpMap[key] = value
+		}
+		inv.ArrayElements[section] = append(inv.ArrayElements[section], tmpMap)
+		return nil
+	}
+
+	if fg.isItemSection(section) {
 		item := &invoice.InvoiceItem{Attributes: make(map[string]string)}
 
 		for field, value := range data {

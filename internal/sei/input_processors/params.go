@@ -41,8 +41,8 @@ func GetInputProcessorConfig(vip *viper.Viper) InputProcessorConfig {
 			EncodingConversionFile: vip.GetString(cfgKeyCSVEncoding),
 		},
 		XLSX: xlsxConfig{
-			SheetName: viper.GetString(cfgKeySheetName),
+			SheetName: vip.GetString(cfgKeySheetName),
 		},
-		Generator: viper.GetString(cfgKeyGenerator),
+		Generator: vip.GetString(cfgKeyGenerator),
 	}
 }

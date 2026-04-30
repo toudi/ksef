@@ -2,6 +2,7 @@ package inputprocessors
 
 import (
 	"fmt"
+	"io"
 	"ksef/internal/sei/parser"
 	"os"
 
@@ -15,16 +16,20 @@ func YAMLDecoder_Init() *YAMLDecoder {
 }
 
 func (y *YAMLDecoder) Process(sourceFile string, parser *parser.Parser) error {
-	var err error
-	var serializedInvoice map[string]any
-
 	file, err := os.Open(sourceFile)
 	if err != nil {
 		return fmt.Errorf("unable to open source file: %v", err)
 	}
 	defer file.Close()
 
-	if err = yaml.NewDecoder(file).Decode(&serializedInvoice); err != nil {
+	return y.ProcessReader(file, parser)
+}
+
+func (y *YAMLDecoder) ProcessReader(src io.Reader, parser *parser.Parser) error {
+	var serializedInvoice map[string]any
+	var err error
+
+	if err = yaml.NewDecoder(src).Decode(&serializedInvoice); err != nil {
 		return fmt.Errorf("error decoding YAML file. syntax error ?: %v", err)
 	}
 
@@ -50,13 +55,13 @@ func (y *YAMLDecoder) processBatchSource(source map[string]any, parser *parser.P
 
 	for _, invoice := range invoices {
 		if err = processRecurse("", commonInvoiceData, parser); err != nil {
-			return fmt.Errorf("unable to process common invoice data: %v", err)
+			return fmt.Errorf("unable to process common invoice data: %w", err)
 		}
 		if err = processRecurse("", invoice, parser); err != nil {
-			return fmt.Errorf("unable to process invoice data: %v", err)
+			return fmt.Errorf("unable to process invoice data: %w", err)
 		}
-		if err = parser.InvoiceReady(); err != nil {
-			return fmt.Errorf("unable to call parser.InvoiceReady(): %v", err)
+		if err = parser.ClearInvoiceData(); err != nil {
+			return fmt.Errorf("unable to call parser.ClearInvoiceData(): %w", err)
 		}
 	}
 
