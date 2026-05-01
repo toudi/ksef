@@ -2,10 +2,10 @@ package jpk
 
 import (
 	"ksef/internal/invoicesdb/config"
-	"ksef/internal/invoicesdb/jpk/types"
+	"ksef/internal/invoicesdb/jpk/generators"
+	"ksef/internal/invoicesdb/jpk/generators/interfaces"
+	"ksef/internal/invoicesdb/jpk/manager"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
-	subjectsettings "ksef/internal/invoicesdb/subject-settings"
-	"ksef/internal/money"
 	"ksef/internal/runtime"
 	"os"
 	"path/filepath"
@@ -16,20 +16,12 @@ import (
 	"github.com/spf13/viper"
 )
 
-type ControlRow struct {
-	VAT money.MonetaryValue
-}
-
 type JPK struct {
-	manager      *JPKManager
-	registry     *monthlyregistry.Registry
-	sjs          *subjectsettings.JPKSettings
-	vip          *viper.Viper
-	path         string
-	Income       []*types.Invoice
-	IncomeCtrl   *ControlRow
-	Purchase     []*types.Invoice
-	PurchaseCtrl *ControlRow
+	manager   *manager.JPKManager
+	registry  *monthlyregistry.Registry
+	generator interfaces.JPKGenerator
+	vip       *viper.Viper
+	path      string
 }
 
 func NewJPK(month time.Time, vip *viper.Viper) (*JPK, error) {
@@ -48,30 +40,19 @@ func NewJPK(month time.Time, vip *viper.Viper) (*JPK, error) {
 		month.Format("01"),
 	)
 
-	ss, err := subjectsettings.OpenOrCreate(
-		filepath.Join(
-			invoicesDBConfig.Root,
-			runtime.GetEnvironmentId(vip),
-			nip,
-		),
-	)
+	manager, err := manager.Manager(vip, manager.WithMonthlyRegistry(monthlyRegistry))
 	if err != nil {
 		return nil, err
 	}
 
-	manager, err := Manager(vip, WithMonthlyRegistry(monthlyRegistry))
-	if err != nil {
-		return nil, err
-	}
+	generator := generators.GetJPKGenerator(manager, month)
 
 	return &JPK{
-		registry:     monthlyRegistry,
-		manager:      manager,
-		vip:          vip,
-		path:         path,
-		sjs:          ss.JPK,
-		IncomeCtrl:   &ControlRow{},
-		PurchaseCtrl: &ControlRow{},
+		registry:  monthlyRegistry,
+		manager:   manager,
+		vip:       vip,
+		path:      path,
+		generator: generator,
 	}, nil
 }
 
@@ -93,12 +74,17 @@ func (j *JPK) Generate() error {
 		}
 	}
 
-	return j.Save(
-		filepath.Join(
-			j.path,
-			"jpk",
-		),
-	)
+	if document, err := j.generator.Document(); err != nil {
+		return err
+	} else {
+		return j.writeToFile(
+			document,
+			filepath.Join(
+				j.path,
+				"jpk",
+			),
+		)
+	}
 }
 
 func (j *JPK) processInvoiceFile(fileName string, invoice *monthlyregistry.Invoice) error {
@@ -114,15 +100,5 @@ func (j *JPK) processInvoiceFile(fileName string, invoice *monthlyregistry.Invoi
 		return err
 	}
 
-	if invoice.Type == monthlyregistry.InvoiceTypeIssued {
-		if err = j.AddIncome(xmlInvoice, invoice); err != nil {
-			return err
-		}
-	} else {
-		if err = j.AddReceived(xmlInvoice, invoice); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	return j.generator.ProcessInvoice(invoice, xmlInvoice)
 }

@@ -3,7 +3,7 @@ package jpk
 import (
 	"errors"
 	"fmt"
-	"ksef/internal/invoicesdb/jpk"
+	"ksef/internal/invoicesdb/jpk/manager"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	"ksef/internal/invoicesdb/shared"
 
@@ -34,9 +34,9 @@ func initJPKManagerFromInvoiceFile(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	jpkManager, err = jpk.Manager(
+	jpkManager, err = manager.Manager(
 		vip,
-		jpk.WithMonthlyRegistry(invoiceRegistry),
+		manager.WithMonthlyRegistry(invoiceRegistry),
 	)
 	if err != nil {
 		return err
