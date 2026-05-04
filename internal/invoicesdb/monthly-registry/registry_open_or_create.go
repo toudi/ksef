@@ -21,22 +21,34 @@ func OpenOrCreate(dir string, certsDB *certsdb.CertificatesDB, vip *viper.Viper)
 		// file
 		return nil, errOpeningRegistryFile
 	}
+
 	reg := &Registry{
 		Invoices:      make([]*Invoice, 0),
 		OrdNums:       make(OrdNumsMap),
-		SavedOrdNums:  make(OrdNums, 0),
 		SyncParams:    &SyncParams{},
-		certsDB:       certsDB,
-		vip:           vip,
-		dir:           dir,
 		checksumIndex: make(map[string]int),
+		dir:           dir,
+		vip:           vip,
+		certsDB:       certsDB,
 	}
 
 	if exists {
 		// if the file exists, then we need to read it's contents
 		defer regFile.Close()
-		if err = utils.ReadYAML(regFile, reg); err != nil {
+		var tmp Registry
+		if err = utils.ReadYAML(regFile, &tmp); err != nil {
 			return nil, errors.Join(errReadingRegistryContents, err)
+		}
+
+		// reading directly into &reg would cause any values that are not in the file
+		// to be reverted to their zero values which in case of pointers means nil.
+		// we definetely don't want that.
+
+		if tmp.Invoices != nil {
+			reg.Invoices = tmp.Invoices
+		}
+		if tmp.SyncParams != nil {
+			reg.SyncParams = tmp.SyncParams
 		}
 
 		if len(reg.SavedOrdNums) > 0 {

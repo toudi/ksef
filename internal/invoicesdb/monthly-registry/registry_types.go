@@ -100,10 +100,10 @@ type Registry struct {
 	Invoices     []*Invoice  `yaml:"invoices"`
 	SyncParams   *SyncParams `yaml:"sync,omitempty"`
 	OrdNums      OrdNumsMap  `yaml:"-"`
-	SavedOrdNums OrdNums     `yaml:"ord-nums,emitempty"`
+	SavedOrdNums OrdNums     `yaml:"ord-nums,omitempty"`
 
-	checksumIndex map[string]int
-	dir           string
-	certsDB       *certsdb.CertificatesDB
-	vip           *viper.Viper
+	checksumIndex map[string]int          `yaml:"-"`
+	dir           string                  `yaml:"-"`
+	certsDB       *certsdb.CertificatesDB `yaml:"-"`
+	vip           *viper.Viper            `yaml:"-"`
 }

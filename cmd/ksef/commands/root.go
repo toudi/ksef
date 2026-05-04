@@ -93,8 +93,10 @@ func setContext(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	logging.SeiLogger.Info("start programu")
-	logging.SeiLogger.Info("wybrane środowisko", "env", runtime.GetEnvironmentId(viper.GetViper()))
+	if _, exists := cmd.Annotations["disable-logging"]; !exists {
+		logging.SeiLogger.Info("start programu")
+		logging.SeiLogger.Info("wybrane środowisko", "env", runtime.GetEnvironmentId(viper.GetViper()))
+	}
 
 	vip := viper.GetViper()
 	if runtime.IgnoreSSLErrors(vip) {

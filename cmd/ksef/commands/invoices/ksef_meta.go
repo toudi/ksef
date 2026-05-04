@@ -18,10 +18,11 @@ import (
 )
 
 var ksefMetaCommand = &cobra.Command{
-	Short: "Zwraca metadane KSeF faktury",
-	Use:   "ksef-meta [numer-faktury]",
-	Args:  cobra.ExactArgs(1),
-	RunE:  getKsefMeta,
+	Short:       "Zwraca metadane KSeF faktury",
+	Use:         "ksef-meta [numer-faktury]",
+	Args:        cobra.ExactArgs(1),
+	RunE:        getKsefMeta,
+	Annotations: map[string]string{"disable-logging": "true"},
 }
 
 var errInvoiceNotFound = errors.New("Nie znaleziono faktury")
@@ -46,7 +47,7 @@ type QRCodes struct {
 type ksefInvoiceMeta struct {
 	RefNo     string  `yaml:"ref-no" toml:"ref-no" json:"ref-no"`
 	KSeFRefNo string  `yaml:"ksef-ref-no" toml:"ksef-ref-no" json:"ksef-ref-no"`
-	QRCodes   QRCodes `yaml:"qrcodes" toml:"qrcodes" json:"qrcodes"`
+	QRCodes   QRCodes `yaml:"qr-codes" toml:"qr-codes" json:"qr-codes"`
 }
 
 func getKsefMeta(cmd *cobra.Command, args []string) error {
