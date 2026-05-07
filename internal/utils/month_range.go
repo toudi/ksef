@@ -15,9 +15,9 @@ func WithinMonthRange(timestamp time.Time, monthStart time.Time) bool {
 	// calculate the last possible time of the month
 	// the -1 is so that we deduct 1 nanosecond and this will give us the last possible timestamp for the
 	// calendar month of `monthStart`
-	lastMoment := monthStart.AddDate(0, 1, -1).Add(-1)
+	monthEnd := EndOfMonth(monthStart)
 
-	if timestamp.Before(monthStart) || timestamp.After(lastMoment) {
+	if timestamp.Before(monthStart) || timestamp.After(monthEnd) {
 		return false
 	}
 
@@ -26,4 +26,8 @@ func WithinMonthRange(timestamp time.Time, monthStart time.Time) bool {
 
 func StartOfMonth(timestamp time.Time) time.Time {
 	return time.Date(timestamp.Year(), timestamp.Month(), 1, 0, 0, 0, 0, timestamp.Location())
+}
+
+func EndOfMonth(timestamp time.Time) time.Time {
+	return timestamp.AddDate(0, 1, 0).Add(-1)
 }

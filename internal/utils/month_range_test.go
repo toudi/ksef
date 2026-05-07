@@ -117,3 +117,12 @@ func TestStartOfMonth(t *testing.T) {
 		})
 	}
 }
+
+func TestEndOfMonth(t *testing.T) {
+	warsawTime, _ := time.LoadLocation("Europe/Warsaw")
+
+	input := utils.StartOfMonth(time.Date(2026, 4, 29, 13, 14, 15, 16, warsawTime))
+	lastMoment := utils.EndOfMonth(input)
+
+	require.Equal(t, time.Date(2026, 4, 30, 23, 59, 59, 999999999, warsawTime), lastMoment)
+}

@@ -10,6 +10,7 @@ import (
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	subjectsettings "ksef/internal/invoicesdb/subject-settings"
 	kr "ksef/internal/keyring"
+	"ksef/internal/utils"
 	"time"
 
 	"github.com/spf13/viper"
@@ -62,11 +63,9 @@ type InvoicesDB struct {
 func newInvoicesDB(vip *viper.Viper) *InvoicesDB {
 	// just so that we don't have to call time.Now() time and time again
 	today := time.Now().Local().Truncate(24 * time.Hour)
-	previousMonth := time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location()).AddDate(0, -1, 0)
+	previousMonth := utils.StartOfMonth(today).AddDate(0, -1, 0)
 
-	monthsRange := []time.Time{
-		previousMonth, today,
-	}
+	monthsRange := generateMonthsRange(previousMonth, &today)
 
 	idb := &InvoicesDB{
 		cfg:         config.GetInvoicesDBConfig(vip),
