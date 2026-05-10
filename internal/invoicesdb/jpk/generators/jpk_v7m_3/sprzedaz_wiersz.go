@@ -32,6 +32,8 @@ func populateSprzedazWiersz(dest *xml.Node, row *absTypes.SaleItem, declaration 
 		"DataSprzedazy":    row.SaleDate,
 		"NrKontrahenta":    row.Buyer.NIP,
 		"NazwaKontrahenta": row.Buyer.Name,
+		"NrKSeF":           row.KSeFRefNo,
+		"DowodSprzedazy":   row.RefNo,
 	}
 
 	for field, defaultValue := range JPK_V7M_3RequiredDefaults {

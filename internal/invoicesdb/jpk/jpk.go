@@ -6,6 +6,8 @@ import (
 	"ksef/internal/invoicesdb/jpk/generators/interfaces"
 	"ksef/internal/invoicesdb/jpk/manager"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
+	"ksef/internal/invoicesdb/shared"
+	"ksef/internal/logging"
 	"ksef/internal/runtime"
 	"os"
 	"path/filepath"
@@ -64,6 +66,17 @@ func (j *JPK) Generate() error {
 
 	for _, invoice := range j.registry.Invoices {
 		if !slices.Contains(invoiceTypes, invoice.Type) {
+			continue
+		}
+
+		// check if the invoice is excluded as a whole
+		if invoice.JPK != nil && len(invoice.JPK.ItemRules) == 1 && (invoice.JPK.ItemRules[0] == shared.JPKItemRule{
+			Hash: shared.ItemHash{
+				Wildcard: true,
+			},
+			Exclude: true,
+		}) {
+			logging.JPKLogger.Info("faktura ma flagę całkowitego wyłączenia z przetwarzania w JPK", "ref-no", invoice.RefNo)
 			continue
 		}
 
