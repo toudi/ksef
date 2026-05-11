@@ -149,8 +149,8 @@ func (g *jpk_v7m_3_generator) Document() (*xml.Node, error) {
 	// .. and ZakupCtrl
 	zakupWierszCtrl, _ := ewidencja.CreateChild("ZakupCtrl", false)
 	zakupWierszCtrl.SetValuesFromMap(map[string]string{
-		"LiczbaWierszyZakupu": strconv.Itoa(len(g.report.Purchase.Rows)),
-		"PodatekNaliczony":    g.report.Purchase.VATAmounts.Total.Vat.Format(2),
+		"LiczbaWierszyZakupow": strconv.Itoa(len(g.report.Purchase.Rows)),
+		"PodatekNaliczony":     g.report.Purchase.VATAmounts.Total.Vat.Format(2),
 	})
 
 	// now we can populate accumulated values:
