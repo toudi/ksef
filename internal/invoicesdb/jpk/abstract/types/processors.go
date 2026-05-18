@@ -1,7 +1,7 @@
 package types
 
 import (
-	"ksef/internal/invoicesdb/jpk/manager"
+	"ksef/internal/invoicesdb/annotations"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 
 	"github.com/beevik/etree"
@@ -14,7 +14,7 @@ type SaleInvoiceProcessor func(
 ) error
 
 type PurchaseInvoiceProcessor func(
-	manager *manager.JPKManager,
+	manager *annotations.Annotations,
 	invoice *monthlyregistry.Invoice,
 	doc *etree.Document,
 	purchase *PurchaseItem,

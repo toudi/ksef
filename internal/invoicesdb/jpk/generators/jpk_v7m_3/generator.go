@@ -2,9 +2,10 @@ package jpk_v7m_3
 
 import (
 	"errors"
+	"ksef/internal/invoicesdb/annotations"
 	"ksef/internal/invoicesdb/jpk/abstract"
 	"ksef/internal/invoicesdb/jpk/generators/interfaces"
-	"ksef/internal/invoicesdb/jpk/manager"
+	subjectsettings "ksef/internal/invoicesdb/subject-settings"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	"ksef/internal/money"
 	"ksef/internal/xml"
@@ -44,16 +45,18 @@ var commonData = map[string]string{
 }
 
 type jpk_v7m_3_generator struct {
-	report  *abstract.MonthlyReport
-	month   time.Time
-	manager *manager.JPKManager
+	report         *abstract.MonthlyReport
+	subjectSettings *subjectsettings.SubjectSettings
+	month          time.Time
+	annotations    *annotations.Annotations
 }
 
-func New(manager *manager.JPKManager, month time.Time) interfaces.JPKGenerator {
+func New(annotations *annotations.Annotations, subjectSettings *subjectsettings.SubjectSettings, month time.Time) interfaces.JPKGenerator {
 	return &jpk_v7m_3_generator{
-		report:  abstract.NewMonthlyReport(manager),
-		month:   month,
-		manager: manager,
+		report:         abstract.NewMonthlyReport(annotations),
+		subjectSettings: subjectSettings,
+		month:          month,
+		annotations:    annotations,
 	}
 }
 
@@ -63,16 +66,15 @@ func (g *jpk_v7m_3_generator) Document() (*xml.Node, error) {
 	root.SetValuesFromMap(commonData)
 	root.SetValue("JPK.Naglowek.DataWytworzeniaJPK", time.Now().Format(time.RFC3339))
 
-	sjs := g.manager.GetSettings()
-	if sjs != nil {
-		if sjs.FormMeta.IRSCode > 0 {
-			root.SetValue("JPK.Naglowek.KodUrzedu", strconv.Itoa(sjs.FormMeta.IRSCode))
-		}
-		if sjs.FormMeta.SystemName != "" {
-			root.SetValue("JPK.Naglowek.NazwaSystemu", sjs.FormMeta.SystemName)
-		}
-	} else {
+	if g.subjectSettings == nil || g.subjectSettings.JPK == nil {
 		return nil, errors.New("JPK settings not defined")
+	}
+	sjs := &g.subjectSettings.JPK.FormMeta
+	if sjs.IRSCode > 0 {
+		root.SetValue("JPK.Naglowek.KodUrzedu", strconv.Itoa(sjs.IRSCode))
+	}
+	if sjs.SystemName != "" {
+		root.SetValue("JPK.Naglowek.NazwaSystemu", sjs.SystemName)
 	}
 
 	root.SetValuesFromMap(
@@ -97,18 +99,18 @@ func (g *jpk_v7m_3_generator) Document() (*xml.Node, error) {
 	}
 
 	// now follow up with defaults from subject settings
-	for node_name, default_value := range sjs.FormMeta.Defaults {
+	for node_name, default_value := range sjs.Defaults {
 		root.SetValue(node_name, default_value)
 	}
 
-	if sjs.FormMeta.Subject != nil {
-		isIndividual := strings.ToLower(sjs.FormMeta.Subject.SubjectType) == subjectTypeIndividual
+	if sjs.Subject != nil {
+		isIndividual := strings.ToLower(sjs.Subject.SubjectType) == subjectTypeIndividual
 		subjectTypeName := "OsobaNiefizyczna"
 		if isIndividual {
 			root.SetValue("JPK.#xmlns:edt", EdtNamespace)
 			subjectTypeName = "OsobaFizyczna"
 		}
-		for subjectField, fieldValue := range sjs.FormMeta.Subject.Data {
+		for subjectField, fieldValue := range sjs.Subject.Data {
 			if isIndividual && slices.Contains(individualEDTFields, subjectField) {
 				subjectField = "edt:" + subjectField
 			}

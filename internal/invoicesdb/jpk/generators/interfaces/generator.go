@@ -1,7 +1,8 @@
 package interfaces
 
 import (
-	"ksef/internal/invoicesdb/jpk/manager"
+	"ksef/internal/invoicesdb/annotations"
+	subjectsettings "ksef/internal/invoicesdb/subject-settings"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	"ksef/internal/xml"
 	"time"
@@ -18,6 +19,7 @@ type JPKGenerator interface {
 }
 
 type JPKGeneratorFactory func(
-	manager *manager.JPKManager,
+	annotations *annotations.Annotations,
+	subjectSettings *subjectsettings.SubjectSettings,
 	reportDate time.Time,
 ) JPKGenerator

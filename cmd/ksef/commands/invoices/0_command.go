@@ -1,6 +1,8 @@
 package invoices
 
 import (
+	"ksef/cmd/ksef/commands/invoices/annotate"
+	"ksef/cmd/ksef/commands/invoices/dump"
 	"ksef/cmd/ksef/commands/invoices/jpk"
 	"ksef/internal/invoicesdb/config"
 
@@ -19,5 +21,7 @@ const (
 func init() {
 	config.InvoicesDBFlags(InvoicesCommand.PersistentFlags())
 	InvoicesCommand.PersistentFlags().Bool(flagNameConfirm, false, "potwierdź operację")
-	InvoicesCommand.AddCommand(jpk.JPKCommand)
+	dump.MonthlyDumpFlags(InvoicesCommand.PersistentFlags())
+	InvoicesCommand.AddCommand(jpk.JPKCommand, annotate.AnnotationsCommand)
+	InvoicesCommand.AddCommand(dump.ZipDumpCommand)
 }

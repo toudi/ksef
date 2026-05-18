@@ -1,4 +1,4 @@
-package manager
+package annotations
 
 import (
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
@@ -6,16 +6,16 @@ import (
 	subjectsettings "ksef/internal/invoicesdb/subject-settings"
 )
 
-func (j *JPKManager) AddItemRules(
+func (a *Annotations) AddItemRules(
 	invoice *monthlyregistry.Invoice,
-	rules []shared.JPKItemRule,
+	rules []shared.Annotation,
 	global bool,
 ) (err error) {
 	if global {
 		// we have to persist this in the subject settings file
-		if err = j.ss.Modify(func(ss *subjectsettings.SubjectSettings) error {
+		if err = a.ss.Modify(func(ss *subjectsettings.SubjectSettings) error {
 			for _, rule := range rules {
-				ss.JPK.ItemRules = append(ss.JPK.ItemRules, subjectsettings.JPKRuleWithNIP{
+				ss.Annotations = append(ss.Annotations, subjectsettings.AnnotationRuleWithNIP{
 					NIP:  invoice.Issuer.NIP,
 					Rule: rule,
 				})
@@ -25,12 +25,12 @@ func (j *JPKManager) AddItemRules(
 			return err
 		}
 
-		return j.ss.Save()
+		return a.ss.Save()
 	}
 	// let's persist the rules in the invoice registry
-	if invoice.JPK == nil {
-		invoice.JPK = &monthlyregistry.JPKProps{}
+	if invoice.Annotations == nil {
+		invoice.Annotations = monthlyregistry.Annotations{}
 	}
-	invoice.JPK.ItemRules = append(invoice.JPK.ItemRules, rules...)
-	return j.registry.Save()
+	invoice.Annotations = append(invoice.Annotations, rules...)
+	return a.registry.Save()
 }

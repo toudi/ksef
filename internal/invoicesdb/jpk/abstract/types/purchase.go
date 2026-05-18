@@ -1,8 +1,8 @@
 package types
 
 import (
+	"ksef/internal/invoicesdb/annotations"
 	"ksef/internal/invoicesdb/jpk/abstract/processors/vat"
-	"ksef/internal/invoicesdb/jpk/manager"
 	"ksef/internal/invoicesdb/jpk/types"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 
@@ -27,10 +27,10 @@ type Purchase struct {
 	Rows       []*PurchaseItem
 	processors []PurchaseInvoiceProcessor
 	VATAmounts *types.PurchaseVAT
-	manager    *manager.JPKManager
+	manager    *annotations.Annotations
 }
 
-func NewPurchase(manager *manager.JPKManager, processors []PurchaseInvoiceProcessor) *Purchase {
+func NewPurchase(manager *annotations.Annotations, processors []PurchaseInvoiceProcessor) *Purchase {
 	return &Purchase{
 		processors: processors,
 		manager:    manager,

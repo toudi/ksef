@@ -1,10 +1,10 @@
 package abstract
 
 import (
+	"ksef/internal/invoicesdb/annotations"
 	"ksef/internal/invoicesdb/jpk/abstract/processors/purchase"
 	"ksef/internal/invoicesdb/jpk/abstract/processors/sale"
 	"ksef/internal/invoicesdb/jpk/abstract/types"
-	"ksef/internal/invoicesdb/jpk/manager"
 )
 
 // this module contains abstract information about Sale and Purchase rows.
@@ -28,7 +28,7 @@ var purchaseInvoiceProcessors = []types.PurchaseInvoiceProcessor{
 	purchase.AggregateItems,
 }
 
-func NewMonthlyReport(manager *manager.JPKManager) *MonthlyReport {
+func NewMonthlyReport(manager *annotations.Annotations) *MonthlyReport {
 	return &MonthlyReport{
 		Sales:    types.NewSales(saleInvoiceProcessors),
 		Purchase: types.NewPurchase(manager, purchaseInvoiceProcessors),

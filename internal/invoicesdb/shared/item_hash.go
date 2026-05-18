@@ -22,11 +22,29 @@ func (h ItemHash) Matches(other ItemHash) bool {
 		compare(h.Name, other.Name))
 }
 
-type JPKItemRule struct {
+type Annotation struct {
 	Hash         ItemHash `yaml:"hash"`
 	Exclude      bool     `yaml:"exclude,omitempty"`
 	Vat50Percent bool     `yaml:"vat-50-percent,omitempty"`
 	FixedAsset   bool     `yaml:"fixed-asset,omitempty"`
+	Comment      *string  `yaml:"comment,omitempty"`
+}
+
+func (a Annotation) String() string {
+	var flags []string
+	if a.Exclude {
+		flags = append(flags, "wyłącz z raportu (zakup prywatny)")
+	}
+	if a.Vat50Percent {
+		flags = append(flags, "50% VAT")
+	}
+	if a.FixedAsset {
+		flags = append(flags, "środki trwałe")
+	}
+	if a.Comment != nil {
+		flags = append(flags, *a.Comment)
+	}
+	return strings.Join(flags, ", ")
 }
 
 func compare(value1, value2 string) bool {

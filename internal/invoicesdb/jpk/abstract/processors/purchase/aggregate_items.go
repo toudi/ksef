@@ -2,9 +2,9 @@ package purchase
 
 import (
 	"errors"
+	"ksef/internal/invoicesdb/annotations"
 	"ksef/internal/invoicesdb/jpk/abstract/processors/vat"
 	"ksef/internal/invoicesdb/jpk/abstract/types"
-	"ksef/internal/invoicesdb/jpk/manager"
 	jpkTypes "ksef/internal/invoicesdb/jpk/types"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	"ksef/internal/invoicesdb/shared"
@@ -20,7 +20,7 @@ const (
 var errUnableToCalculateVAT = errors.New("unable to calculate VAT for invoice item")
 
 func AggregateItems(
-	manager *manager.JPKManager,
+	manager *annotations.Annotations,
 	invoice *monthlyregistry.Invoice,
 	doc *etree.Document,
 	purchase *types.PurchaseItem,
@@ -34,7 +34,7 @@ func AggregateItems(
 	for _, item := range items {
 		itemHash := itemHashFromXML(item)
 		// check if item should be excluded from the report
-		if manager.ItemHasRule(invoice, itemHash, func(rule shared.JPKItemRule) bool { return rule.Exclude }) {
+		if manager.ItemHasRule(invoice, itemHash, func(rule shared.Annotation) bool { return rule.Exclude }) {
 			logger.Info("przedmiot faktury ma flagę wyłączenia z raportu", "hash", itemHash)
 			continue
 		}
@@ -45,7 +45,7 @@ func AggregateItems(
 		}
 
 		// apply 50% VAT if applicable
-		if manager.ItemHasRule(invoice, itemHash, func(rule shared.JPKItemRule) bool { return rule.Vat50Percent }) {
+		if manager.ItemHasRule(invoice, itemHash, func(rule shared.Annotation) bool { return rule.Vat50Percent }) {
 			logger.Info("przedmiot faktury ma flagę zastosowania 50% VAT", "hash", itemHash)
 			vatInfo.VatAmount = vatInfo.VatAmount.HalveAndRoundUp()
 		}
@@ -58,7 +58,7 @@ func AggregateItems(
 
 		purchaseAttributes.VatRate = vatRate
 		// decide if this is a fixed asset or not
-		if manager.ItemHasRule(invoice, itemHash, func(rule shared.JPKItemRule) bool { return rule.FixedAsset }) {
+		if manager.ItemHasRule(invoice, itemHash, func(rule shared.Annotation) bool { return rule.FixedAsset }) {
 			logger.Info("przedmiot faktury ma flagę środków trwałych", "hash", itemHash)
 			purchaseAttributes.FixedAssets = true
 		}

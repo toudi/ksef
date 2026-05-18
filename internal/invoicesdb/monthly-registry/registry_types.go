@@ -37,8 +37,24 @@ type InvoiceIssuer struct {
 	Name string `yaml:"name"`
 }
 
-type JPKProps struct {
-	ItemRules []shared.JPKItemRule `yaml:"item-rules,omitempty"`
+// Annotations is a slice of Annotation rules that marshals as a flat YAML list
+// under the "annotations" key (no intermediate "item-rules" field).
+type Annotations []shared.Annotation
+
+func (a Annotations) MarshalYAML() (any, error) {
+	if len(a) == 0 {
+		return nil, nil
+	}
+	return []shared.Annotation(a), nil
+}
+
+func (a *Annotations) UnmarshalYAML(unmarshal func(any) error) error {
+	var rules []shared.Annotation
+	if err := unmarshal(&rules); err != nil {
+		return err
+	}
+	*a = rules
+	return nil
 }
 
 type Invoice struct {
@@ -52,7 +68,7 @@ type Invoice struct {
 	PrintoutData map[string]any `yaml:"printout-data,omitempty"`
 	Issuer       *InvoiceIssuer `yaml:"issuer,omitempty"`
 	OrdNum       int            `yaml:"ord-num"`
-	JPK          *JPKProps      `yaml:"jpk,omitempty"`
+	Annotations  Annotations    `yaml:"annotations,omitempty"`
 }
 
 type InvoiceMetadata struct {

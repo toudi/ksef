@@ -1,4 +1,4 @@
-package manager
+package annotations
 
 import (
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
@@ -8,14 +8,14 @@ import (
 	"github.com/spf13/viper"
 )
 
-type JPKManager struct {
+type Annotations struct {
 	vip      *viper.Viper
 	registry *monthlyregistry.Registry
 	ss       *subjectsettings.SubjectSettings
 }
 
-func Manager(vip *viper.Viper, initializers ...func(*JPKManager) error) (*JPKManager, error) {
-	manager := &JPKManager{}
+func Manager(vip *viper.Viper, initializers ...func(*Annotations) error) (*Annotations, error) {
+	manager := &Annotations{}
 
 	for _, initializer := range initializers {
 		if err := initializer(manager); err != nil {
@@ -26,8 +26,8 @@ func Manager(vip *viper.Viper, initializers ...func(*JPKManager) error) (*JPKMan
 	return manager, nil
 }
 
-func WithMonthlyRegistry(registry *monthlyregistry.Registry) func(*JPKManager) error {
-	return func(m *JPKManager) error {
+func WithMonthlyRegistry(registry *monthlyregistry.Registry) func(*Annotations) error {
+	return func(m *Annotations) error {
 		m.registry = registry
 
 		// we can load subject settings (if they exist) based on data from monthly
@@ -48,10 +48,4 @@ func WithMonthlyRegistry(registry *monthlyregistry.Registry) func(*JPKManager) e
 	}
 }
 
-func (m *JPKManager) GetSettings() *subjectsettings.JPKSettings {
-	if m.ss != nil {
-		return m.ss.JPK
-	}
 
-	return nil
-}

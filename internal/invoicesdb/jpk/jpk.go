@@ -1,17 +1,15 @@
 package jpk
 
 import (
+	"ksef/internal/invoicesdb/annotations"
 	"ksef/internal/invoicesdb/config"
 	"ksef/internal/invoicesdb/jpk/generators"
 	"ksef/internal/invoicesdb/jpk/generators/interfaces"
-	"ksef/internal/invoicesdb/jpk/manager"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
-	"ksef/internal/invoicesdb/shared"
-	"ksef/internal/logging"
+	subjectsettings "ksef/internal/invoicesdb/subject-settings"
 	"ksef/internal/runtime"
 	"os"
 	"path/filepath"
-	"slices"
 	"time"
 
 	"github.com/beevik/etree"
@@ -19,7 +17,7 @@ import (
 )
 
 type JPK struct {
-	manager   *manager.JPKManager
+	manager   *annotations.Annotations
 	registry  *monthlyregistry.Registry
 	generator interfaces.JPKGenerator
 	vip       *viper.Viper
@@ -42,12 +40,24 @@ func NewJPK(month time.Time, vip *viper.Viper) (*JPK, error) {
 		month.Format("01"),
 	)
 
-	manager, err := manager.Manager(vip, manager.WithMonthlyRegistry(monthlyRegistry))
+	manager, err := annotations.Manager(vip, annotations.WithMonthlyRegistry(monthlyRegistry))
 	if err != nil {
 		return nil, err
 	}
 
-	generator := generators.GetJPKGenerator(manager, month)
+	// Load subject settings directly - the path is derived from the registry
+	settingsPath := filepath.Join(
+		monthlyRegistry.Dir(),
+		"..",
+		"..",
+	)
+	subjectSettings, err := subjectsettings.OpenOrCreate(settingsPath)
+	if err != nil {
+		// subject settings are optional, so we just continue without them
+		subjectSettings = nil
+	}
+
+	generator := generators.GetJPKGenerator(manager, subjectSettings, month)
 
 	return &JPK{
 		registry:  monthlyRegistry,
@@ -59,27 +69,7 @@ func NewJPK(month time.Time, vip *viper.Viper) (*JPK, error) {
 }
 
 func (j *JPK) Generate() error {
-	invoiceTypes := []monthlyregistry.InvoiceType{
-		monthlyregistry.InvoiceTypeIssued,
-		monthlyregistry.InvoiceTypeReceived,
-	}
-
-	for _, invoice := range j.registry.Invoices {
-		if !slices.Contains(invoiceTypes, invoice.Type) {
-			continue
-		}
-
-		// check if the invoice is excluded as a whole
-		if invoice.JPK != nil && len(invoice.JPK.ItemRules) == 1 && (invoice.JPK.ItemRules[0] == shared.JPKItemRule{
-			Hash: shared.ItemHash{
-				Wildcard: true,
-			},
-			Exclude: true,
-		}) {
-			logging.JPKLogger.Info("faktura ma flagę całkowitego wyłączenia z przetwarzania w JPK", "ref-no", invoice.RefNo)
-			continue
-		}
-
+	for _, invoice := range j.registry.JPKEligibleInvoices() {
 		fileName := j.registry.InvoiceFilename(invoice).XML
 
 		if err := j.processInvoiceFile(fileName, invoice); err != nil {

@@ -19,11 +19,12 @@ var (
 )
 
 type SubjectSettings struct {
-	PDF    []pdfConfig.PDFEngineConfig `yaml:"pdf,omitempty"`
-	JPK    *JPKSettings                `yaml:"jpk,omitempty"`
-	Import *ImportSettings             `yaml:"import,omitempty"`
-	dir    string
-	dirty  bool
+	PDF         []pdfConfig.PDFEngineConfig `yaml:"pdf,omitempty"`
+	Annotations GlobalAnnotations           `yaml:"annotations,omitempty"`
+	JPK         *JPKSettings                `yaml:"jpk,omitempty"`
+	Import      *ImportSettings             `yaml:"import,omitempty"`
+	dir         string
+	dirty       bool
 }
 
 func OpenOrCreate(dir string) (*SubjectSettings, error) {

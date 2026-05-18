@@ -30,7 +30,6 @@ func checkMonthArgs(cmd *cobra.Command, args []string) error {
 func init() {
 	flagSet := JPKCommand.Flags()
 	flags.NIP(flagSet)
-	JPKCommand.AddCommand(jpkExclude, jpk50PercVAT, jpkFixedAssets, jpkClearFlags, jpkDumpItems)
 }
 
 func generateJPK(cmd *cobra.Command, args []string) error {
