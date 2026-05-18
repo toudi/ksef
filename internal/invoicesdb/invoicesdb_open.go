@@ -45,5 +45,7 @@ func OpenForNIP(nip string, vip *viper.Viper, initializers ...func(*InvoicesDB))
 		initializer(idb)
 	}
 
+	idb.monthsRange = idb.monthsRangeGenerator(vip, idb.today)
+
 	return idb, nil
 }

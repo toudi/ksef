@@ -50,7 +50,12 @@ func syncInvoicesRun(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	invoicesDB, err := invoicesdb.OpenForNIP(nip, vip, invoicesdb.WithKSeFClient(ksefClient))
+	invoicesDB, err := invoicesdb.OpenForNIP(
+		nip,
+		vip,
+		invoicesdb.WithKSeFClient(ksefClient),
+		invoicesdb.WithMonthsRangeGenerator(invoicesdb.MonthsRangePreviousMonthGenerator),
+	)
 	if err != nil {
 		return err
 	}

@@ -187,39 +187,3 @@ func (i *InvoicesDB) DownloadInvoices(
 
 	return nil
 }
-
-func generateMonthsRange(startDate time.Time, endDate *time.Time) []time.Time {
-	today := time.Now()
-
-	return generateMonthsRangeAtTime(today, startDate, endDate)
-}
-
-func generateMonthsRangeAtTime(today time.Time, startDate time.Time, endDate *time.Time) []time.Time {
-	// that is quite important - basically we do not control user input with regards to timezone.
-	// theoretically we could - like we could just bail out with an error if they give an UTC
-	// as this can get nasty with regards to last day + near midnight cases, but instead of
-	// doing that let's just convert all of the dates to be within the same timezone.
-	// if the user does not provide any timezone then .Now() will fallback to local timezone anyway
-	today = today.In(startDate.Location())
-
-	if endDate != nil && !endDate.IsZero() {
-		today = (*endDate).In(startDate.Location())
-	}
-
-	monthsRange := []time.Time{}
-
-	for !startDate.After(today) {
-		monthsRange = append(monthsRange, startDate)
-
-		// calculate the first day of next month.
-		// In order to do that correctly we have to first override the day at `startDate` to 1. The
-		// reason for that is - if somebody gives us a number that would be very close to the end
-		// of the month (e.g. 25+) when we add +1 month we'd actually skip an entire month.
-		// Therefore zeroing the time and overriding the day gives us safety
-		startDate = time.Date(startDate.Year(), startDate.Month(), 1, 0, 0, 0, 0, startDate.Location())
-		// add one month
-		startDate = startDate.AddDate(0, 1, 0)
-	}
-
-	return monthsRange
-}

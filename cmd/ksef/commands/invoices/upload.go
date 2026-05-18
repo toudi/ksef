@@ -53,6 +53,7 @@ func uploadInvoicesRun(cmd *cobra.Command, _ []string) error {
 		vip,
 		invoicesdb.WithKSeFClient(ksefClient),
 		invoicesdb.WithKeyring(keyring),
+		invoicesdb.WithMonthsRangeGenerator(invoicesdb.MonthsRangePreviousMonthGenerator),
 	)
 	if err != nil {
 		return err

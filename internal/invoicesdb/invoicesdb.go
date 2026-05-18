@@ -10,7 +10,6 @@ import (
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	subjectsettings "ksef/internal/invoicesdb/subject-settings"
 	kr "ksef/internal/keyring"
-	"ksef/internal/utils"
 	"time"
 
 	"github.com/spf13/viper"
@@ -58,21 +57,21 @@ type InvoicesDB struct {
 	// optimization for quickly retrieving newly imported invoices so that we could
 	// send them right away and/or generate PDF's
 	newInvoices []*NewInvoice
+	// monthsRangeGenerator generates the months range for invoice operations.
+	// Defaults to monthsRangeLastTimestampGenerator.
+	monthsRangeGenerator MonthsRangeGenerator
 }
 
 func newInvoicesDB(vip *viper.Viper) *InvoicesDB {
 	// just so that we don't have to call time.Now() time and time again
 	today := time.Now().Local().Truncate(24 * time.Hour)
-	previousMonth := utils.StartOfMonth(today).AddDate(0, -1, 0)
-
-	monthsRange := generateMonthsRange(previousMonth, &today)
 
 	idb := &InvoicesDB{
-		cfg:         config.GetInvoicesDBConfig(vip),
-		importCfg:   config.GetImportConfig(vip),
-		vip:         vip,
-		today:       today,
-		monthsRange: monthsRange,
+		cfg:                  config.GetInvoicesDBConfig(vip),
+		importCfg:            config.GetImportConfig(vip),
+		vip:                  vip,
+		today:                today,
+		monthsRangeGenerator: MonthsRangeLastKnownTimestampGenerator,
 	}
 
 	return idb
@@ -90,6 +89,8 @@ func NewInvoicesDB(vip *viper.Viper, initializers ...func(i *InvoicesDB)) (*Invo
 	for _, initializer := range initializers {
 		initializer(idb)
 	}
+
+	idb.monthsRange = idb.monthsRangeGenerator(vip, idb.today)
 
 	if !idb.skipPrefixInitialization {
 		prefix, err := idb.getMonthlyRegistryPrefix()
@@ -118,6 +119,13 @@ func WithoutInitializingPrefix() func(idb *InvoicesDB) {
 func WithKeyring(keyring kr.Keyring) func(idb *InvoicesDB) {
 	return func(idb *InvoicesDB) {
 		idb.keyring = keyring
+	}
+}
+
+// WithMonthsRangeGenerator sets a custom months range generator.
+func WithMonthsRangeGenerator(gen MonthsRangeGenerator) func(idb *InvoicesDB) {
+	return func(idb *InvoicesDB) {
+		idb.monthsRangeGenerator = gen
 	}
 }
 
