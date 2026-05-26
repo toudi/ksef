@@ -6,6 +6,7 @@ const (
 	KeyBackupPassword = "backup-password"
 	keyPrivateKeyAES  = "privateKeyAES"
 	// primary key encryption cipher - base64 encoded since zalando lib uses strings internally rather than bytes
+	EncryptionKeyUser = "epk"
 )
 
 func SessionTokensKey(certId string) string {

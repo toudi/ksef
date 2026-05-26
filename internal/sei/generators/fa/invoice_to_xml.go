@@ -119,7 +119,13 @@ func (fg *FAGenerator) populateArrayItems(root *xml.Node, arrayElements map[stri
 		nodeParentName := strings.Join(nodeNameParts[1:len(nodeNameParts)-1], ".")
 		leafName := nodeNameParts[len(nodeNameParts)-1]
 
-		parent, _ := root.CreateChild(nodeParentName, false)
+		var parent *xml.Node
+		if nodeParentName == "" {
+			// the array element is a direct child of the root node (e.g., "Faktura.Podmiot3")
+			parent = root
+		} else {
+			parent, _ = root.CreateChild(nodeParentName, false)
+		}
 
 		for _, dataRow := range dataRows {
 			node, _ := parent.CreateChild(leafName, true)

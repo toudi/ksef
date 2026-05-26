@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"io"
 	kr "ksef/internal/keyring"
+	"ksef/internal/logging"
 	"ksef/internal/utils"
+	"log/slog"
 	"os"
 	"slices"
 )
@@ -43,10 +46,31 @@ func (c *Certificate) readPrivateKeyBytes(keyring kr.Keyring) ([]byte, error) {
 }
 
 func (c *Certificate) loadEncryptionKey(keyring kr.Keyring, certID string) ([]byte, error) {
-	// retrieve decryption key from keyring
-	decryptionKey, err := keyring.Get(kr.AppPrefix, "", kr.PrivateKeyEncryptionKey(certID))
-	if err != nil {
-		return nil, err
+	var decryptionKey string
+	var err error
+
+	for idx, keyringUserKey := range []string{kr.EncryptionKeyUser, ""} {
+		decryptionKey, err = keyring.Get(kr.AppPrefix, keyringUserKey, kr.PrivateKeyEncryptionKey(certID))
+		if decryptionKey != "" {
+			// we definetely found the key. let's just check if we can skip ahead of time
+			if keyringUserKey == "" {
+				// we need to rewrite it to the new scheme.
+				logging.CertsDBLogger.Warn("Przenoszę klucz szyfrujący do nowego obiektu w keyring")
+				if err := keyring.Set(kr.AppPrefix, kr.EncryptionKeyUser, kr.PrivateKeyEncryptionKey(certID), decryptionKey); err != nil {
+					logging.CertsDBLogger.Error("błąd zapisywania klucza szyfrującego", slog.Any("error", err))
+					return nil, err
+				}
+			}
+			break
+		}
+		if err != nil && idx < 1 {
+			// we haven't visited all of the keys yet
+			continue
+		}
+	}
+
+	if decryptionKey == "" {
+		return nil, errors.New("nie znaleziono klucza szyfrującego")
 	}
 	// decryption key is base64 encoded since we're dealing with bytes but zalando lib stores strings so let's just be
 	// safe than sorry
@@ -69,7 +93,12 @@ func (c *Certificate) encryptPrivateKeyBytes(pemBytes []byte, dest io.Writer, ke
 		return err
 	}
 	// let's save the key to keyring first before proceeding further
-	if err = keyring.Set(kr.AppPrefix, "", kr.PrivateKeyEncryptionKey(c.UID), base64.StdEncoding.EncodeToString(encryptionKey)); err != nil {
+	if err = keyring.Set(
+		kr.AppPrefix,
+		kr.EncryptionKeyUser,
+		kr.PrivateKeyEncryptionKey(c.UID),
+		base64.StdEncoding.EncodeToString(encryptionKey),
+	); err != nil {
 		return err
 	}
 	encryptedKeyBytes, err := utils.GCMAESEncrypt(pemBytes, encryptionKey)
@@ -99,5 +128,8 @@ func (c *Certificate) DecryptPrivateKey(keyring kr.Keyring) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(c.PrivateKeyFilename(), privateKeyBytes, 0600)
+	if err := os.WriteFile(c.PrivateKeyFilename(), privateKeyBytes, 0600); err != nil {
+		logging.CertsDBLogger.Error("błąd zapisu pliku", slog.Any("err", err))
+	}
+	return keyring.Delete(kr.AppPrefix, kr.EncryptionKeyUser, kr.PrivateKeyEncryptionKey(c.UID))
 }

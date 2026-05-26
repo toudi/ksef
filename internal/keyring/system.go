@@ -1,8 +1,8 @@
 package keyring
 
 import (
-	"strings"
 	"ksef/internal/logging"
+	"strings"
 
 	zalandoKeyring "github.com/zalando/go-keyring"
 )
@@ -19,10 +19,13 @@ func NewSystemKeyring() *SystemKeyring {
 }
 
 func (s *SystemKeyring) Delete(bucket string, nip string, key string) error {
+	logging.KeyringLogger.Debug("delete key", "service", serviceName(bucket, key), "user", nip)
 	return zalandoKeyring.Delete(serviceName(bucket, key), nip)
 }
 
 func (s *SystemKeyring) Get(bucket string, nip string, key string) (string, error) {
+	logging.KeyringLogger.Debug("get key value", "service", serviceName(bucket, key), "user", nip)
+
 	value, err := zalandoKeyring.Get(serviceName(bucket, key), nip)
 	if err == zalandoKeyring.ErrNotFound {
 		err = ErrNotFound
@@ -34,6 +37,8 @@ func (s *SystemKeyring) Get(bucket string, nip string, key string) (string, erro
 }
 
 func (s *SystemKeyring) Set(bucket string, nip string, key string, contents string) error {
+	logging.KeyringLogger.Debug("set key", "service", serviceName(bucket, key), "user", nip)
+
 	return zalandoKeyring.Set(serviceName(bucket, key), nip, contents)
 }
 

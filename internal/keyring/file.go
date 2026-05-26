@@ -58,6 +58,7 @@ func NewFileBasedKeyring(config *FileBasedKeyringConfig) (*FileBasedKeyring, err
 
 func (f *FileBasedKeyring) Delete(bucket string, nip string, key string) error {
 	keyName := keyName(bucket, nip, key)
+	logging.KeyringLogger.Debug("delete key", "keyName", keyName)
 	if f.cfg.Buffered {
 		delete(f.contents, keyName)
 		return nil
@@ -70,6 +71,7 @@ func (f *FileBasedKeyring) Delete(bucket string, nip string, key string) error {
 
 func (f *FileBasedKeyring) Get(bucket string, nip string, key string) (string, error) {
 	keyName := keyName(bucket, nip, key)
+	logging.KeyringLogger.Debug("get key value", "keyName", keyName)
 	if f.cfg.Buffered {
 		if value, exists := f.contents[keyName]; exists {
 			return value, nil

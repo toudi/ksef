@@ -89,6 +89,9 @@ func pkeysDecrypt(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
+	// this is required, since if somebody would be using file-based keyring we
+	// actually have to save it
+	defer keyring.Close()
 
 	if err := certsDB.ForEach(
 		func(cert certsdb.Certificate) bool { return true },
