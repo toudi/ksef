@@ -1,6 +1,9 @@
 package shared
 
-import "strings"
+import (
+	"regexp"
+	"strings"
+)
 
 type ItemHash struct {
 	Wildcard bool   `yaml:"wildcard,omitempty"`
@@ -19,7 +22,7 @@ func (h ItemHash) Matches(other ItemHash) bool {
 	return (compare(h.PKWiU, other.PKWiU) ||
 		compare(h.GTIN, other.GTIN) ||
 		compare(h.Index, other.Index) ||
-		compare(h.Name, other.Name))
+		compareName(h.Name, other.Name))
 }
 
 type Annotation struct {
@@ -56,4 +59,14 @@ func compare(value1, value2 string) bool {
 	// comparing names themselves which would cause an early return.
 	// please refer to lines 19..22 of this file
 	return value1 != "" && value2 != "" && strings.EqualFold(value1, value2)
+}
+
+func compareName(value1, value2 string) bool {
+	// the invoice items can be wildcarded so let's use regexp to compare them
+	match, _ := regexp.MatchString(value1, value2)
+	if match {
+		return true
+	}
+	match, _ = regexp.MatchString(value2, value1)
+	return match
 }
