@@ -4,6 +4,7 @@ import (
 	"errors"
 	"ksef/cmd/ksef/flags"
 	"ksef/internal/invoicesdb/jpk"
+	"ksef/internal/invoicesdb/jpk/constants"
 	"ksef/internal/runtime"
 	"strconv"
 	"time"
@@ -30,6 +31,12 @@ func checkMonthArgs(cmd *cobra.Command, args []string) error {
 func init() {
 	flagSet := JPKCommand.Flags()
 	flags.NIP(flagSet)
+	flagSet.String(
+		constants.FlagNameRefundMode,
+		"",
+		"rachunek do zwrotu nadwyżki",
+	)
+	flagSet.String(constants.FlagNameOffsetTaxCode, "", "nazwa zobowiązania podatkowego")
 }
 
 func generateJPK(cmd *cobra.Command, args []string) error {

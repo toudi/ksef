@@ -4,9 +4,10 @@ import (
 	"errors"
 	"ksef/internal/invoicesdb/annotations"
 	"ksef/internal/invoicesdb/jpk/abstract"
+	"ksef/internal/invoicesdb/jpk/constants"
 	"ksef/internal/invoicesdb/jpk/generators/interfaces"
-	subjectsettings "ksef/internal/invoicesdb/subject-settings"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
+	subjectsettings "ksef/internal/invoicesdb/subject-settings"
 	"ksef/internal/money"
 	"ksef/internal/xml"
 	"slices"
@@ -45,18 +46,18 @@ var commonData = map[string]string{
 }
 
 type jpk_v7m_3_generator struct {
-	report         *abstract.MonthlyReport
+	report          *abstract.MonthlyReport
 	subjectSettings *subjectsettings.SubjectSettings
-	month          time.Time
-	annotations    *annotations.Annotations
+	month           time.Time
+	annotations     *annotations.Annotations
 }
 
 func New(annotations *annotations.Annotations, subjectSettings *subjectsettings.SubjectSettings, month time.Time) interfaces.JPKGenerator {
 	return &jpk_v7m_3_generator{
-		report:         abstract.NewMonthlyReport(annotations),
+		report:          abstract.NewMonthlyReport(annotations),
 		subjectSettings: subjectSettings,
-		month:          month,
-		annotations:    annotations,
+		month:           month,
+		annotations:     annotations,
 	}
 }
 
@@ -186,6 +187,7 @@ func (g *jpk_v7m_3_generator) Document() (*xml.Node, error) {
 		DecimalPlaces: subtractSum.DecimalPlaces,
 	})
 	root.SetValue(declarationDetailedInfoBasePath+"P_38", vatSum.Format(0))
+	outputVat := vatSum
 
 	// Calculate P_48
 	// according to schema:
@@ -194,6 +196,39 @@ func (g *jpk_v7m_3_generator) Document() (*xml.Node, error) {
 		[]string{"P_39", "P_41", "P_43", "P_44", "P_45", "P_46", "P_47"},
 	)
 	root.SetValue(declarationDetailedInfoBasePath+"P_48", vatSum.Format(0))
+	vatDue := vatSum
+
+	// let's check if there's a surplus.
+	surplus := vatDue.Add(money.MonetaryValue{
+		Amount:        outputVat.Amount * -1,
+		DecimalPlaces: outputVat.DecimalPlaces,
+	})
+
+	if surplus.Amount > 0 {
+		root.SetValue(declarationDetailedInfoBasePath+"P_53", surplus.Format(0))
+
+		if g.subjectSettings.JPK.Surplus.CarryOver {
+			root.SetValue(declarationDetailedInfoBasePath+"P_62", surplus.Format(0))
+		}
+		if g.subjectSettings.JPK.Surplus.Refund != "" {
+			refundModeToField := map[string]string{
+				constants.RefundMode15Days:    "P_540",
+				constants.RefundMode25DaysVat: "P_55",
+				constants.RefundMode25Days:    "P_56",
+				constants.RefundMode40Days:    "P_560",
+				constants.RefundMode180Days:   "P_58",
+			}
+			root.SetValue(declarationDetailedInfoBasePath+"P_54", surplus.Format(0))
+			root.SetValue(declarationDetailedInfoBasePath+refundModeToField[g.subjectSettings.JPK.Surplus.Refund], "1")
+		}
+		if g.subjectSettings.JPK.Surplus.OffsetTax != "" {
+			root.SetValue(declarationDetailedInfoBasePath+"P_55", "1")
+			root.SetValue(declarationDetailedInfoBasePath+"P_59", "1")
+			root.SetValue(declarationDetailedInfoBasePath+"P_54", surplus.Format(0))
+			root.SetValue(declarationDetailedInfoBasePath+"P_60", surplus.Format(0))
+			root.SetValue(declarationDetailedInfoBasePath+"P_61", g.subjectSettings.JPK.Surplus.OffsetTax)
+		}
+	}
 
 	if err := root.ApplyOrdering(JPK_V7M_3ChildrenOrder); err != nil {
 		return nil, err

@@ -14,6 +14,9 @@ JPK_REQUIRED_FIELDS = {
         "JPK.Ewidencja.SprzedazWiersz",
         "JPK.Ewidencja.ZakupWiersz",
     ],
+    "ignore": [
+        "JPK.Deklaracja.PozycjeSzczegolowe.P_54",
+    ],
     "defaults": {
         # consequence of the above is that the parser will tell us about required fields
         # and their types. so we will initialize the JPK document with these zero values
@@ -38,6 +41,7 @@ def filter_required_fields(required_fields: dict[str, str]) -> list[tuple[str, s
         for name, typ in required_fields.items()
         if any(name.startswith(prefix) for prefix in JPK_REQUIRED_FIELDS["prefixes"])
         and typ in JPK_REQUIRED_FIELDS["defaults"]
+        and name not in JPK_REQUIRED_FIELDS["ignore"]
     ]
 
 

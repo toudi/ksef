@@ -45,7 +45,6 @@ var JPK_V7M_3RequiredDefaults = map[string]string{
 	"JPK.Deklaracja.PozycjeSzczegolowe.P_42": "0",
 	"JPK.Deklaracja.PozycjeSzczegolowe.P_43": "0",
 	"JPK.Deklaracja.PozycjeSzczegolowe.P_51": "0",
-	"JPK.Deklaracja.PozycjeSzczegolowe.P_54": "0",
 	"JPK.Ewidencja.SprzedazWiersz.K_15":      "0",
 	"JPK.Ewidencja.SprzedazWiersz.K_16":      "0",
 	"JPK.Ewidencja.SprzedazWiersz.K_17":      "0",

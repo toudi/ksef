@@ -1,8 +1,10 @@
 package jpk
 
 import (
+	"errors"
 	"ksef/internal/invoicesdb/annotations"
 	"ksef/internal/invoicesdb/config"
+	"ksef/internal/invoicesdb/jpk/constants"
 	"ksef/internal/invoicesdb/jpk/generators"
 	"ksef/internal/invoicesdb/jpk/generators/interfaces"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
@@ -54,7 +56,33 @@ func NewJPK(month time.Time, vip *viper.Viper) (*JPK, error) {
 	subjectSettings, err := subjectsettings.OpenOrCreate(settingsPath)
 	if err != nil {
 		// subject settings are optional, so we just continue without them
-		subjectSettings = nil
+		subjectSettings = &subjectsettings.SubjectSettings{
+			JPK: &subjectsettings.JPKSettings{
+				Surplus: subjectsettings.SurplusAction{
+					CarryOver: true,
+				},
+			},
+		}
+	}
+
+	if subjectSettings.JPK == nil {
+		return nil, errors.New("brak ustawień JPK")
+	}
+
+	refundMode := vip.GetString(constants.FlagNameRefundMode)
+	if refundMode != "" {
+		subjectSettings.JPK.Surplus.CarryOver = false
+		subjectSettings.JPK.Surplus.Refund = refundMode
+	}
+
+	offsetTax := vip.GetString(constants.FlagNameOffsetTaxCode)
+	if offsetTax != "" && offsetTax != subjectSettings.JPK.Surplus.OffsetTax {
+		subjectSettings.JPK.Surplus.CarryOver = false
+		subjectSettings.JPK.Surplus.OffsetTax = offsetTax
+	}
+
+	if err := subjectSettings.JPK.Validate(); err != nil {
+		return nil, err
 	}
 
 	generator := generators.GetJPKGenerator(manager, subjectSettings, month)

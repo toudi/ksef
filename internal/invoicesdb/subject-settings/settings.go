@@ -47,6 +47,10 @@ func OpenOrCreate(dir string) (*SubjectSettings, error) {
 		}
 	}
 
+	if !ss.JPK.Surplus.CarryOver && (ss.JPK.Surplus.Refund == "" && ss.JPK.Surplus.OffsetTax == "") {
+		ss.JPK.Surplus.CarryOver = true
+	}
+
 	return ss, nil
 }
 
