@@ -101,7 +101,7 @@ func (m *MonetaryValue) LoadFromString(value string) error {
 	// everything seems correct, right ?
 	// up until you multiply the float by 100:
 	// unitPriceFloat * 100 = 3990.99999995
-
+	isNegative := strings.HasPrefix(value, "-")
 	numberParts := strings.SplitN(value, ".", 2)
 	var decimalPart int = 0
 	// zeroes on the left (after the dot) **ARE** significant
@@ -120,9 +120,17 @@ func (m *MonetaryValue) LoadFromString(value string) error {
 	m.Amount = decimalPart * int(math.Pow10(m.DecimalPlaces))
 	if numberParts[1] != "" {
 		// there is a fractional part which we can simply add to the base
+		// first parse the fractional part itself ..
 		fractionalPart, err := strconv.Atoi(numberParts[1])
 		if err != nil {
 			return errors.Join(errors.New("error parsing fractional part"), err)
+		}
+		// and because we're reconstructuring the whole amount in lowest currency
+		// units there's an addition. but because of negative numbers we also
+		// have to carry over the sign of the decimal part. otherwise we'd
+		// end up subtracting fractional part
+		if isNegative {
+			fractionalPart = -fractionalPart
 		}
 		m.Amount += fractionalPart
 	}

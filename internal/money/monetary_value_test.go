@@ -54,6 +54,23 @@ func TestMonetaryValue(t *testing.T) {
 			"0.015723",
 			money.MonetaryValue{Amount: 15723, DecimalPlaces: 6},
 		},
+		// negative numbers
+		{
+			"-0.5",
+			money.MonetaryValue{Amount: -5, DecimalPlaces: 1},
+		},
+		{
+			"-0.14",
+			money.MonetaryValue{Amount: -14, DecimalPlaces: 2},
+		},
+		{
+			"-0.015723",
+			money.MonetaryValue{Amount: -15723, DecimalPlaces: 6},
+		},
+		{
+			"-123.450000",
+			money.MonetaryValue{Amount: -12345, DecimalPlaces: 2},
+		},
 	} {
 		t.Run(test.input, func(t *testing.T) {
 			var m money.MonetaryValue
