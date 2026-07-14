@@ -10,6 +10,13 @@ type PurchaseVAT struct {
 	Total        *VATInfo
 }
 
+func PurchaseVAT_Init() *PurchaseVAT {
+	return &PurchaseVAT{
+		ByAttributes: make(map[PurchaseAttributes]*VATInfo),
+		Total:        &VATInfo{},
+	}
+}
+
 func (p *PurchaseVAT) Add(attributes PurchaseAttributes, info VATInfo) {
 	if p.ByAttributes == nil {
 		p.ByAttributes = make(map[PurchaseAttributes]*VATInfo)

@@ -34,7 +34,7 @@ func NewPurchase(manager *annotations.Annotations, processors []PurchaseInvoiceP
 	return &Purchase{
 		processors: processors,
 		manager:    manager,
-		VATAmounts: &types.PurchaseVAT{},
+		VATAmounts: types.PurchaseVAT_Init(),
 	}
 }
 
@@ -44,7 +44,7 @@ func (p *Purchase) ProcessInvoice(
 ) error {
 	row := &PurchaseItem{
 		purchase:   p,
-		VATAmounts: &types.PurchaseVAT{},
+		VATAmounts: types.PurchaseVAT_Init(),
 	}
 
 	for _, processor := range p.processors {
