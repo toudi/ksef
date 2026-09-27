@@ -9,7 +9,6 @@ import (
 	"ksef/internal/runtime"
 	"os"
 	"text/template"
-	"time"
 
 	"github.com/goccy/go-yaml"
 	"github.com/pelletier/go-toml/v2"
@@ -58,30 +57,9 @@ func getKsefMeta(cmd *cobra.Command, args []string) error {
 
 	refNo := args[0]
 
-	month := time.Now()
-	month = time.Date(month.Year(), month.Month(), 1, 0, 0, 0, 0, time.Local)
-
-	var invoice *monthlyregistry.Invoice
-
-	// let's start from the most recent month and iterate back
-	// until we hit a match.
-	for range 12 {
-		reg, err := monthlyregistry.OpenForMonth(vip, month)
-		if err != nil {
-			month = month.AddDate(0, -1, 0)
-			continue
-		}
-		if invoice = reg.GetInvoice(func(i monthlyregistry.Invoice) bool {
-			return i.RefNo == refNo && i.Type == monthlyregistry.InvoiceTypeIssued
-		}); invoice != nil {
-			break
-		}
-
-		month = month.AddDate(0, -1, 0)
-	}
-
-	if invoice == nil {
-		return errInvoiceNotFound
+	invoice, _, err := findInvoiceByRefNo(vip, refNo)
+	if err != nil {
+		return err
 	}
 
 	return dumpInvoiceData(invoice, vip)
