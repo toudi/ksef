@@ -75,8 +75,13 @@ func (idb *InvoicesDB) invoiceReady(inv *sei.ParsedInvoice) error {
 	// and now we can finally detect if this is potentially a correction candidate or
 	// simply we've already processed this.
 	if _invoice != nil && checksum == _invoice.Checksum {
-		logging.GenerateLogger.Info("faktura została już zaimportowana. no-op.", "numer faktury", _invoice.RefNo)
-		return nil
+		if len(_invoice.Corrections) == 0 {
+			logging.GenerateLogger.Info("faktura została już zaimportowana. no-op.", "numer faktury", _invoice.RefNo)
+			return nil
+		}
+		// invoice has corrections - it may have been modified in KSeF since initial
+		// submission. fall through to handleCorrection which will check if the
+		// current state already matches the incoming invoice.
 	}
 
 	// is this a new invoice ? or..

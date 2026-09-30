@@ -9,6 +9,7 @@ import (
 	"ksef/internal/sei"
 	"ksef/internal/sei/generators/fa"
 	"ksef/internal/utils"
+	"reflect"
 	"time"
 )
 
@@ -47,6 +48,26 @@ func (idb *InvoicesDB) handleCorrection(
 		originalInvoice, err := originalInvoiceData.Unmarshall()
 		if err != nil {
 			return err
+		}
+
+		// iterate through existing corrections and check if any of them brings the
+		// invoice state to match the incoming invoice - if so, we can no-op.
+		if len(originalInvoiceData.Corrections) > 0 {
+			currentState, err := originalInvoiceData.ReconstructCurrentState()
+			if err != nil {
+				return err
+			}
+			if invoicesEqual(currentState, inv.Invoice) {
+				logging.GenerateLogger.Info(
+					"korekta już istnieje, stan faktury w KSeF jest zgodny. no-op.",
+					"numer faktury", originalInvoiceData.RefNo,
+				)
+				return nil
+			}
+			// No existing correction produces the desired state. Use the reconstructed
+			// current state (from applying all corrections) as the baseline for the diff,
+			// so that we compute the right delta.
+			originalInvoice = currentState
 		}
 
 		if len(inv.Invoice.Items) == 0 {
@@ -173,4 +194,28 @@ func (idb *InvoicesDB) handleCorrection(
 	})
 
 	return nil
+}
+
+// invoicesEqual compares two invoice objects by their items only,
+// ignoring metadata like timestamps, numbers, and KSeF references.
+// Two invoices are considered equal if they have the same items in the
+// same order with the same content.
+// TODO: This is still not ideal since you can correct invoices due to
+// recipient data being different, but this is ignored for now.
+func invoicesEqual(a, b *invoice.Invoice) bool {
+	if a == nil && b == nil {
+		return true
+	}
+	if a == nil || b == nil {
+		return false
+	}
+	if len(a.Items) != len(b.Items) {
+		return false
+	}
+	for i := range a.Items {
+		if !reflect.DeepEqual(a.Items[i], b.Items[i]) {
+			return false
+		}
+	}
+	return true
 }

@@ -18,3 +18,14 @@ func (m *MonetaryValue) Format(decimalPlaces int) string {
 	}
 	return strconv.Itoa(decimalPart)
 }
+
+// FormatTrimmed renders the value using the minimum number of decimal places
+// necessary (equivalent to Go's float 'f' format with precision -1). Trailing
+// zeroes are dropped, so 93.00 renders as "93" and 93.73 as "93.73".
+func (m MonetaryValue) FormatTrimmed() string {
+	if m.DecimalPlaces == 0 {
+		return strconv.Itoa(m.Amount)
+	}
+
+	return RenderAmountFromCurrencyUnits(m.Amount, uint8(m.DecimalPlaces))
+}
