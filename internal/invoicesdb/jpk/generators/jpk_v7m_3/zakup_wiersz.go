@@ -31,8 +31,8 @@ func populateZakupWiersz(dest *xml.Node, row *absTypes.PurchaseItem, declaration
 			formFields.BaseField = "K_40"
 			formFields.VatField = "K_41"
 		}
-		data[formFields.BaseField] = amounts.Base.Format(2)
-		data[formFields.VatField] = amounts.Vat.Format(2)
+		data[formFields.BaseField] = amounts.Base.FormatTrimmed()
+		data[formFields.VatField] = amounts.Vat.FormatTrimmed()
 
 		declaration.Add(formFields, amounts)
 	}

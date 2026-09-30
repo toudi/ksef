@@ -158,7 +158,7 @@ func (g *jpk_v7m_3_generator) Document() (*xml.Node, error) {
 
 	// now we can populate accumulated values:
 	for field, amount := range *fieldToAmount {
-		root.SetValue(declarationDetailedInfoBasePath+field, amount.Format(0))
+		root.SetValue(declarationDetailedInfoBasePath+field, amount.RoundedWhole().FormatTrimmed())
 	}
 	// whew that was a lot of work.
 	// now we can populate PozycjeSzczeglowe fields of Deklaracja section.
@@ -171,7 +171,7 @@ func (g *jpk_v7m_3_generator) Document() (*xml.Node, error) {
 			"P_27", "P_29", "P_31",
 		},
 	)
-	root.SetValue(declarationDetailedInfoBasePath+"P_37", accumulated.Format(0))
+	root.SetValue(declarationDetailedInfoBasePath+"P_37", accumulated.RoundedWhole().FormatTrimmed())
 
 	// Calculate P_38 (total output VAT)
 	// according to schema:
@@ -186,7 +186,7 @@ func (g *jpk_v7m_3_generator) Document() (*xml.Node, error) {
 		Amount:        subtractSum.Amount * -1,
 		DecimalPlaces: subtractSum.DecimalPlaces,
 	})
-	root.SetValue(declarationDetailedInfoBasePath+"P_38", vatSum.Format(0))
+	root.SetValue(declarationDetailedInfoBasePath+"P_38", vatSum.RoundedWhole().FormatTrimmed())
 	outputVat := vatSum
 
 	// Calculate P_48
@@ -195,8 +195,16 @@ func (g *jpk_v7m_3_generator) Document() (*xml.Node, error) {
 	vatSum = fieldToAmount.accumulate(
 		[]string{"P_39", "P_41", "P_43", "P_44", "P_45", "P_46", "P_47"},
 	)
-	root.SetValue(declarationDetailedInfoBasePath+"P_48", vatSum.Format(0))
+	root.SetValue(declarationDetailedInfoBasePath+"P_48", vatSum.RoundedWhole().FormatTrimmed())
 	vatDue := vatSum
+
+	// Calculate P_51 - amount of VAT due to the tax office.
+	// If P_38 - P_48 > 0 then P_51 = P_38 - P_48 - P_49 - P_50, otherwise 0.
+	// P_49 and P_50 are not currently populated (they default to 0).
+	// both values are rounded whole amounts (0 decimal places), so their
+	// Amounts are plain zloty values that can be subtracted directly.
+	p51 := max(0, outputVat.RoundedWhole().Amount-vatDue.RoundedWhole().Amount)
+	root.SetValue(declarationDetailedInfoBasePath+"P_51", strconv.Itoa(p51))
 
 	// let's check if there's a surplus.
 	surplus := vatDue.Add(money.MonetaryValue{
@@ -205,10 +213,11 @@ func (g *jpk_v7m_3_generator) Document() (*xml.Node, error) {
 	})
 
 	if surplus.Amount > 0 {
-		root.SetValue(declarationDetailedInfoBasePath+"P_53", surplus.Format(0))
+		surplusWhole := surplus.RoundedWhole().FormatTrimmed()
+		root.SetValue(declarationDetailedInfoBasePath+"P_53", surplusWhole)
 
 		if g.subjectSettings.JPK.Surplus.CarryOver {
-			root.SetValue(declarationDetailedInfoBasePath+"P_62", surplus.Format(0))
+			root.SetValue(declarationDetailedInfoBasePath+"P_62", surplusWhole)
 		}
 		if g.subjectSettings.JPK.Surplus.Refund != "" {
 			refundModeToField := map[string]string{
@@ -218,14 +227,14 @@ func (g *jpk_v7m_3_generator) Document() (*xml.Node, error) {
 				constants.RefundMode40Days:    "P_560",
 				constants.RefundMode180Days:   "P_58",
 			}
-			root.SetValue(declarationDetailedInfoBasePath+"P_54", surplus.Format(0))
+			root.SetValue(declarationDetailedInfoBasePath+"P_54", surplusWhole)
 			root.SetValue(declarationDetailedInfoBasePath+refundModeToField[g.subjectSettings.JPK.Surplus.Refund], "1")
 		}
 		if g.subjectSettings.JPK.Surplus.OffsetTax != "" {
 			root.SetValue(declarationDetailedInfoBasePath+"P_55", "1")
 			root.SetValue(declarationDetailedInfoBasePath+"P_59", "1")
-			root.SetValue(declarationDetailedInfoBasePath+"P_54", surplus.Format(0))
-			root.SetValue(declarationDetailedInfoBasePath+"P_60", surplus.Format(0))
+			root.SetValue(declarationDetailedInfoBasePath+"P_54", surplusWhole)
+			root.SetValue(declarationDetailedInfoBasePath+"P_60", surplusWhole)
 			root.SetValue(declarationDetailedInfoBasePath+"P_61", g.subjectSettings.JPK.Surplus.OffsetTax)
 		}
 	}

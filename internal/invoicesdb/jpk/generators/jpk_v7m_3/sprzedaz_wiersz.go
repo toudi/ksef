@@ -60,7 +60,7 @@ func populateSprzedazWiersz(dest *xml.Node, row *absTypes.SaleItem, declaration 
 
 	for fieldName, amount := range accumulator.values {
 		if amount.Amount > 0 {
-			data[fieldName] = amount.Format(2)
+			data[fieldName] = amount.FormatTrimmed()
 		}
 	}
 
