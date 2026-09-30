@@ -6,7 +6,6 @@ import (
 	"ksef/internal/utils"
 	"os"
 
-	"github.com/goforj/godump"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -38,8 +37,6 @@ func importPDFRun(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-
-	godump.Dump(invoice, reg)
 
 	targetPDFName := reg.InvoiceFilename(invoice).PDF
 
