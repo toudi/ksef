@@ -2,7 +2,9 @@ package certificates
 
 import (
 	"fmt"
-	"ksef/internal/certsdb"
+	"ksef/core/certsdb"
+	fsCertsStorage "ksef/core/certsdb/fs"
+	"ksef/internal/runtime"
 	"strings"
 
 	"github.com/alexeyco/simpletable"
@@ -29,12 +31,14 @@ func init() {
 
 func listCerts(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
+	ctx := cmd.Context()
 
-	certDB, err := certsdb.OpenOrCreate(vip)
+	certStorage, err := fsCertsStorage.Init(vip)
 	if err != nil {
 		return err
 	}
-	defer certDB.Save()
+	certsDB := certsdb.Init(certStorage)
+	defer certsDB.Close(ctx)
 
 	table := simpletable.New()
 
@@ -52,7 +56,17 @@ func listCerts(cmd *cobra.Command, _ []string) error {
 
 	certSerial := vip.GetString(certSerial)
 
-	for _, cert := range certDB.Certs() {
+	certs, err := certsDB.Certs(cmd.Context())
+	selectedGateway, err := runtime.Gateway(vip)
+	if err != nil {
+		return err
+	}
+
+	for cert := range certs {
+		if cert.Gateway != selectedGateway {
+			continue
+		}
+
 		if certSerial != "" && cert.SerialNumber != certSerial {
 			continue
 		}
@@ -62,7 +76,7 @@ func listCerts(cmd *cobra.Command, _ []string) error {
 				Text: cert.UID,
 			},
 			{
-				Text: string(cert.EnvironmentId),
+				Text: string(cert.Gateway),
 			},
 			{
 				Text: cert.UsageAsString(),

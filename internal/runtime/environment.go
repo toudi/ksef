@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"fmt"
+	"ksef/core/ksef"
 	"ksef/internal/utils"
 
 	"github.com/spf13/viper"
@@ -43,16 +44,22 @@ var (
 	}
 )
 
+// DEPRECATED - definetely remove in v0.3
+var LegacyEnvironmentHosts = map[string][]string{
+	TestEnvironmentId: {"ksef-test.mf.gov.pl", "api-test.ksef.mf.gov.pl"},
+	DemoEnvironmentId: {"ksef-demo.mf.gov.pl", "api-demo.ksef.mf.gov.pl"},
+	ProdEnvironmentId: {"ksef.mf.gov.pl"},
+}
+
 var environments = map[string]Environment{
 	TestEnvironmentId: testEnvironment,
 	DemoEnvironmentId: demoEnvironment,
 	ProdEnvironmentId: prodEnvironment,
 }
 
-var LegacyEnvironmentHosts = map[string][]string{
-	TestEnvironmentId: {"ksef-test.mf.gov.pl", "api-test.ksef.mf.gov.pl"},
-	DemoEnvironmentId: {"ksef-demo.mf.gov.pl", "api-demo.ksef.mf.gov.pl"},
-	ProdEnvironmentId: {"ksef.mf.gov.pl"},
+func Gateway(vip *viper.Viper) (ksef.KSeFGateway, error) {
+	// TODO: get rid of the GetEnvironmentId
+	return ksef.ParseGateway(GetEnvironmentId(vip))
 }
 
 func GetEnvironmentId(vip *viper.Viper) string {

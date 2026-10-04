@@ -1,10 +1,8 @@
 package certificates
 
 import (
-	"ksef/internal/certsdb"
+	fsCertsStorage "ksef/core/certsdb/fs"
 	"ksef/internal/logging"
-
-	kr "ksef/internal/keyring"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -39,82 +37,80 @@ func init() {
 
 func pkeysEncrypt(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
+	ctx := cmd.Context()
 
-	certsDB, err := certsdb.OpenOrCreate(vip)
+	certsStorage, err := fsCertsStorage.Init(vip)
 	if err != nil {
 		return err
 	}
 
-	keyring, err := kr.NewKeyring(vip)
+	certs, err := certsStorage.Certs(ctx)
 	if err != nil {
 		return err
 	}
-	// this is required, since if somebody would be using file-based keyring we
-	// actually have to save it
-	defer keyring.Close()
 
-	if err := certsDB.ForEach(
-		func(cert certsdb.Certificate) bool { return true },
-		func(cert *certsdb.Certificate) error {
-			if !cert.IsEncryptable() {
-				return nil
-			}
-			isEncrypted, err := cert.PrivateKeyIsEncrypted()
-			if err != nil {
-				return err
-			}
-			if isEncrypted {
-				logging.CertsDBLogger.Info("klucz prywatny certyfikatu jest już zaszyfrowany. no-op", "cert", cert.UID)
-				return nil
-			}
-			logging.CertsDBLogger.Info("Szyfruję klucz prywatny certyfikatu", "cert", cert.UID)
-			return cert.EncryptPrivateKey(keyring)
-		},
-	); err != nil {
-		return err
+	// let's iterate over certs from the storage and check whether they need encryption.
+	for _, cert := range certs {
+		if !cert.IsEncryptable() {
+			continue
+		}
+
+		isEncrypted, err := certsStorage.IsPrivateKeyEncrypted(ctx, cert.UID)
+		if err != nil {
+			return err
+		}
+
+		if isEncrypted {
+			// private key is already encrypted, can no-op
+			logging.CertsDBLogger.Info("klucz prywatny certyfikatu jest już zaszyfrowany. no-op", "cert", cert.UID)
+			continue
+		}
+
+		logging.CertsDBLogger.Info("Szyfruję klucz prywatny certyfikatu", "cert", cert.UID)
+		if err := certsStorage.EncryptPrivateKey(ctx, cert.UID); err != nil {
+			return err
+		}
 	}
 
-	return certsDB.Save()
+	return certsStorage.Close(ctx)
 }
 
 func pkeysDecrypt(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
+	ctx := cmd.Context()
 
-	certsDB, err := certsdb.OpenOrCreate(vip)
+	certsStorage, err := fsCertsStorage.Init(vip)
 	if err != nil {
 		return err
 	}
 
-	keyring, err := kr.NewKeyring(vip)
+	certs, err := certsStorage.Certs(ctx)
 	if err != nil {
 		return err
 	}
-	// this is required, since if somebody would be using file-based keyring we
-	// actually have to save it
-	defer keyring.Close()
 
-	if err := certsDB.ForEach(
-		func(cert certsdb.Certificate) bool { return true },
-		func(cert *certsdb.Certificate) error {
-			if !cert.IsEncryptable() {
-				return nil
-			}
-			isEncrypted, err := cert.PrivateKeyIsEncrypted()
-			if err != nil {
-				return err
-			}
-			if !isEncrypted {
-				logging.CertsDBLogger.Info("klucz prywatny certyfikatu jest już odszyfrowany. no-op", "cert", cert.UID)
-			}
-			if isEncrypted {
-				logging.CertsDBLogger.Info("Odszyfrowuję klucz prywatny certyfikatu", "cert", cert.UID)
-				return cert.DecryptPrivateKey(keyring)
-			}
-			return nil
-		},
-	); err != nil {
-		return err
+	// let's iterate over certs from the storage and check whether they need encryption.
+	for _, cert := range certs {
+		if !cert.IsEncryptable() {
+			continue
+		}
+
+		isEncrypted, err := certsStorage.IsPrivateKeyEncrypted(ctx, cert.UID)
+		if err != nil {
+			return err
+		}
+
+		if !isEncrypted {
+			// private key is already encrypted, can no-op
+			logging.CertsDBLogger.Info("klucz prywatny certyfikatu jest już odszyfrowany. no-op", "cert", cert.UID)
+			continue
+		}
+
+		logging.CertsDBLogger.Info("Szyfruję klucz prywatny certyfikatu", "cert", cert.UID)
+		if err := certsStorage.DecryptPrivateKey(ctx, cert.UID); err != nil {
+			return err
+		}
 	}
 
-	return certsDB.Save()
+	return certsStorage.Close(ctx)
 }
