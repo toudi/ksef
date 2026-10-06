@@ -3,6 +3,7 @@ package uploader
 import (
 	"context"
 	"errors"
+
 	sessionTypes "ksef/internal/client/v2/session/types"
 	"ksef/internal/logging"
 )

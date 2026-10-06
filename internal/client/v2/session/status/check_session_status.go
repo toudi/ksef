@@ -3,9 +3,10 @@ package status
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	ratelimits "ksef/internal/client/v2/rate-limits"
 	HTTP "ksef/internal/http"
-	"net/http"
 )
 
 const endpointSessionStatus = "/v2/sessions/%s"

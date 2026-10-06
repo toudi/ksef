@@ -2,10 +2,11 @@ package archive
 
 import (
 	"archive/zip"
-	"ksef/internal/logging"
-	"ksef/internal/utils"
 	"os"
 	"path/filepath"
+
+	"ksef/internal/logging"
+	"ksef/internal/utils"
 
 	"github.com/jaevor/go-nanoid"
 )
@@ -36,7 +37,7 @@ func New(workDir string, maxFileSize int64) (*Archive, error) {
 	randomPart := generator()
 
 	outputDir := filepath.Join(workDir, randomPart)
-	if err = os.MkdirAll(outputDir, 0775); err != nil {
+	if err = os.MkdirAll(outputDir, 0o775); err != nil {
 		return nil, err
 	}
 

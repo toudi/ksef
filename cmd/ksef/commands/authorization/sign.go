@@ -7,7 +7,7 @@ import (
 	"ksef/internal/client/v2/auth/xades"
 	"os"
 
-	kr "ksef/internal/keyring"
+	kr "ksef/core/keyring"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

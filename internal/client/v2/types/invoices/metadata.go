@@ -1,8 +1,9 @@
 package invoices
 
 import (
-	"ksef/internal/utils"
 	"time"
+
+	"ksef/internal/utils"
 )
 
 type InvoiceSubjectMetadata struct {

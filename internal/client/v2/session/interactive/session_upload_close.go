@@ -3,8 +3,9 @@ package interactive
 import (
 	"context"
 	"fmt"
-	HTTP "ksef/internal/http"
 	"net/http"
+
+	HTTP "ksef/internal/http"
 )
 
 const endpointSessionClose = "/v2/sessions/online/%s/close"

@@ -1,10 +1,11 @@
 package certsdb
 
 import (
-	"ksef/internal/logging"
-	"ksef/internal/runtime"
 	"slices"
 	"time"
+
+	"ksef/internal/logging"
+	"ksef/internal/runtime"
 
 	"github.com/samber/lo"
 )

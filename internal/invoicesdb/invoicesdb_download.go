@@ -5,6 +5,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+	"time"
+
 	"ksef/internal/client/v2/types/invoices"
 	invoiceTypes "ksef/internal/client/v2/types/invoices"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
@@ -13,8 +16,6 @@ import (
 	pdfconfig "ksef/internal/pdf/config"
 	"ksef/internal/runtime"
 	"ksef/internal/utils"
-	"strings"
-	"time"
 
 	"github.com/spf13/viper"
 )

@@ -3,8 +3,9 @@ package v2
 import (
 	"context"
 	"errors"
-	"ksef/internal/client/v2/auth"
 	"time"
+
+	"ksef/internal/client/v2/auth"
 )
 
 var (

@@ -1,9 +1,10 @@
 package jpk_v7m_3
 
 import (
+	"testing"
+
 	"ksef/internal/invoicesdb/jpk/types"
 	"ksef/internal/money"
-	"testing"
 
 	"github.com/stretchr/testify/require"
 )

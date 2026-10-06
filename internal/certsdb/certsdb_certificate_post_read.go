@@ -3,12 +3,13 @@ package certsdb
 import (
 	"crypto/x509"
 	"encoding/pem"
-	"ksef/internal/logging"
-	"ksef/internal/runtime"
 	"os"
 	"path"
 	"path/filepath"
 	"slices"
+
+	"ksef/internal/logging"
+	"ksef/internal/runtime"
 )
 
 func (cert *Certificate) postReadHook(environmentId string) bool {

@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/xml"
 	"errors"
-	"ksef/internal/money"
 	"math"
 	"strconv"
+
+	"ksef/internal/money"
 
 	"github.com/beevik/etree"
 )

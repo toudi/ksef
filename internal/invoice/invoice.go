@@ -1,9 +1,10 @@
 package invoice
 
 import (
-	"ksef/internal/money"
 	"strconv"
 	"time"
+
+	"ksef/internal/money"
 )
 
 type VAT struct {

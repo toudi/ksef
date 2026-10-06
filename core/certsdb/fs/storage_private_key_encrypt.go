@@ -6,7 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"io"
-	"ksef/internal/keyring"
+	"ksef/core/keyring"
 	"ksef/internal/utils"
 	"os"
 )

@@ -3,9 +3,10 @@ package types
 import (
 	"context"
 	"errors"
+	"time"
+
 	"ksef/internal/client/v2/session/status"
 	"ksef/internal/utils"
-	"time"
 )
 
 type UploadSessionResult struct {

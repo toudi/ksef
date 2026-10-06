@@ -1,10 +1,10 @@
 package client
 
 import (
+	kr "ksef/core/keyring"
 	"ksef/internal/certsdb"
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/client/v2/auth/token"
-	kr "ksef/internal/keyring"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

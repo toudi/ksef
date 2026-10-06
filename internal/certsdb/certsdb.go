@@ -2,10 +2,11 @@ package certsdb
 
 import (
 	"errors"
-	"ksef/internal/runtime"
-	"ksef/internal/utils"
 	"os"
 	"path"
+
+	"ksef/internal/runtime"
+	"ksef/internal/utils"
 
 	"github.com/samber/lo"
 	"github.com/spf13/viper"
@@ -101,7 +102,7 @@ func OpenOrCreate(vip *viper.Viper) (*CertificatesDB, error) {
 		vip:      vip,
 	}
 
-	if err := os.MkdirAll(path.Dir(certificatesDBFile), 0775); err != nil {
+	if err := os.MkdirAll(path.Dir(certificatesDBFile), 0o775); err != nil {
 		return nil, err
 	}
 	dbFile, exists, err := utils.FileExists(certificatesDBFile)

@@ -2,6 +2,11 @@ package jpk_v7m_3
 
 import (
 	"errors"
+	"slices"
+	"strconv"
+	"strings"
+	"time"
+
 	"ksef/internal/invoicesdb/annotations"
 	"ksef/internal/invoicesdb/jpk/abstract"
 	"ksef/internal/invoicesdb/jpk/constants"
@@ -10,10 +15,6 @@ import (
 	subjectsettings "ksef/internal/invoicesdb/subject-settings"
 	"ksef/internal/money"
 	"ksef/internal/xml"
-	"slices"
-	"strconv"
-	"strings"
-	"time"
 
 	"github.com/beevik/etree"
 )

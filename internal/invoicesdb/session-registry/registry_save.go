@@ -1,9 +1,10 @@
 package sessionregistry
 
 import (
-	"ksef/internal/utils"
 	"path/filepath"
 	"slices"
+
+	"ksef/internal/utils"
 )
 
 func (r *Registry) Save() error {

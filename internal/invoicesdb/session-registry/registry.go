@@ -2,16 +2,17 @@ package sessionregistry
 
 import (
 	"errors"
+	"log/slog"
+	"os"
+	"path/filepath"
+	"time"
+
 	"ksef/internal/client/v2/session/status"
 	"ksef/internal/client/v2/upo"
 	"ksef/internal/invoicesdb/config"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
 	"ksef/internal/utils"
-	"log/slog"
-	"os"
-	"path/filepath"
-	"time"
 
 	"github.com/spf13/viper"
 )

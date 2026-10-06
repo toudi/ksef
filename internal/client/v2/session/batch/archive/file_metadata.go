@@ -1,9 +1,10 @@
 package archive
 
 import (
+	"os"
+
 	"ksef/internal/encryption"
 	"ksef/internal/utils"
-	"os"
 )
 
 type ArchivePart struct {
@@ -24,5 +25,5 @@ func (a *ArchivePart) Encrypt(cipher *encryption.Cipher) error {
 		return err
 	}
 	a.EncryptedFilename = a.FileName + ".aes"
-	return os.WriteFile(a.EncryptedFilename, encrypted, 0644)
+	return os.WriteFile(a.EncryptedFilename, encrypted, 0o644)
 }

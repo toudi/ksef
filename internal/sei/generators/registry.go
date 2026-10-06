@@ -2,6 +2,7 @@ package generators
 
 import (
 	"fmt"
+
 	"ksef/internal/interfaces"
 	"ksef/internal/sei/generators/fa_3_1"
 )

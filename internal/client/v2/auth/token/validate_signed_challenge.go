@@ -3,10 +3,11 @@ package token
 import (
 	"context"
 	"io"
+	baseHTTP "net/http"
+
 	"ksef/internal/client/v2/auth/validator"
 	"ksef/internal/http"
 	"ksef/internal/logging"
-	baseHTTP "net/http"
 )
 
 const (

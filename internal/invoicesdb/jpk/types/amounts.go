@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+
 	"ksef/internal/invoicesdb/jpk/abstract/processors/vat"
 )
 

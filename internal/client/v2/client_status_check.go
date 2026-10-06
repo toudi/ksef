@@ -3,13 +3,12 @@ package v2
 import (
 	"context"
 	"errors"
+
 	"ksef/internal/client/v2/session/status"
 	"ksef/internal/client/v2/upo"
 )
 
-var (
-	errTimeoutReached = errors.New("przekroczono maksymalny czas oczekiwania na UPO")
-)
+var errTimeoutReached = errors.New("przekroczono maksymalny czas oczekiwania na UPO")
 
 func (c *APIClient) SessionStatusChecker() *status.SessionStatusChecker {
 	return status.NewSessionStatusChecker(

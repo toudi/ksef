@@ -8,8 +8,9 @@ import (
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"encoding/base64"
+
+	kr "ksef/core/keyring"
 	"ksef/internal/certsdb"
-	kr "ksef/internal/keyring"
 )
 
 type EnrollmentType string

@@ -4,9 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"ksef/internal/logging"
 	"path/filepath"
 	"strings"
+
+	"ksef/internal/logging"
 
 	"github.com/mozillazg/go-slugify"
 )

@@ -4,10 +4,11 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
-	"ksef/internal/invoice"
-	"ksef/internal/sei/generators/fa/mnemonics"
 	"strconv"
 	"strings"
+
+	"ksef/internal/invoice"
+	"ksef/internal/sei/generators/fa/mnemonics"
 )
 
 type Amounts struct {
@@ -76,7 +77,7 @@ func (x *Invoice) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) err
 				break
 			}
 			curName := path[len(path)-1]["_"].(string)
-			var nodeValue = typeConvert(val)
+			nodeValue := typeConvert(val)
 			path[len(path)-2][curName] = nodeValue
 			fullName := strings.Join(dottedPath[:len(dottedPath)-1], ".")
 			if fullName == pathItem {
@@ -126,7 +127,7 @@ func (x *Invoice) UnmarshalXML(decoder *xml.Decoder, start xml.StartElement) err
 
 		amt := ii.Amount()
 
-		var itemM = item.(map[string]any)
+		itemM := item.(map[string]any)
 		itemM["vat-desc"] = ii.UnitPrice.Vat.Description
 		itemM["amount-net"] = amt.Net
 		itemM["amount-gross"] = amt.Gross

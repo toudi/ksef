@@ -1,9 +1,10 @@
 package invoice
 
 import (
-	"ksef/internal/money"
 	"math"
 	"reflect"
+
+	"ksef/internal/money"
 )
 
 type InvoiceItem struct {

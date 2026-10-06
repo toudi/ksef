@@ -3,6 +3,7 @@ package interactive
 import (
 	"context"
 	"errors"
+
 	"ksef/internal/certsdb"
 	"ksef/internal/client/v2/session/types"
 	HTTP "ksef/internal/http"

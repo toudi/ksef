@@ -1,8 +1,9 @@
 package downloadertypes
 
 import (
-	types "ksef/internal/client/v2/types/invoices"
 	"time"
+
+	types "ksef/internal/client/v2/types/invoices"
 )
 
 type DateRangeType string

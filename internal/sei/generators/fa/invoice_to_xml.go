@@ -2,11 +2,12 @@ package fa
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"ksef/internal/invoice"
 	"ksef/internal/money"
 	"ksef/internal/xml"
-	"strings"
-	"time"
 )
 
 // this function is meant to be used when you have a invoice.Invoice object as your source

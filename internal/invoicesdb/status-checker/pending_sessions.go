@@ -2,12 +2,13 @@ package statuschecker
 
 import (
 	"errors"
+	"os"
+	"slices"
+
 	annualregistry "ksef/internal/invoicesdb/annual-registry"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	sessionregistry "ksef/internal/invoicesdb/session-registry"
 	"ksef/internal/logging"
-	"os"
-	"slices"
 )
 
 var (

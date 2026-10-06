@@ -3,8 +3,9 @@ package auth
 import (
 	"context"
 	"errors"
-	"ksef/internal/http"
 	baseHttp "net/http"
+
+	"ksef/internal/http"
 )
 
 var errUnauthorized = errors.New("unauthorized - token is probably deactivated")

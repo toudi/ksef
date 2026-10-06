@@ -3,9 +3,9 @@ package invoices
 import (
 	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
+	kr "ksef/core/keyring"
 	"ksef/internal/invoicesdb"
 	"ksef/internal/invoicesdb/config"
-	kr "ksef/internal/keyring"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
 

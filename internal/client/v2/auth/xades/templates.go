@@ -22,13 +22,13 @@ var (
 )
 
 func init() {
-	var funcMap = template.FuncMap{
+	funcMap := template.FuncMap{
 		"base64": func(input []byte) string {
 			return base64.StdEncoding.EncodeToString(input)
 		},
 		"rdname": func(name pkix.Name) string {
 			// s := name.ToRDNSequence().String()
-			var s = ""
+			s := ""
 
 			// fmt.Printf("s? %v\n", s)
 

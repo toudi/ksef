@@ -1,9 +1,10 @@
 package jpk_v7m_3
 
 import (
+	"strings"
+
 	absTypes "ksef/internal/invoicesdb/jpk/abstract/types"
 	"ksef/internal/xml"
-	"strings"
 )
 
 const zakupWierszPrefix = "JPK.Ewidencja.ZakupWiersz."

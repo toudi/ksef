@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"errors"
+
 	"ksef/cmd/ksef/flags"
 
 	"github.com/spf13/pflag"

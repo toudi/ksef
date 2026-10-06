@@ -2,8 +2,9 @@ package auth
 
 import (
 	"context"
-	"ksef/internal/logging"
 	"time"
+
+	"ksef/internal/logging"
 )
 
 func (t *TokenManager) validateSessionTokens(ctx context.Context, sessionTokens *SessionTokens) (canBeUsed bool, refreshed bool) {
@@ -12,7 +13,7 @@ func (t *TokenManager) validateSessionTokens(ctx context.Context, sessionTokens 
 		return false, false
 	}
 
-	var now = time.Now()
+	now := time.Now()
 
 	if sessionTokens.AuthorizationToken.ExpiresAt.Before(now) && sessionTokens.RefreshToken.ExpiresAt.Before(now) {
 		logging.AuthLogger.Debug("both auth token and refresh token are expired")

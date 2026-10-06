@@ -51,7 +51,7 @@ func PrinterConfigFlags(cmd *cobra.Command, flags *pflag.FlagSet) {
 func PrinterConfig(vip *viper.Viper) (*LatexPrinterConfig, error) {
 	var err error
 
-	var config = &LatexPrinterConfig{
+	config := &LatexPrinterConfig{
 		Debug:   viper.GetBool(cfgKeyLatexDebug),
 		Workdir: viper.GetString(cfgKeyLatexWorkdir),
 		Docker:  viper.GetBool(cfgKeyLatexDocker),

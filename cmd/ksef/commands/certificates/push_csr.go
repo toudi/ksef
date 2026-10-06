@@ -3,7 +3,7 @@ package certificates
 import (
 	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
-	kr "ksef/internal/keyring"
+	kr "ksef/core/keyring"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
 

@@ -2,14 +2,15 @@ package monthlyregistry
 
 import (
 	"errors"
-	"ksef/internal/certsdb"
-	"ksef/internal/invoicesdb/config"
-	"ksef/internal/runtime"
-	"ksef/internal/utils"
 	"os"
 	"path"
 	"path/filepath"
 	"time"
+
+	"ksef/internal/certsdb"
+	"ksef/internal/invoicesdb/config"
+	"ksef/internal/runtime"
+	"ksef/internal/utils"
 
 	"github.com/spf13/viper"
 )

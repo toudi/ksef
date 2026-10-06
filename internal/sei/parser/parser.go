@@ -3,12 +3,13 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
+
 	"ksef/internal/invoice"
 	"ksef/internal/logging"
 	"ksef/internal/money"
 	"ksef/internal/sei/constants"
-	"strconv"
-	"strings"
 )
 
 const (

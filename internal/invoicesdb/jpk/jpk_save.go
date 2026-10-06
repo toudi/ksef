@@ -1,9 +1,10 @@
 package jpk
 
 import (
-	"ksef/internal/xml"
 	"os"
 	"path/filepath"
+
+	"ksef/internal/xml"
 )
 
 const (
@@ -13,7 +14,7 @@ const (
 
 func (j *JPK) writeToFile(root *xml.Node, outputDir string) error {
 	var err error
-	if err = os.MkdirAll(outputDir, 0775); err != nil {
+	if err = os.MkdirAll(outputDir, 0o775); err != nil {
 		return err
 	}
 	outputFilename := "jpk-v7m.xml"

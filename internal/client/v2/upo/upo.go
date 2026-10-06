@@ -3,11 +3,12 @@ package upo
 import (
 	"context"
 	"fmt"
-	HTTP "ksef/internal/http"
-	"ksef/internal/utils"
 	"os"
 	"path/filepath"
 	"time"
+
+	HTTP "ksef/internal/http"
+	"ksef/internal/utils"
 )
 
 type UPODownloadPage struct {

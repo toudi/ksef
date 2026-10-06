@@ -2,8 +2,9 @@ package interactive
 
 import (
 	"encoding/base64"
-	"ksef/internal/utils"
 	"os"
+
+	"ksef/internal/utils"
 )
 
 type SessionUploadPayload struct {

@@ -2,6 +2,7 @@ package annualregistry
 
 import (
 	"errors"
+
 	"ksef/internal/invoice"
 )
 

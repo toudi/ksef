@@ -2,16 +2,16 @@ package certsdb
 
 import "context"
 
-type certsDB struct {
+type CertsDB struct {
 	storage CertificateStorage
 }
 
-func Init(storage CertificateStorage) *certsDB {
-	return &certsDB{
+func Init(storage CertificateStorage) *CertsDB {
+	return &CertsDB{
 		storage: storage,
 	}
 }
 
-func (c *certsDB) Close(ctx context.Context) error {
+func (c *CertsDB) Close(ctx context.Context) error {
 	return c.storage.Close(ctx)
 }

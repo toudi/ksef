@@ -55,7 +55,7 @@ func NIPValidator(nip string) error {
 		checksum += digit * digitWeights[digitNo]
 	}
 
-	var expectedLastDigit = strconv.Itoa(checksum % 11)
+	expectedLastDigit := strconv.Itoa(checksum % 11)
 	if string(nip[9]) != expectedLastDigit {
 		return errors.Join(errNIPInvalid, errInvalidModulo)
 	}

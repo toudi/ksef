@@ -2,8 +2,9 @@ package sei
 
 import (
 	"io"
-	"ksef/internal/invoice"
 	"time"
+
+	"ksef/internal/invoice"
 )
 
 type ParsedInvoice struct {

@@ -1,9 +1,10 @@
 package annotations
 
 import (
+	"path/filepath"
+
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	subjectsettings "ksef/internal/invoicesdb/subject-settings"
-	"path/filepath"
 
 	"github.com/spf13/viper"
 )
@@ -47,5 +48,3 @@ func WithMonthlyRegistry(registry *monthlyregistry.Registry) func(*Annotations) 
 		return nil
 	}
 }
-
-

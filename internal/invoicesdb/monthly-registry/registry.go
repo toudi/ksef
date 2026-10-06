@@ -4,8 +4,9 @@ package monthlyregistry
 
 import (
 	"errors"
-	"ksef/internal/utils"
 	"path/filepath"
+
+	"ksef/internal/utils"
 )
 
 const (

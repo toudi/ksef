@@ -2,13 +2,14 @@ package annualregistry
 
 import (
 	"errors"
-	"ksef/internal/invoicesdb/config"
-	"ksef/internal/runtime"
-	"ksef/internal/utils"
 	"os"
 	"path"
 	"path/filepath"
 	"time"
+
+	"ksef/internal/invoicesdb/config"
+	"ksef/internal/runtime"
+	"ksef/internal/utils"
 
 	"github.com/spf13/viper"
 )

@@ -2,6 +2,10 @@ package jpk
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
+	"time"
+
 	"ksef/internal/invoicesdb/annotations"
 	"ksef/internal/invoicesdb/config"
 	"ksef/internal/invoicesdb/jpk/constants"
@@ -10,9 +14,6 @@ import (
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	subjectsettings "ksef/internal/invoicesdb/subject-settings"
 	"ksef/internal/runtime"
-	"os"
-	"path/filepath"
-	"time"
 
 	"github.com/beevik/etree"
 	"github.com/spf13/viper"

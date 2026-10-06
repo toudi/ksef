@@ -3,9 +3,10 @@ package inputprocessors
 import (
 	"fmt"
 	"io"
+	"strings"
+
 	"ksef/internal/sei/constants"
 	"ksef/internal/sei/parser"
-	"strings"
 
 	"github.com/xuri/excelize/v2"
 )

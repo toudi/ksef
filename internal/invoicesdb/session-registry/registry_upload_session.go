@@ -19,7 +19,7 @@ func (us *UploadSession) addInfoAboutInvoice(
 			invoice.Errors = uploadStatus.Status.Details
 		}
 	} else {
-		var invoice = &Invoice{
+		invoice := &Invoice{
 			RefNo:    uploadStatus.InvoiceNumber,
 			Checksum: uploadStatus.Checksum,
 		}

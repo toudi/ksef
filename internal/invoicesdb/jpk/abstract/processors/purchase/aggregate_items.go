@@ -2,6 +2,7 @@ package purchase
 
 import (
 	"errors"
+
 	"ksef/internal/invoicesdb/annotations"
 	"ksef/internal/invoicesdb/jpk/abstract/processors/vat"
 	"ksef/internal/invoicesdb/jpk/abstract/types"

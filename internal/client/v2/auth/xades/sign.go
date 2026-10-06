@@ -8,11 +8,12 @@ import (
 	"encoding/pem"
 	"errors"
 	"io"
-	"ksef/internal/certsdb"
-	kr "ksef/internal/keyring"
 	"os"
 	"strings"
 	"time"
+
+	kr "ksef/core/keyring"
+	"ksef/internal/certsdb"
 
 	"github.com/beevik/etree"
 	"github.com/google/uuid"

@@ -2,6 +2,7 @@ package invoicesdb
 
 import (
 	"errors"
+
 	annualregistry "ksef/internal/invoicesdb/annual-registry"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	"ksef/internal/sei"

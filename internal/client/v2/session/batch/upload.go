@@ -4,15 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	baseHTTP "net/http"
+	"os"
+	"time"
+
 	"ksef/internal/certsdb"
 	"ksef/internal/client/v2/session/status"
 	"ksef/internal/client/v2/session/types"
 	"ksef/internal/encryption"
 	HTTP "ksef/internal/http"
 	"ksef/internal/logging"
-	baseHTTP "net/http"
-	"os"
-	"time"
 )
 
 const (

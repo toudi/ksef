@@ -4,12 +4,13 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
-	"ksef/internal/certsdb"
-	kr "ksef/internal/keyring"
-	"ksef/internal/sei"
 	"net/url"
 	"strings"
 	"time"
+
+	kr "ksef/core/keyring"
+	"ksef/internal/certsdb"
+	"ksef/internal/sei"
 )
 
 const (

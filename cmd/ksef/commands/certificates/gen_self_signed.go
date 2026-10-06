@@ -5,8 +5,8 @@ import (
 	"encoding/asn1"
 	"errors"
 	"ksef/cmd/ksef/flags"
+	kr "ksef/core/keyring"
 	"ksef/internal/certsdb"
-	kr "ksef/internal/keyring"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"

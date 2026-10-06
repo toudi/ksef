@@ -2,9 +2,10 @@ package utils_test
 
 import (
 	"fmt"
-	"ksef/internal/utils"
 	"testing"
 	"time"
+
+	"ksef/internal/utils"
 
 	"github.com/stretchr/testify/require"
 )

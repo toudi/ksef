@@ -3,12 +3,13 @@ package typst
 import (
 	"bytes"
 	"io/fs"
-	"ksef/internal/logging"
-	"ksef/internal/utils"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"ksef/internal/logging"
+	"ksef/internal/utils"
 )
 
 func (tp *typstPrinter) prepareWorkdir() error {
@@ -17,7 +18,7 @@ func (tp *typstPrinter) prepareWorkdir() error {
 		tp.cfg.Workdir = tp.cfg.Templates
 		return nil
 	}
-	if err := os.MkdirAll(tp.cfg.Workdir, 0775); err != nil {
+	if err := os.MkdirAll(tp.cfg.Workdir, 0o775); err != nil {
 		return err
 	}
 	_, err := os.Stat(filepath.Join(tp.cfg.Workdir, "upo"))
@@ -34,7 +35,7 @@ func (tp *typstPrinter) prepareWorkdir() error {
 			}
 
 			if d.IsDir() {
-				return os.MkdirAll(filepath.Join(tp.cfg.Workdir, destLocalPath), 0775)
+				return os.MkdirAll(filepath.Join(tp.cfg.Workdir, destLocalPath), 0o775)
 			}
 
 			return utils.CopyFile(
@@ -72,7 +73,7 @@ func (tp *typstPrinter) print(
 	err = cmd.Run()
 	if err != nil {
 		if tp.cfg.Debug && stdErrBuffer.Len() > 0 {
-			if writeErr := os.WriteFile(strings.Replace(output, ".pdf", "-error.txt", 1), stdErrBuffer.Bytes(), 0644); writeErr != nil {
+			if writeErr := os.WriteFile(strings.Replace(output, ".pdf", "-error.txt", 1), stdErrBuffer.Bytes(), 0o644); writeErr != nil {
 				logging.PDFRendererLogger.Error("błąd zapisywania wyjścia błędu", "err", writeErr)
 			}
 		}

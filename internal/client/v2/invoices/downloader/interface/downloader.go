@@ -3,6 +3,7 @@ package downloaderinterface
 import (
 	"bytes"
 	"context"
+
 	"ksef/internal/client/v2/types/invoices"
 )
 

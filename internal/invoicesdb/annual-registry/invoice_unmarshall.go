@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
+
 	"ksef/internal/invoice"
 
 	"github.com/fxamacker/cbor/v2"

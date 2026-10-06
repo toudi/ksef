@@ -9,13 +9,14 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	kr "ksef/internal/keyring"
 	"os"
 	"path"
 	"path/filepath"
 	"slices"
 	"strings"
 	"time"
+
+	kr "ksef/core/keyring"
 
 	"github.com/samber/lo"
 )

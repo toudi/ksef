@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	baseHTTP "net/http"
+
 	"ksef/internal/certsdb"
 	downloadertypes "ksef/internal/client/v2/invoices/downloader/types"
 	ratelimits "ksef/internal/client/v2/rate-limits"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/encryption"
 	"ksef/internal/http"
-	baseHTTP "net/http"
 )
 
 var errFetchingInvoicesWithExport = errors.New("error fetching invoices with export endpoint")

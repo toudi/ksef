@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"ksef/internal/sei/parser"
 	"os"
+
+	"ksef/internal/sei/parser"
 )
 
 type JSONDecoder struct{}

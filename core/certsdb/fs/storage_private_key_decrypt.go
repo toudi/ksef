@@ -2,7 +2,7 @@ package fs
 
 import (
 	"context"
-	"ksef/internal/keyring"
+	"ksef/core/keyring"
 	"ksef/internal/logging"
 	"log/slog"
 	"os"

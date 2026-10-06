@@ -3,6 +3,7 @@ package invoicesdb
 import (
 	"context"
 	"errors"
+
 	"ksef/internal/invoicesdb/config"
 	"ksef/internal/logging"
 

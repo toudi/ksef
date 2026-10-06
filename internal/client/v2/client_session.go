@@ -2,6 +2,7 @@ package v2
 
 import (
 	"errors"
+
 	"ksef/internal/client/v2/session/batch"
 	"ksef/internal/client/v2/session/interactive"
 	"ksef/internal/client/v2/session/types"

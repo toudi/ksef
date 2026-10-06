@@ -49,7 +49,7 @@ func InitLogging(output string, vip *viper.Viper) error {
 		if vip.GetBool(CfgKeyLogFileTruncate) {
 			logFileFlag = os.O_TRUNC
 		}
-		outputFile, err = os.OpenFile(output, os.O_CREATE|os.O_RDWR|logFileFlag, 0644)
+		outputFile, err = os.OpenFile(output, os.O_CREATE|os.O_RDWR|logFileFlag, 0o644)
 		if err != nil {
 			return fmt.Errorf("unable to open log file: %v", err)
 		}

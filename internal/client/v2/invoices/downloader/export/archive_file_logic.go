@@ -3,9 +3,10 @@ package export
 import (
 	"context"
 	"io"
-	"ksef/internal/http"
 	"os"
 	"path/filepath"
+
+	"ksef/internal/http"
 )
 
 const archiveFilename = "export.zip"
@@ -30,7 +31,7 @@ func (ah *archiveHandler) decryptPart(part exportStatusPart) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(filepath.Join(ah.workDir, part.decryptedFilename()), decryptedBytes, 0644)
+	return os.WriteFile(filepath.Join(ah.workDir, part.decryptedFilename()), decryptedBytes, 0o644)
 }
 
 func (ah *archiveHandler) concatenateParts(parts []exportStatusPart) error {

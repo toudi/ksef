@@ -3,11 +3,12 @@ package config
 import (
 	"errors"
 	"fmt"
+	"time"
+
 	"ksef/cmd/ksef/flags"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/runtime"
 	"ksef/internal/utils"
-	"time"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"

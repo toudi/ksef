@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"os"
+
+	kr "ksef/core/keyring"
 	"ksef/internal/certsdb"
 	"ksef/internal/client/v2/auth/validator"
 	"ksef/internal/client/v2/auth/xades"
 	"ksef/internal/http"
-	kr "ksef/internal/keyring"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
-	"os"
 
 	"github.com/spf13/viper"
 )

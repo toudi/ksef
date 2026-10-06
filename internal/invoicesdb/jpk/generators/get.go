@@ -1,11 +1,12 @@
 package generators
 
 import (
+	"time"
+
 	"ksef/internal/invoicesdb/annotations"
-	subjectsettings "ksef/internal/invoicesdb/subject-settings"
 	"ksef/internal/invoicesdb/jpk/generators/interfaces"
 	"ksef/internal/invoicesdb/jpk/generators/jpk_v7m_3"
-	"time"
+	subjectsettings "ksef/internal/invoicesdb/subject-settings"
 )
 
 type generator struct {

@@ -6,10 +6,11 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	kr "ksef/internal/keyring"
 	"log"
 	"math/big"
 	"time"
+
+	kr "ksef/core/keyring"
 )
 
 // based on https://go.dev/src/crypto/tls/generate_cert.go

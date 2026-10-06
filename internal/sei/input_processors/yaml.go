@@ -3,8 +3,9 @@ package inputprocessors
 import (
 	"fmt"
 	"io"
-	"ksef/internal/sei/parser"
 	"os"
+
+	"ksef/internal/sei/parser"
 
 	"github.com/goccy/go-yaml"
 )

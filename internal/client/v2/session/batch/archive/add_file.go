@@ -7,9 +7,7 @@ import (
 	"path"
 )
 
-var (
-	ErrExeedsMaxSize = errors.New("archive exceeds maximum filesize")
-)
+var ErrExeedsMaxSize = errors.New("archive exceeds maximum filesize")
 
 func (a *Archive) AddFile(fileName string) error {
 	fileInfo, err := os.Stat(fileName)

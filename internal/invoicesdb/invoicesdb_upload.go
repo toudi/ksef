@@ -3,6 +3,10 @@ package invoicesdb
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
+	"time"
+
 	annualregistry "ksef/internal/invoicesdb/annual-registry"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	statuschecker "ksef/internal/invoicesdb/status-checker"
@@ -10,9 +14,6 @@ import (
 	"ksef/internal/invoicesdb/uploader"
 	uploaderconfig "ksef/internal/invoicesdb/uploader/config"
 	"ksef/internal/logging"
-	"os"
-	"path/filepath"
-	"time"
 )
 
 func (i *InvoicesDB) UploadOutstandingInvoices(

@@ -5,8 +5,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+
+	"ksef/core/keyring"
 	"ksef/internal/certsdb"
-	"ksef/internal/keyring"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
 )

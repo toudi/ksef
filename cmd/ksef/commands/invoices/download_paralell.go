@@ -2,10 +2,10 @@ package invoices
 
 import (
 	"ksef/cmd/ksef/commands/client"
+	kr "ksef/core/keyring"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/invoicesdb"
 	downloaderconfig "ksef/internal/invoicesdb/downloader/config"
-	kr "ksef/internal/keyring"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
 	"sync"

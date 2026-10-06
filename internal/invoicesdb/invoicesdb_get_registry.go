@@ -2,15 +2,16 @@ package invoicesdb
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
+	"time"
+
 	annualregistry "ksef/internal/invoicesdb/annual-registry"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	sessionregistry "ksef/internal/invoicesdb/session-registry"
 	subjectsettings "ksef/internal/invoicesdb/subject-settings"
 	"ksef/internal/runtime"
 	"ksef/internal/sei"
-	"os"
-	"path/filepath"
-	"time"
 )
 
 var errUnableToCreateRegistryDir = errors.New("unable to create registry directory")
@@ -44,7 +45,7 @@ func (idb *InvoicesDB) getMonthlyRegistryForInvoice(inv *sei.ParsedInvoice) (*mo
 		inv.Invoice.Issued.Format("2006"),
 		inv.Invoice.Issued.Format("01"),
 	)
-	if err := os.MkdirAll(path, 0775); err != nil {
+	if err := os.MkdirAll(path, 0o775); err != nil {
 		return nil, errors.Join(errUnableToCreateRegistryDir, err)
 	}
 
@@ -71,7 +72,7 @@ func (idb *InvoicesDB) getAnnualRegistryForInvoice(inv *sei.ParsedInvoice) (*ann
 		inv.Invoice.Issuer.NIP,
 		inv.Invoice.Issued.Format("2006"),
 	)
-	if err := os.MkdirAll(prefix, 0775); err != nil {
+	if err := os.MkdirAll(prefix, 0o775); err != nil {
 		return nil, errors.Join(errUnableToCreateRegistryDir, err)
 	}
 
@@ -100,7 +101,7 @@ func (idb *InvoicesDB) getUploadSessionRegistry(month time.Time) (*sessionregist
 		month.Format("2006"),
 		month.Format("01"),
 	)
-	if err := os.MkdirAll(path, 0775); err != nil {
+	if err := os.MkdirAll(path, 0o775); err != nil {
 		return nil, errors.Join(errUnableToCreateRegistryDir, err)
 	}
 

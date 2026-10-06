@@ -5,14 +5,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	baseHTTP "net/http"
+	"time"
+
 	ratelimits "ksef/internal/client/v2/rate-limits"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/encryption"
 	"ksef/internal/http"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
-	baseHTTP "net/http"
-	"time"
 )
 
 var (

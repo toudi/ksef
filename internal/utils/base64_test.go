@@ -1,8 +1,9 @@
 package utils_test
 
 import (
-	"ksef/internal/utils"
 	"testing"
+
+	"ksef/internal/utils"
 
 	"github.com/stretchr/testify/require"
 )

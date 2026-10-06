@@ -2,8 +2,9 @@ package certificates
 
 import (
 	"context"
-	"ksef/internal/http"
 	baseHTTP "net/http"
+
+	"ksef/internal/http"
 )
 
 const (
@@ -27,7 +28,7 @@ func (m *Manager) DownloadCertificate(
 	serialNumber string,
 ) (DownloadCertificatesResponse, error) {
 	var resp DownloadCertificatesResponse
-	var req = DownloadCertificatesRequest{
+	req := DownloadCertificatesRequest{
 		SerialNumbers: []string{serialNumber},
 	}
 

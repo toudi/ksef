@@ -1,9 +1,10 @@
 package invoicesdb
 
 import (
+	"time"
+
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	"ksef/internal/utils"
-	"time"
 
 	"github.com/spf13/viper"
 )

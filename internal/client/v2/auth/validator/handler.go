@@ -2,8 +2,9 @@ package validator
 
 import (
 	"context"
-	"ksef/internal/http"
 	"time"
+
+	"ksef/internal/http"
 )
 
 type AuthChallenge struct {

@@ -2,9 +2,10 @@ package certificates
 
 import (
 	"context"
+	baseHTTP "net/http"
+
 	"ksef/internal/certsdb"
 	"ksef/internal/http"
-	baseHTTP "net/http"
 )
 
 const (
@@ -22,9 +23,8 @@ type enrollmentResponse struct {
 }
 
 func (m *Manager) PushCSR(ctx context.Context, cert *certsdb.Certificate) (*enrollmentResponse, error) {
-
 	var resp enrollmentResponse
-	var eReq = enrollmentRequest{
+	eReq := enrollmentRequest{
 		CertificateName: cert.Usage[0].Description(),
 		CertificateType: string(cert.Usage[0]),
 		CSR:             cert.CSRData,

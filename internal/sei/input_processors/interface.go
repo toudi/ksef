@@ -3,6 +3,7 @@ package inputprocessors
 import (
 	"errors"
 	"io"
+
 	"ksef/internal/sei/parser"
 )
 

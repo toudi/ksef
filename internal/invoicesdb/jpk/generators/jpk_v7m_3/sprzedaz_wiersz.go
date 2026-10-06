@@ -2,11 +2,12 @@ package jpk_v7m_3
 
 import (
 	"errors"
+	"strings"
+
 	absTypes "ksef/internal/invoicesdb/jpk/abstract/types"
 	"ksef/internal/invoicesdb/jpk/types"
 	"ksef/internal/money"
 	"ksef/internal/xml"
-	"strings"
 )
 
 const sprzedazWierszPrefix = "JPK.Ewidencja.SprzedazWiersz."

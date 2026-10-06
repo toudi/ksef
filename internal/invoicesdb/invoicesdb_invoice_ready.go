@@ -2,12 +2,13 @@ package invoicesdb
 
 import (
 	"errors"
+	"time"
+
 	annualregistry "ksef/internal/invoicesdb/annual-registry"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
 	"ksef/internal/sei"
 	"ksef/internal/utils"
-	"time"
 )
 
 var (

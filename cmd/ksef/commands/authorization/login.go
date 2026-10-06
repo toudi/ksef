@@ -2,11 +2,11 @@ package authorization
 
 import (
 	"ksef/cmd/ksef/commands/authorization/challenge"
+	kr "ksef/core/keyring"
 	"ksef/internal/certsdb"
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/token"
-	kr "ksef/internal/keyring"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"

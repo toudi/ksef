@@ -3,6 +3,9 @@ package invoicesdb
 import (
 	"context"
 	"errors"
+	"path/filepath"
+	"strings"
+
 	"ksef/internal/invoicesdb/config"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	statuscheckerconfig "ksef/internal/invoicesdb/status-checker/config"
@@ -13,8 +16,6 @@ import (
 	"ksef/internal/pdf/printer"
 	"ksef/internal/runtime"
 	"ksef/internal/sei"
-	"path/filepath"
-	"strings"
 
 	"github.com/spf13/viper"
 )

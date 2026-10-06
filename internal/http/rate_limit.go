@@ -2,9 +2,10 @@ package http
 
 import (
 	"errors"
-	ratelimiter "ksef/internal/utils/rate-limiter"
 	"log/slog"
 	"time"
+
+	ratelimiter "ksef/internal/utils/rate-limiter"
 )
 
 var errLimitNotFound = errors.New("limit not found")

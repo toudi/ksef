@@ -3,10 +3,11 @@ package status
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	ratelimits "ksef/internal/client/v2/rate-limits"
 	HTTP "ksef/internal/http"
 	"ksef/internal/utils"
-	"net/http"
 )
 
 const endpointSessionInvoices = "/v2/sessions/%s/invoices"

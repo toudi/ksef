@@ -2,6 +2,7 @@ package downloader
 
 import (
 	"context"
+
 	"ksef/internal/client/v2/types/invoices"
 )
 

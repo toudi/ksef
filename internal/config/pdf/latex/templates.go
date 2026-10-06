@@ -3,11 +3,12 @@ package latex
 import (
 	"errors"
 	"fmt"
-	"ksef/internal/config/pdf/abstract"
 	"path/filepath"
 	"strings"
 	"text/template"
 	"time"
+
+	"ksef/internal/config/pdf/abstract"
 
 	"github.com/spf13/viper"
 )
@@ -16,7 +17,7 @@ func parseTemplates(vip *viper.Viper) (templates abstract.Templates, err error) 
 	invoiceTemplatesPath := vip.GetString(cfgKeyLatexInvoiceTemplates)
 	upoTemplatesPath := vip.GetString(cfgKeyLatexUpoTemplates)
 
-	var isValid = false
+	isValid := false
 
 	if invoiceTemplatesPath != "" {
 		templates.Invoice, err = readTemplatesFromDirectory(invoiceTemplatesPath)
@@ -86,7 +87,7 @@ var funcs = template.FuncMap{
 }
 
 func readTemplatesFromDirectory(dirname string) (abstract.TemplatesCollection, error) {
-	var templates = abstract.TemplatesCollection{
+	templates := abstract.TemplatesCollection{
 		Enabled: true,
 		SrcPath: dirname,
 	}

@@ -1,8 +1,8 @@
 package token
 
 import (
+	kr "ksef/core/keyring"
 	"ksef/internal/certsdb"
-	kr "ksef/internal/keyring"
 )
 
 type initializerFunc = func(handler *TokenHandler)

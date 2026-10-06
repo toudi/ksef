@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	baseHTTP "net/http"
+
 	ratelimits "ksef/internal/client/v2/rate-limits"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/http"
-	baseHTTP "net/http"
 )
 
 const (

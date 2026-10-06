@@ -3,12 +3,13 @@ package fa
 import (
 	"errors"
 	"fmt"
-	"ksef/internal/invoice"
-	"ksef/internal/sei/generators/fa/mnemonics"
-	"ksef/internal/utils"
 	"strconv"
 	"strings"
 	"time"
+
+	"ksef/internal/invoice"
+	"ksef/internal/sei/generators/fa/mnemonics"
+	"ksef/internal/utils"
 )
 
 const (

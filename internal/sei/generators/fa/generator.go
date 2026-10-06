@@ -1,10 +1,11 @@
 package fa
 
 import (
-	"ksef/internal/sei/constants"
-	"ksef/internal/xml"
 	"strings"
 	"time"
+
+	"ksef/internal/sei/constants"
+	"ksef/internal/xml"
 )
 
 type ElementOrdering map[string]map[string]int

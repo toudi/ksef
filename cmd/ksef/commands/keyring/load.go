@@ -1,8 +1,8 @@
 package keyring
 
 import (
+	"ksef/core/keyring"
 	"ksef/internal/config"
-	"ksef/internal/keyring"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

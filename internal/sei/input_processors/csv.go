@@ -6,11 +6,12 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"ksef/internal/sei/constants"
-	"ksef/internal/sei/parser"
 	"os"
 	"strconv"
 	"strings"
+
+	"ksef/internal/sei/constants"
+	"ksef/internal/sei/parser"
 )
 
 type CSVFormat struct {

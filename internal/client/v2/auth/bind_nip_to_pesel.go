@@ -2,8 +2,9 @@ package auth
 
 import (
 	"context"
-	"ksef/internal/http"
 	baseHTTP "net/http"
+
+	"ksef/internal/http"
 )
 
 const (

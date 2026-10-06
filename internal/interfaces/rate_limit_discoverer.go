@@ -2,6 +2,7 @@ package interfaces
 
 import (
 	"context"
+
 	ratelimiter "ksef/internal/utils/rate-limiter"
 )
 

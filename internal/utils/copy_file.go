@@ -40,7 +40,7 @@ func CopyFileToWriter(srcPath string, writer io.Writer) error {
 }
 
 func SaveBufferToFile(buffer bytes.Buffer, destFileName string) error {
-	if err := os.MkdirAll(filepath.Dir(destFileName), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(destFileName), 0o755); err != nil {
 		return err
 	}
 

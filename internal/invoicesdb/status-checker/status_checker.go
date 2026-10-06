@@ -1,13 +1,14 @@
 package statuschecker
 
 import (
+	"time"
+
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/client/v2/session/status"
 	annualregistry "ksef/internal/invoicesdb/annual-registry"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	sessionregistry "ksef/internal/invoicesdb/session-registry"
 	"ksef/internal/invoicesdb/status-checker/config"
-	"time"
 
 	"github.com/spf13/viper"
 )

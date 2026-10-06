@@ -1,11 +1,12 @@
 package cirfmf
 
 import (
+	"os/exec"
+	"path/filepath"
+
 	"ksef/internal/config/pdf/cirfmf"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	"ksef/internal/pdf/printer"
-	"os/exec"
-	"path/filepath"
 )
 
 type cirfmfPrinter struct {

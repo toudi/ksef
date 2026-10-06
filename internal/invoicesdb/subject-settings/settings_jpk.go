@@ -2,8 +2,9 @@ package subjectsettings
 
 import (
 	"errors"
-	"ksef/internal/invoicesdb/jpk/constants"
 	"slices"
+
+	"ksef/internal/invoicesdb/jpk/constants"
 )
 
 type JPKFormMeta struct {

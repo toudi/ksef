@@ -1,12 +1,13 @@
 package typst
 
 import (
+	"path/filepath"
+
 	"ksef/internal/config/pdf/typst"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	"ksef/internal/logging"
 	"ksef/internal/pdf/printer"
 	"ksef/internal/utils"
-	"path/filepath"
 )
 
 type typstPrinter struct {

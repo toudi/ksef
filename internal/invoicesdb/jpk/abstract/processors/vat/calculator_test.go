@@ -1,8 +1,9 @@
 package vat
 
 import (
-	"ksef/internal/money"
 	"testing"
+
+	"ksef/internal/money"
 
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/require"

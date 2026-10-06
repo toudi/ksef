@@ -2,9 +2,9 @@ package keyring
 
 import (
 	"ksef/cmd/ksef/flags"
+	"ksef/core/keyring"
 	"ksef/internal/certsdb"
 	"ksef/internal/config"
-	"ksef/internal/keyring"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"

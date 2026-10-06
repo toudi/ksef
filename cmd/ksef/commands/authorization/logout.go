@@ -3,8 +3,8 @@ package authorization
 import (
 	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
+	kr "ksef/core/keyring"
 	"ksef/internal/client/v2/auth"
-	kr "ksef/internal/keyring"
 	"ksef/internal/logging"
 
 	"github.com/spf13/cobra"

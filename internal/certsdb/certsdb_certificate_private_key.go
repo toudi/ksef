@@ -6,12 +6,13 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
-	kr "ksef/internal/keyring"
-	"ksef/internal/logging"
-	"ksef/internal/utils"
 	"log/slog"
 	"os"
 	"slices"
+
+	kr "ksef/core/keyring"
+	"ksef/internal/logging"
+	"ksef/internal/utils"
 )
 
 var encryptionHeader = []byte{
@@ -115,7 +116,7 @@ func (c *Certificate) EncryptPrivateKey(keyring kr.Keyring) error {
 	if err != nil {
 		return err
 	}
-	privateKeyFile, err := os.OpenFile(c.PrivateKeyFilename(), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
+	privateKeyFile, err := os.OpenFile(c.PrivateKeyFilename(), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
 	if err != nil {
 		return err
 	}
@@ -128,7 +129,7 @@ func (c *Certificate) DecryptPrivateKey(keyring kr.Keyring) error {
 	if err != nil {
 		return err
 	}
-	if err := os.WriteFile(c.PrivateKeyFilename(), privateKeyBytes, 0600); err != nil {
+	if err := os.WriteFile(c.PrivateKeyFilename(), privateKeyBytes, 0o600); err != nil {
 		logging.CertsDBLogger.Error("błąd zapisu pliku", slog.Any("err", err))
 	}
 	return keyring.Delete(kr.AppPrefix, kr.EncryptionKeyUser, kr.PrivateKeyEncryptionKey(c.UID))

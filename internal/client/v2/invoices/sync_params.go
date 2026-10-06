@@ -1,8 +1,9 @@
 package invoices
 
 import (
-	"ksef/internal/client/v2/types/invoices"
 	"time"
+
+	"ksef/internal/client/v2/types/invoices"
 )
 
 type SyncParams struct {

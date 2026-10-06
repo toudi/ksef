@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	baseHTTP "net/http"
+
 	"ksef/internal/certsdb"
 	"ksef/internal/http"
-	baseHTTP "net/http"
 )
 
 const (
@@ -14,9 +15,7 @@ const (
 	enrollmentSuccess        int = 200
 )
 
-var (
-	errInvalidEnrollment = errors.New("nieprawidłowy wniosek (brak numeru referencyjnego)")
-)
+var errInvalidEnrollment = errors.New("nieprawidłowy wniosek (brak numeru referencyjnego)")
 
 type status struct {
 	Code        int       `json:"code"`

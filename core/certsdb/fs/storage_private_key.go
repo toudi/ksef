@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
-	"ksef/internal/keyring"
+	"ksef/core/keyring"
 	"ksef/internal/utils"
 	"os"
 	"path/filepath"

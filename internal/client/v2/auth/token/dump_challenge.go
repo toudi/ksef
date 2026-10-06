@@ -3,9 +3,10 @@ package token
 import (
 	_ "embed"
 	"io"
+	"text/template"
+
 	"ksef/internal/certsdb"
 	"ksef/internal/client/v2/auth/validator"
-	"text/template"
 )
 
 var (

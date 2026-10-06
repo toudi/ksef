@@ -2,6 +2,8 @@ package v2
 
 import (
 	"context"
+
+	kr "ksef/core/keyring"
 	"ksef/internal/certsdb"
 	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/validator"
@@ -9,7 +11,6 @@ import (
 	ratelimits "ksef/internal/client/v2/rate-limits"
 	"ksef/internal/http"
 	httpClient "ksef/internal/http"
-	kr "ksef/internal/keyring"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
 

@@ -6,10 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"ksef/internal/logging"
 	"net/http"
 	"net/url"
 	"time"
+
+	"ksef/internal/logging"
 )
 
 func (rb *Client) requestAttempt(

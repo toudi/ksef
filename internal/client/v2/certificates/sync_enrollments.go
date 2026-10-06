@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/base64"
+
 	"ksef/internal/certsdb"
 	"ksef/internal/logging"
 )

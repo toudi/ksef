@@ -1,11 +1,12 @@
 package interfaces
 
 import (
-	"ksef/internal/invoicesdb/annotations"
-	subjectsettings "ksef/internal/invoicesdb/subject-settings"
-	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
-	"ksef/internal/xml"
 	"time"
+
+	"ksef/internal/invoicesdb/annotations"
+	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
+	subjectsettings "ksef/internal/invoicesdb/subject-settings"
+	"ksef/internal/xml"
 
 	"github.com/beevik/etree"
 )

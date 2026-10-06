@@ -3,14 +3,15 @@ package interactive
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"time"
+
 	"ksef/internal/certsdb"
 	"ksef/internal/client/v2/session/status"
 	"ksef/internal/client/v2/session/types"
 	"ksef/internal/encryption"
 	HTTP "ksef/internal/http"
 	"ksef/internal/logging"
-	"net/http"
-	"time"
 )
 
 const (

@@ -2,6 +2,7 @@ package sale
 
 import (
 	"errors"
+
 	"ksef/internal/invoicesdb/jpk/abstract/processors/vat"
 	"ksef/internal/invoicesdb/jpk/abstract/types"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"

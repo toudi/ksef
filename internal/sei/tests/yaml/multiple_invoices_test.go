@@ -2,10 +2,11 @@ package yaml
 
 import (
 	"bytes"
-	"ksef/internal/sei"
-	"ksef/internal/sei/tests/recorder"
 	"strings"
 	"testing"
+
+	"ksef/internal/sei"
+	"ksef/internal/sei/tests/recorder"
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"

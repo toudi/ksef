@@ -2,6 +2,9 @@ package invoicesdb
 
 import (
 	"errors"
+	"reflect"
+	"time"
+
 	"ksef/internal/invoice"
 	annualregistry "ksef/internal/invoicesdb/annual-registry"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
@@ -9,8 +12,6 @@ import (
 	"ksef/internal/sei"
 	"ksef/internal/sei/generators/fa"
 	"ksef/internal/utils"
-	"reflect"
-	"time"
 )
 
 var errAddingItem = errors.New("unable to add item")

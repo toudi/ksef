@@ -2,10 +2,11 @@ package auth
 
 import (
 	"context"
+	"net/http"
+
 	"ksef/internal/client/v2/auth/validator"
 	HTTP "ksef/internal/http"
 	"ksef/internal/logging"
-	"net/http"
 )
 
 const (

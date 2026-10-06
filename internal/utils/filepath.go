@@ -42,7 +42,7 @@ func ResolveFilepath(config FilepathResolverConfig) (string, error) {
 		if !config.Mkdir {
 			return "", ErrDoesNotExistAndMkdirNotSpecified
 		}
-		if err = os.MkdirAll(outputPath, 0755); err != nil {
+		if err = os.MkdirAll(outputPath, 0o755); err != nil {
 			return "", fmt.Errorf("unable to create directories: %v", err)
 		}
 	}

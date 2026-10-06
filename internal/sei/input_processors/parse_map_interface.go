@@ -2,11 +2,12 @@ package inputprocessors
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+
 	"ksef/internal/logging"
 	"ksef/internal/money"
 	"ksef/internal/sei/parser"
-	"strconv"
-	"strings"
 )
 
 // processRecurse takes the input node (which can be a part of map) and then it constructs

@@ -2,9 +2,10 @@ package recorder
 
 import (
 	"bytes"
+	"time"
+
 	"ksef/internal/invoice"
 	"ksef/internal/sei"
-	"time"
 )
 
 type parsedInvoiceRecorder struct {

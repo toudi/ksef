@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"ksef/core/certsdb"
-	"ksef/internal/keyring"
+	"ksef/core/keyring"
 	"ksef/internal/runtime"
 	"ksef/internal/utils"
 	"os"

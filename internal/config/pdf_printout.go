@@ -3,14 +3,15 @@ package config
 import (
 	"bytes"
 	"errors"
+	"path/filepath"
+	"slices"
+	"text/template"
+
 	invoicesdbconfig "ksef/internal/invoicesdb/config"
 	subjectsettings "ksef/internal/invoicesdb/subject-settings"
 	"ksef/internal/logging"
 	pdfConfig "ksef/internal/pdf/config"
 	"ksef/internal/runtime"
-	"path/filepath"
-	"slices"
-	"text/template"
 
 	"github.com/goccy/go-yaml"
 	"github.com/samber/lo"

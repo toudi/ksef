@@ -2,11 +2,12 @@ package subjectsettings
 
 import (
 	"errors"
-	pdfConfig "ksef/internal/pdf/config"
-	"ksef/internal/utils"
 	"os"
 	"path"
 	"path/filepath"
+
+	pdfConfig "ksef/internal/pdf/config"
+	"ksef/internal/utils"
 )
 
 const (

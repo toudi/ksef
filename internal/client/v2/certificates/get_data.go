@@ -2,8 +2,9 @@ package certificates
 
 import (
 	"context"
-	"ksef/internal/http"
 	baseHTTP "net/http"
+
+	"ksef/internal/http"
 )
 
 const (
@@ -33,7 +34,6 @@ func (m *Manager) GetEnrollmentsData(ctx context.Context) (*EnrollmentsData, err
 		},
 		endpointEnrollmentsData,
 	)
-
 	if err != nil {
 		return nil, err
 	}

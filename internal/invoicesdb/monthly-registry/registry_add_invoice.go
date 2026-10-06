@@ -3,9 +3,10 @@ package monthlyregistry
 import (
 	"encoding/base64"
 	"errors"
+
+	kr "ksef/core/keyring"
 	"ksef/internal/certsdb"
 	"ksef/internal/client/v2/types/invoices"
-	kr "ksef/internal/keyring"
 	"ksef/internal/runtime"
 	"ksef/internal/sei"
 )

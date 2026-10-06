@@ -3,15 +3,16 @@ package invoicesdb
 import (
 	"errors"
 	"io/fs"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
 	"ksef/internal/invoice"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	"ksef/internal/logging"
 	"ksef/internal/sei"
 	"ksef/internal/utils"
-	"os"
-	"path/filepath"
-	"strings"
-	"time"
 )
 
 var (
@@ -108,7 +109,7 @@ func (i *InvoicesDB) importXMLInvoices(
 
 		fileName := monthlyRegistry.GetDestFileName(parsedInvoice, monthlyregistry.InvoiceTypeIssued)
 
-		if err = os.MkdirAll(filepath.Dir(fileName), 0775); err != nil {
+		if err = os.MkdirAll(filepath.Dir(fileName), 0o775); err != nil {
 			return errors.Join(errUnableToCreateDir, err)
 		}
 

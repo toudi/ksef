@@ -2,10 +2,11 @@ package auth
 
 import (
 	"context"
-	"ksef/internal/client/v2/auth/validator"
-	"ksef/internal/logging"
 	"log/slog"
 	"time"
+
+	"ksef/internal/client/v2/auth/validator"
+	"ksef/internal/logging"
 )
 
 func (t *TokenManager) Stop() {

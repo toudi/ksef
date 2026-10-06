@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func (c *certsDB) SignContent(ctx context.Context, cert Certificate, content []byte) ([]byte, error) {
+func (c *CertsDB) SignContent(ctx context.Context, cert Certificate, content []byte) ([]byte, error) {
 	// we can only do it if we have a private key
 	privKeyBytes, err := c.storage.GetPrivateKeyBytes(ctx, cert.PrivateKeyId)
 	if err != nil {

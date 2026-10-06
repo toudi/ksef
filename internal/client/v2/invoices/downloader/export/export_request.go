@@ -1,10 +1,11 @@
 package export
 
 import (
-	downloadertypes "ksef/internal/client/v2/invoices/downloader/types"
-	"ksef/internal/encryption"
 	"strconv"
 	"strings"
+
+	downloadertypes "ksef/internal/client/v2/invoices/downloader/types"
+	"ksef/internal/encryption"
 )
 
 const (

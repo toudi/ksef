@@ -1,8 +1,9 @@
 package invoice
 
 import (
-	"ksef/internal/money"
 	"testing"
+
+	"ksef/internal/money"
 )
 
 type Expected struct {

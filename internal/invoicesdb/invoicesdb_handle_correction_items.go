@@ -2,9 +2,10 @@ package invoicesdb
 
 import (
 	"errors"
+	"reflect"
+
 	"ksef/internal/invoice"
 	"ksef/internal/logging"
-	"reflect"
 )
 
 // disclaimer

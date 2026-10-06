@@ -2,9 +2,10 @@ package security
 
 import (
 	"context"
+	"time"
+
 	"ksef/internal/certsdb"
 	"ksef/internal/http"
-	"time"
 )
 
 const endpointDownloadCertificates = "/v2/security/public-key-certificates"

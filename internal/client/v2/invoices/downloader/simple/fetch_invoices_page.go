@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+
 	"ksef/internal/client/v2/invoices/downloader/metadata"
 	"ksef/internal/client/v2/types/invoices"
 	types "ksef/internal/client/v2/types/invoices"

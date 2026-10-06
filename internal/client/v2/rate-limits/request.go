@@ -2,11 +2,12 @@ package ratelimits
 
 import (
 	"context"
+	baseHTTP "net/http"
+	"time"
+
 	"ksef/internal/http"
 	"ksef/internal/logging"
 	ratelimiter "ksef/internal/utils/rate-limiter"
-	baseHTTP "net/http"
-	"time"
 )
 
 const endpointRateLimits = "/v2/rate-limits"

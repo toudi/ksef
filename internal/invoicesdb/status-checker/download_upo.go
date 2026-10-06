@@ -2,6 +2,10 @@ package statuschecker
 
 import (
 	"context"
+	"path/filepath"
+	"strings"
+	"time"
+
 	"ksef/internal/client/v2/session/types"
 	"ksef/internal/client/v2/upo"
 	"ksef/internal/http"
@@ -10,9 +14,6 @@ import (
 	"ksef/internal/pdf"
 	"ksef/internal/pdf/printer"
 	"ksef/internal/runtime"
-	"path/filepath"
-	"strings"
-	"time"
 
 	"github.com/spf13/viper"
 )

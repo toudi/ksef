@@ -34,7 +34,7 @@ func ParseUPO(contentBase64 string) (*UPO, error) {
 	// there can be other nodes here besides Nip as defined here:
 	// https://github.com/CIRFMF/ksef-docs/blob/main/faktury/upo/schemy/upo-v4-2.xsd
 	// desperate times call for desperate measures and all that.
-	var upoDoc = etree.NewDocument()
+	upoDoc := etree.NewDocument()
 	if err = upoDoc.ReadFromBytes(upoXMLBytes); err != nil {
 		return nil, err
 	}
@@ -44,7 +44,7 @@ func ParseUPO(contentBase64 string) (*UPO, error) {
 		return nil, errContextIdNotFound
 	}
 
-	var contextTypes = map[string]string{
+	contextTypes := map[string]string{
 		"Nip":                   "NIP",
 		"IdWewnetrzny":          "Identyfikator wewnętrzny",
 		"IdZlozonyVatUE":        "Kontekst złożony: NIP + numer VAT UE",

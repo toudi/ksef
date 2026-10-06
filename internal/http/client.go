@@ -6,12 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"ksef/internal/interfaces"
-	"ksef/internal/logging"
-	"ksef/internal/runtime"
 	"net/http"
 	"strconv"
 	"time"
+
+	"ksef/internal/interfaces"
+	"ksef/internal/logging"
+	"ksef/internal/runtime"
 
 	"github.com/spf13/viper"
 )

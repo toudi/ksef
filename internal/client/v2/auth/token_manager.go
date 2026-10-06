@@ -3,14 +3,15 @@ package auth
 import (
 	"context"
 	"errors"
+	"sync"
+	"time"
+
+	"ksef/core/keyring"
 	"ksef/internal/certsdb"
 	"ksef/internal/client/v2/auth/validator"
 	"ksef/internal/http"
-	"ksef/internal/keyring"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
-	"sync"
-	"time"
 
 	"github.com/spf13/viper"
 )

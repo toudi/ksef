@@ -3,10 +3,10 @@ package invoices
 import (
 	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
+	kr "ksef/core/keyring"
 	"ksef/internal/invoicesdb"
 	statuscheckerconfig "ksef/internal/invoicesdb/status-checker/config"
 	uploaderconfig "ksef/internal/invoicesdb/uploader/config"
-	kr "ksef/internal/keyring"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
 

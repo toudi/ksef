@@ -2,6 +2,7 @@ package pdf
 
 import (
 	"errors"
+
 	"ksef/internal/config"
 	"ksef/internal/pdf/cirfmf"
 	pdfconfig "ksef/internal/pdf/config"

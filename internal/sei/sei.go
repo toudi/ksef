@@ -6,14 +6,15 @@ import (
 	"encoding/hex"
 	"errors"
 	"io"
+	"path/filepath"
+	"strings"
+
 	"ksef/internal/certsdb"
 	"ksef/internal/interfaces"
 	"ksef/internal/sei/generators"
 	inputprocessors "ksef/internal/sei/input_processors"
 	"ksef/internal/sei/parser"
 	"ksef/internal/xml"
-	"path/filepath"
-	"strings"
 
 	"github.com/spf13/viper"
 )

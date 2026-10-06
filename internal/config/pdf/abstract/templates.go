@@ -6,9 +6,7 @@ import (
 	"text/template"
 )
 
-var (
-	ErrNoTemplatesDefined = errors.New("nie zdefiniowano żadnych szablonów renderujących")
-)
+var ErrNoTemplatesDefined = errors.New("nie zdefiniowano żadnych szablonów renderujących")
 
 type HeaderFooterSettings struct {
 	Left   string
@@ -30,7 +28,7 @@ type Templates struct {
 }
 
 func ReadTemplatesFromDirectory(dirname string, extension string, funcs template.FuncMap) (TemplatesCollection, error) {
-	var templates = TemplatesCollection{
+	templates := TemplatesCollection{
 		Enabled: true,
 		SrcPath: dirname,
 	}

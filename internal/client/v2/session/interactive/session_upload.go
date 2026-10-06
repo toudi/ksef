@@ -2,9 +2,10 @@ package interactive
 
 import (
 	"context"
+	"net/http"
+
 	sessionTypes "ksef/internal/client/v2/session/types"
 	HTTP "ksef/internal/http"
-	"net/http"
 )
 
 type InvoiceUploadResponse struct {
@@ -31,7 +32,6 @@ func (s *Session) uploadFile(
 		ExpectedStatus:  http.StatusAccepted,
 		Method:          http.MethodPost,
 	}, us.uploadUrl)
-
 	if err != nil {
 		return err
 	}

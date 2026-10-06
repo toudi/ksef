@@ -1,10 +1,11 @@
 package invoicesdb
 
 import (
-	"ksef/internal/invoicesdb/config"
-	"ksef/internal/runtime"
 	"os"
 	"path/filepath"
+
+	"ksef/internal/invoicesdb/config"
+	"ksef/internal/runtime"
 
 	"github.com/spf13/viper"
 )

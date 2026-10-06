@@ -1,8 +1,9 @@
 package money_test
 
 import (
-	"ksef/internal/money"
 	"testing"
+
+	"ksef/internal/money"
 
 	"github.com/stretchr/testify/require"
 )

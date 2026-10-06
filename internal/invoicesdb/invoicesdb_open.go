@@ -2,11 +2,12 @@ package invoicesdb
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
+
 	"ksef/internal/certsdb"
 	"ksef/internal/invoicesdb/config"
 	"ksef/internal/runtime"
-	"os"
-	"path/filepath"
 
 	"github.com/spf13/viper"
 )
@@ -25,7 +26,7 @@ func OpenForNIP(nip string, vip *viper.Viper, initializers ...func(*InvoicesDB))
 		nip,
 	)
 
-	if err := os.MkdirAll(prefix, 0755); err != nil {
+	if err := os.MkdirAll(prefix, 0o755); err != nil {
 		return nil, err
 	}
 

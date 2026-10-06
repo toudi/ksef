@@ -2,12 +2,13 @@ package metadata
 
 import (
 	"context"
+	baseHttp "net/http"
+	"strconv"
+
 	downloadertypes "ksef/internal/client/v2/invoices/downloader/types"
 	ratelimits "ksef/internal/client/v2/rate-limits"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/http"
-	baseHttp "net/http"
-	"strconv"
 )
 
 const (

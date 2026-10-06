@@ -1,9 +1,10 @@
 package jpk_v7m_3
 
 import (
+	"strings"
+
 	"ksef/internal/invoicesdb/jpk/types"
 	"ksef/internal/money"
-	"strings"
 )
 
 type FormFields struct {

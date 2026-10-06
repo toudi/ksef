@@ -3,12 +3,12 @@ package invoices
 import (
 	"errors"
 	"ksef/cmd/ksef/commands/client"
+	kr "ksef/core/keyring"
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/invoicesdb"
 	invoicesdbconfig "ksef/internal/invoicesdb/config"
 	statuscheckerconfig "ksef/internal/invoicesdb/status-checker/config"
 	uploaderconfig "ksef/internal/invoicesdb/uploader/config"
-	kr "ksef/internal/keyring"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
 	inputprocessors "ksef/internal/sei/input_processors"

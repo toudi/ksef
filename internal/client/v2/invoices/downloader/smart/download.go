@@ -3,11 +3,12 @@ package smart
 import (
 	"bytes"
 	"context"
+	"time"
+
 	"ksef/internal/client/v2/invoices/downloader/metadata"
 	ratelimits "ksef/internal/client/v2/rate-limits"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/logging"
-	"time"
 )
 
 func (sd *smartDownloader) Download(

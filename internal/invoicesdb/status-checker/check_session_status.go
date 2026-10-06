@@ -3,12 +3,13 @@ package statuschecker
 import (
 	"context"
 	"errors"
+	"time"
+
 	"ksef/internal/client/v2/session/status"
 	"ksef/internal/client/v2/session/types"
 	"ksef/internal/logging"
 	"ksef/internal/pdf"
 	pdfconfig "ksef/internal/pdf/config"
-	"time"
 )
 
 var (
