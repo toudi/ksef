@@ -2,14 +2,17 @@ package invoicesdb
 
 import (
 	"bytes"
+	"ksef/core/certsdb"
+	"ksef/internal/client/v2/session/status"
+	"ksef/internal/invoicesdb/config"
 	"time"
 
 	kr "ksef/core/keyring"
-	"ksef/internal/certsdb"
+
 	v2 "ksef/internal/client/v2"
-	"ksef/internal/client/v2/session/status"
+
 	annualregistry "ksef/internal/invoicesdb/annual-registry"
-	"ksef/internal/invoicesdb/config"
+
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 	subjectsettings "ksef/internal/invoicesdb/subject-settings"
 
@@ -31,8 +34,8 @@ type InvoicesDB struct {
 	annualRegistry  *annualregistry.Registry  // currently used annual invoice registry
 	subjectSettings *subjectsettings.SubjectSettings
 
-	certsDB *certsdb.CertificatesDB // for retrieving offline certificate
-	keyring kr.Keyring              // for accessing private keys
+	certsDB *certsdb.CertsDB // for retrieving offline certificate
+	keyring kr.Keyring       // for accessing private keys
 	vip     *viper.Viper
 	// for sync only
 	prefix string
@@ -78,12 +81,7 @@ func newInvoicesDB(vip *viper.Viper) *InvoicesDB {
 	return idb
 }
 
-func NewInvoicesDB(vip *viper.Viper, initializers ...func(i *InvoicesDB)) (*InvoicesDB, error) {
-	certsDB, err := certsdb.OpenOrCreate(vip)
-	if err != nil {
-		return nil, err
-	}
-
+func NewInvoicesDB(vip *viper.Viper, certsDB *certsdb.CertsDB, initializers ...func(i *InvoicesDB)) (*InvoicesDB, error) {
 	idb := newInvoicesDB(vip)
 	idb.certsDB = certsDB
 

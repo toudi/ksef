@@ -2,8 +2,7 @@ package certificates
 
 import (
 	"fmt"
-	"ksef/core/certsdb"
-	fsCertsStorage "ksef/core/certsdb/fs"
+	"ksef/cmd/ksef/commands/client"
 	"ksef/internal/runtime"
 	"strings"
 
@@ -33,11 +32,10 @@ func listCerts(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
 	ctx := cmd.Context()
 
-	certStorage, err := fsCertsStorage.Init(vip)
+	certsDB, err := client.CertsDB(vip)
 	if err != nil {
 		return err
 	}
-	certsDB := certsdb.Init(certStorage)
 	defer certsDB.Close(ctx)
 
 	table := simpletable.New()
@@ -57,6 +55,9 @@ func listCerts(cmd *cobra.Command, _ []string) error {
 	certSerial := vip.GetString(certSerial)
 
 	certs, err := certsDB.Certs(cmd.Context())
+	if err != nil {
+		return err
+	}
 	selectedGateway, err := runtime.Gateway(vip)
 	if err != nil {
 		return err

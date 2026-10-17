@@ -4,14 +4,14 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	baseHTTP "net/http"
-
-	"ksef/internal/certsdb"
-	downloadertypes "ksef/internal/client/v2/invoices/downloader/types"
-	ratelimits "ksef/internal/client/v2/rate-limits"
+	"ksef/core/certsdb"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/encryption"
 	"ksef/internal/http"
+	baseHTTP "net/http"
+
+	downloadertypes "ksef/internal/client/v2/invoices/downloader/types"
+	ratelimits "ksef/internal/client/v2/rate-limits"
 )
 
 var errFetchingInvoicesWithExport = errors.New("error fetching invoices with export endpoint")
@@ -41,11 +41,17 @@ func (ed *ExportDownloader) Download(
 			},
 		}
 
-		certificate, err := ed.certsDB.GetByUsage(certsdb.UsageSymmetricKeyEncryption, "")
+		certificate, err := ed.certsDB.GetCertificateByUsage(
+			ctx, certsdb.CertificateUsageSymmetricKeyEncryption,
+		)
 		if err != nil {
 			return err
 		}
-		req.Encryption, err = cipher.PrepareHTTPRequestPayload(certificate.Filename())
+		certificateFileBytes, err := ed.certsDB.GetCertificateBytes(ctx, certificate.UID)
+		if err != nil {
+			return err
+		}
+		req.Encryption, err = cipher.PrepareHTTPRequestPayload(certificateFileBytes)
 		if err != nil {
 			return err
 		}

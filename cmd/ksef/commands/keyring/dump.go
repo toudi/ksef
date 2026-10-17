@@ -1,11 +1,13 @@
 package keyring
 
 import (
+	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
+	"ksef/core/certsdb"
 	"ksef/core/keyring"
-	"ksef/internal/certsdb"
 	"ksef/internal/config"
 	"ksef/internal/runtime"
+	"slices"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -27,7 +29,9 @@ func init() {
 
 func setKeyringKeys(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
-	certsDB, err := certsdb.OpenOrCreate(vip)
+	ctx := cmd.Context()
+
+	certsDB, err := client.CertsDB(vip)
 	if err != nil {
 		return err
 	}
@@ -37,10 +41,16 @@ func setKeyringKeys(cmd *cobra.Command, _ []string) error {
 	}
 
 	// iterate over all potential authorization keys to build keyring keys
-	for _, cert := range certsDB.FetchByUsage(certsdb.UsageAuthentication, nip) {
+	filtered, err := certsDB.FilterCertificates(ctx, func(c certsdb.Certificate) bool {
+		return slices.Contains(c.NIP, nip) && slices.Contains(c.Usage, certsdb.CertificateUsageAuthentication)
+	})
+	if err != nil {
+		return err
+	}
+	for _, cert := range filtered {
 		allKeyringKeys = append(allKeyringKeys, keyring.SessionTokensKey(cert.UID))
 	}
-	return nil
+	return certsDB.Close(ctx)
 }
 
 func dumpKeyringToFileRun(cmd *cobra.Command, _ []string) error {

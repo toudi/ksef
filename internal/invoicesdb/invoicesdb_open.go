@@ -2,12 +2,12 @@ package invoicesdb
 
 import (
 	"errors"
-	"os"
-	"path/filepath"
-
-	"ksef/internal/certsdb"
+	"ksef/core/certsdb"
+	fsStorage "ksef/core/certsdb/fs"
 	"ksef/internal/invoicesdb/config"
 	"ksef/internal/runtime"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/viper"
 )
@@ -36,7 +36,16 @@ func OpenForNIP(nip string, vip *viper.Viper, initializers ...func(*InvoicesDB))
 
 	idb := newInvoicesDB(vip)
 	idb.prefix = prefix
-	certsDB, err := certsdb.OpenOrCreate(vip)
+
+	certsStorage, err := fsStorage.Init(vip)
+	if err != nil {
+		return nil, err
+	}
+	certsDB, err := certsdb.Init(
+		certsStorage,
+		certsdb.WithEnvironment(runtime.GetEnvironmentId(vip)),
+		certsdb.WithPreferredCertProfile(runtime.GetPreferredCertProfile(vip)),
+	)
 	if err != nil {
 		return nil, err
 	}

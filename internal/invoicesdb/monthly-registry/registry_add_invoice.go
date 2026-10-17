@@ -1,14 +1,15 @@
 package monthlyregistry
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
-
-	kr "ksef/core/keyring"
-	"ksef/internal/certsdb"
+	"ksef/core/certsdb"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/runtime"
 	"ksef/internal/sei"
+
+	kr "ksef/core/keyring"
 )
 
 var (
@@ -62,20 +63,21 @@ func (r *Registry) AddInvoice(
 	}
 
 	if inv.Invoice.KSeFFlags.Offline {
+		ctx := context.Background()
 		// let's prepare the offline qrcode
-		var certificate certsdb.Certificate
-		if certificate, err = r.certsDB.GetByUsage(
-			certsdb.UsageOffline,
-			inv.Invoice.Issuer.NIP,
+		var certificate *certsdb.Certificate
+		if certificate, err = r.certsDB.GetCertificateByUsageAndNIP(
+			ctx, certsdb.CertificateUsageOffline, inv.Invoice.Issuer.NIP,
 		); err != nil {
 			return errors.Join(errUnableToGetCertificate, err)
 		}
 
 		if invoice.QRCodes.Offline, err = invoice.generateCertificateQRCode(
+			ctx,
 			environment.QRCode,
 			inv,
 			certificate,
-			keyring,
+			r.certsDB,
 		); err != nil {
 			return errors.Join(errUnableToGenerateQRCode, err)
 		}

@@ -1,21 +1,22 @@
 package certificates
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
-	"encoding/base64"
+	"ksef/core/certsdb"
+	"ksef/core/ksef"
 
 	kr "ksef/core/keyring"
-	"ksef/internal/certsdb"
 )
 
 type EnrollmentType string
 
-func (m *Manager) PrepareEnrollmentCSR(data *EnrollmentsData, usage certsdb.Usage, nip string, keyring kr.Keyring) error {
+func (m *Manager) PrepareEnrollmentCSR(data *EnrollmentsData, usage certsdb.CertificateUsage, nip string, keyring kr.Keyring) error {
 	template := &x509.CertificateRequest{
 		Subject: pkix.Name{
 			CommonName: data.CommonName,
@@ -57,15 +58,21 @@ func (m *Manager) PrepareEnrollmentCSR(data *EnrollmentsData, usage certsdb.Usag
 		return err
 	}
 
-	return m.certsDB.AddCert(func(newCert *certsdb.Certificate) error {
-		newCert.EnvironmentId = m.env
-		var err error
-		if err = newCert.SavePKey(private, keyring); err != nil {
-			return err
-		}
-		newCert.NIP = []string{nip}
-		newCert.CSRData = base64.StdEncoding.EncodeToString(csrDerBytes)
-		newCert.Usage = append(newCert.Usage, usage)
-		return nil
-	})
+	ctx := context.Background()
+
+	gateway, err := ksef.ParseGateway(m.env)
+	if err != nil {
+		return err
+	}
+
+	return m.certsDB.AddCSRRequest(
+		ctx,
+		certsdb.CSRRequest{
+			Gateway:    gateway,
+			PrivateKey: private,
+			NIP:        nip,
+			CSRData:    csrDerBytes,
+			Usage:      usage,
+		},
+	)
 }

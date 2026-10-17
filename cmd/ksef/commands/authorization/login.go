@@ -2,8 +2,8 @@ package authorization
 
 import (
 	"ksef/cmd/ksef/commands/authorization/challenge"
+	"ksef/cmd/ksef/commands/client"
 	kr "ksef/core/keyring"
-	"ksef/internal/certsdb"
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/token"
@@ -44,7 +44,7 @@ func login(cmd *cobra.Command, args []string) error {
 	}
 	defer keyring.Close()
 
-	certsDB, err := certsdb.OpenOrCreate(vip)
+	certsDB, err := client.CertsDB(vip)
 	if err != nil {
 		return err
 	}

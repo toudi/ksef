@@ -3,9 +3,9 @@ package authorization
 import (
 	"errors"
 	"ksef/cmd/ksef/commands/authorization/challenge"
+	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
 	kr "ksef/core/keyring"
-	"ksef/internal/certsdb"
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/token"
@@ -67,7 +67,7 @@ func authSessionDebug(cmd *cobra.Command, _ []string) error {
 			return errors.New("brak numeru NIP")
 		}
 		// pick up cert from the database
-		certsDB, err := certsdb.OpenOrCreate(vip)
+		certsDB, err := client.CertsDB(vip)
 		if err != nil {
 			return err
 		}

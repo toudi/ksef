@@ -2,6 +2,7 @@ package sessions
 
 import (
 	"fmt"
+	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
 	kr "ksef/core/keyring"
 	"ksef/internal/client/v2/auth"
@@ -33,6 +34,7 @@ func getSessions(cmd *cobra.Command, _ []string) error {
 	var err error
 
 	vip := viper.GetViper()
+	ctx := cmd.Context()
 
 	keyring, err := kr.NewKeyring(vip)
 	if err != nil {
@@ -40,12 +42,18 @@ func getSessions(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 	defer keyring.Close()
+	certsDB, err := client.CertsDB(vip)
+	if err != nil {
+		return err
+	}
+	defer certsDB.Close(ctx)
 
 	tokenManager, err = auth.NewTokenManager(
 		cmd.Context(),
 		vip,
 		nil,
 		keyring,
+		certsDB,
 	)
 	if err != nil {
 		return err

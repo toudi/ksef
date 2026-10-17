@@ -1,7 +1,7 @@
 package smart
 
 import (
-	"ksef/internal/certsdb"
+	"ksef/core/certsdb"
 	"ksef/internal/client/v2/invoices/downloader/export"
 	downloaderinterface "ksef/internal/client/v2/invoices/downloader/interface"
 	"ksef/internal/client/v2/invoices/downloader/simple"
@@ -14,7 +14,7 @@ import (
 
 type smartDownloader struct {
 	vip        *viper.Viper
-	certsDB    *certsdb.CertificatesDB
+	certsDB    *certsdb.CertsDB
 	httpClient *http.Client
 	registry   *monthlyregistry.Registry
 	params     invoices.DownloadParams
@@ -25,7 +25,7 @@ type smartDownloader struct {
 
 func NewDownloader(
 	vip *viper.Viper,
-	certsDB *certsdb.CertificatesDB,
+	certsDB *certsdb.CertsDB,
 	httpClient *http.Client,
 	registry *monthlyregistry.Registry,
 	params invoices.DownloadParams,

@@ -2,19 +2,18 @@ package security
 
 import (
 	"context"
-	"time"
-
-	"ksef/internal/certsdb"
+	"ksef/core/certsdb"
 	"ksef/internal/http"
+	"time"
 )
 
 const endpointDownloadCertificates = "/v2/security/public-key-certificates"
 
 type certificateRow struct {
-	Certificate string          `json:"certificate"`
-	ValidFrom   time.Time       `json:"validFrom"`
-	ValidTo     time.Time       `json:"validTo"`
-	Usage       []certsdb.Usage `json:"usage"`
+	Certificate string                     `json:"certificate"`
+	ValidFrom   time.Time                  `json:"validFrom"`
+	ValidTo     time.Time                  `json:"validTo"`
+	Usage       []certsdb.CertificateUsage `json:"usage"`
 }
 
 func DownloadCertificates(ctx context.Context, client *http.Client) ([]certificateRow, error) {

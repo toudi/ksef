@@ -2,7 +2,6 @@ package runtime
 
 import (
 	"fmt"
-
 	"ksef/core/ksef"
 	"ksef/internal/utils"
 
@@ -61,6 +60,10 @@ var environments = map[string]Environment{
 func Gateway(vip *viper.Viper) (ksef.KSeFGateway, error) {
 	// TODO: get rid of the GetEnvironmentId
 	return ksef.ParseGateway(GetEnvironmentId(vip))
+}
+
+func GatewayConfig(vip *viper.Viper) (ksef.KSeFGatewayConfig, error) {
+	return ksef.GatewayConfig(GetEnvironmentId(vip))
 }
 
 func GetEnvironmentId(vip *viper.Viper) string {

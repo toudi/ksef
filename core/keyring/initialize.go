@@ -19,15 +19,25 @@ var (
 	ErrPasswordFilePermissionsTooWide     = errors.New("uprawnienia pliku hasła są zbyt szerokie. ustaw je na 0600")
 )
 
+var fileKeyringInstance *FileBasedKeyring
+
 func NewKeyring(vip *viper.Viper) (Keyring, error) {
 	engine := vip.GetString(flags.CfgKeyKeyringEngine)
 
 	if engine == flags.KeyringEngineFile {
+		if fileKeyringInstance != nil {
+			return fileKeyringInstance, nil
+		}
 		cfg, err := GetFileBasedKeyringConfig(vip)
 		if err != nil {
 			return nil, err
 		}
-		return NewFileBasedKeyring(cfg)
+		fileKeyringInstance, err = NewFileBasedKeyring(cfg)
+		if err != nil {
+			fileKeyringInstance = nil
+			return nil, err
+		}
+		return fileKeyringInstance, nil
 	}
 
 	return NewSystemKeyring(), nil

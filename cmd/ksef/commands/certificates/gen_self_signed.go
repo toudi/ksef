@@ -4,9 +4,8 @@ import (
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"errors"
+	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
-	kr "ksef/core/keyring"
-	"ksef/internal/certsdb"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
@@ -44,14 +43,9 @@ func validateParams(cmd *cobra.Command, _ []string) error {
 
 func generateSelfSignedCert(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
+	ctx := cmd.Context()
 
-	certsDB, err := certsdb.OpenOrCreate(vip)
-	if err != nil {
-		return err
-	}
-	defer certsDB.Save()
-
-	keyring, err := kr.NewKeyring(vip)
+	certsDB, err := client.CertsDB(vip)
 	if err != nil {
 		return err
 	}
@@ -96,5 +90,8 @@ func generateSelfSignedCert(cmd *cobra.Command, _ []string) error {
 
 	}
 
-	return certsDB.GenerateSelfSignedCert(subject, keyring)
+	if err = certsDB.RegenerateSelfSignedCert(ctx, subject); err != nil {
+		return err
+	}
+	return certsDB.Close(ctx)
 }

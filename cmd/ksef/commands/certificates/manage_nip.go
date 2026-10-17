@@ -1,10 +1,9 @@
 package certificates
 
 import (
+	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
-	"ksef/internal/certsdb"
 	"ksef/internal/runtime"
-	"slices"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -43,6 +42,7 @@ func init() {
 
 func addNIPToCertRun(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
+	ctx := cmd.Context()
 
 	certID := vip.GetString(flagCertID)
 	nip, err := runtime.GetNIP(vip)
@@ -50,27 +50,20 @@ func addNIPToCertRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	certDB, err := certsdb.OpenOrCreate(vip)
+	certsDB, err := client.CertsDB(vip)
 	if err != nil {
 		return err
 	}
-	defer certDB.Save()
 
-	return certDB.Upsert(
-		func(cert certsdb.Certificate) bool {
-			return cert.UID == certID
-		},
-		func(newCert *certsdb.Certificate) error {
-			if !slices.Contains(newCert.NIP, nip) {
-				newCert.NIP = append(newCert.NIP, nip)
-			}
-			return nil
-		},
-	)
+	if err = certsDB.AddNIPToCertificate(ctx, certID, nip); err != nil {
+		return err
+	}
+	return certsDB.Close(ctx)
 }
 
 func dropNIPFromCertRun(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
+	ctx := cmd.Context()
 
 	certID := vip.GetString(flagCertID)
 	nip, err := runtime.GetNIP(vip)
@@ -78,23 +71,13 @@ func dropNIPFromCertRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	certDB, err := certsdb.OpenOrCreate(vip)
+	certsDB, err := client.CertsDB(vip)
 	if err != nil {
 		return err
 	}
-	defer certDB.Save()
 
-	return certDB.Upsert(
-		func(cert certsdb.Certificate) bool {
-			return cert.UID == certID
-		},
-		func(newCert *certsdb.Certificate) error {
-			if slices.Contains(newCert.NIP, nip) {
-				newCert.NIP = slices.DeleteFunc(newCert.NIP, func(n string) bool {
-					return n == nip
-				})
-			}
-			return nil
-		},
-	)
+	if err = certsDB.RemoveNIPFromCertificate(ctx, certID, nip); err != nil {
+		return err
+	}
+	return certsDB.Close(ctx)
 }

@@ -2,18 +2,16 @@ package xades
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
 	"errors"
 	"io"
-	"os"
+	"ksef/core/certsdb"
 	"strings"
 	"time"
-
-	kr "ksef/core/keyring"
-	"ksef/internal/certsdb"
 
 	"github.com/beevik/etree"
 	"github.com/google/uuid"
@@ -39,7 +37,13 @@ type TemplateVars struct {
 	}
 }
 
-func SignAuthChallenge(challenge io.Reader, cert certsdb.Certificate, keyring kr.Keyring, dest io.Writer) error {
+func SignAuthChallenge(
+	ctx context.Context,
+	challenge io.Reader,
+	certsDB *certsdb.CertsDB,
+	certId string,
+	dest io.Writer,
+) error {
 	templateVars := TemplateVars{
 		SigningTime: time.Now().UTC(),
 	}
@@ -50,7 +54,7 @@ func SignAuthChallenge(challenge io.Reader, cert certsdb.Certificate, keyring kr
 	var hash [32]byte
 
 	// read certificate into memory
-	certificateBytes, err := os.ReadFile(cert.Filename())
+	certificateBytes, err := certsDB.GetCertificateBytes(ctx, certId)
 	if err != nil {
 		return err
 	}
@@ -114,7 +118,7 @@ func SignAuthChallenge(challenge io.Reader, cert certsdb.Certificate, keyring kr
 	// 2. calculate the signature of the document. We will use signedInfo node as our
 	// input hash
 	var signature []byte
-	if signature, err = cert.SignContent([]byte(signedInfo), keyring); err != nil {
+	if signature, err = certsDB.SignContent(ctx, certId, []byte(signedInfo)); err != nil {
 		return err
 	}
 

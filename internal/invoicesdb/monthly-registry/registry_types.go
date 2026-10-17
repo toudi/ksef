@@ -1,11 +1,10 @@
 package monthlyregistry
 
 import (
-	"time"
-
-	"ksef/internal/certsdb"
+	"ksef/core/certsdb"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/invoicesdb/shared"
+	"time"
 
 	sessionTypes "ksef/internal/client/v2/session/types"
 
@@ -119,8 +118,8 @@ type Registry struct {
 	OrdNums      OrdNumsMap  `yaml:"-"`
 	SavedOrdNums OrdNums     `yaml:"ord-nums,omitempty"`
 
-	checksumIndex map[string]int          `yaml:"-"`
-	dir           string                  `yaml:"-"`
-	certsDB       *certsdb.CertificatesDB `yaml:"-"`
-	vip           *viper.Viper            `yaml:"-"`
+	checksumIndex map[string]int   `yaml:"-"`
+	dir           string           `yaml:"-"`
+	certsDB       *certsdb.CertsDB `yaml:"-"`
+	vip           *viper.Viper     `yaml:"-"`
 }

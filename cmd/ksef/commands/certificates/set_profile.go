@@ -2,7 +2,8 @@ package certificates
 
 import (
 	"errors"
-	"ksef/internal/certsdb"
+	"ksef/cmd/ksef/commands/client"
+	"ksef/core/certsdb"
 	"slices"
 
 	"github.com/spf13/cobra"
@@ -33,6 +34,7 @@ func init() {
 
 func setCertProfileRun(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
+	ctx := cmd.Context()
 
 	flags := cmd.Flags()
 	certIds, err := flags.GetStringSlice(flagNameCertIds)
@@ -47,22 +49,25 @@ func setCertProfileRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	certsDB, err := certsdb.OpenOrCreate(vip)
+	certsDB, err := client.CertsDB(vip)
 	if err != nil {
 		return err
 	}
 
-	if err = certsDB.ForEach(
-		func(cert certsdb.Certificate) bool {
-			return slices.Contains(certIds, cert.UID)
-		},
-		func(cert *certsdb.Certificate) error {
-			cert.ProfileName = profileName
-			return nil
-		},
-	); err != nil {
+	certs, err := certsDB.FilterCertificates(ctx, func(c certsdb.Certificate) bool {
+		return slices.Contains(certIds, c.UID)
+	})
+	if err != nil {
 		return err
 	}
 
-	return certsDB.Save()
+	updateData := certsdb.CertificateUpdateData{ProfileName: &profileName}
+
+	for _, cert := range certs {
+		if err = certsDB.UpdateCertificate(ctx, cert.UID, updateData); err != nil {
+			return err
+		}
+	}
+
+	return certsDB.Close(ctx)
 }

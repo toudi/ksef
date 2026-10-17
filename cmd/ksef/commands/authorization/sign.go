@@ -3,11 +3,10 @@ package authorization
 import (
 	"bytes"
 	"ksef/cmd/ksef/commands/authorization/challenge"
-	"ksef/internal/certsdb"
+	"ksef/cmd/ksef/commands/client"
+	"ksef/core/certsdb"
 	"ksef/internal/client/v2/auth/xades"
 	"os"
-
-	kr "ksef/core/keyring"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -31,11 +30,7 @@ func init() {
 func signChallengeFile(cmd *cobra.Command, args []string) error {
 	vip := viper.GetViper()
 	challengeFile = args[0]
-	certsDB, err := certsdb.OpenOrCreate(vip)
-	if err != nil {
-		return err
-	}
-	keyring, err := kr.NewKeyring(vip)
+	certsDB, err := client.CertsDB(vip)
 	if err != nil {
 		return err
 	}
@@ -43,7 +38,9 @@ func signChallengeFile(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	certFile, err := certsDB.GetByUsage(certsdb.UsageAuthentication, nip)
+	cert, err := certsDB.GetCertificateByUsageAndNIP(
+		cmd.Context(), certsdb.CertificateUsageAuthentication, nip,
+	)
 	if err != nil {
 		return err
 	}
@@ -53,5 +50,11 @@ func signChallengeFile(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	defer destFile.Close()
-	return xades.SignAuthChallenge(bytes.NewBuffer(challengeBytes), certFile, keyring, destFile)
+	return xades.SignAuthChallenge(
+		cmd.Context(),
+		bytes.NewBuffer(challengeBytes),
+		certsDB,
+		cert.UID,
+		destFile,
+	)
 }

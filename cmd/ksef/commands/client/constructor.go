@@ -1,10 +1,12 @@
 package client
 
 import (
+	"ksef/core/certsdb"
+	"ksef/core/certsdb/fs"
 	kr "ksef/core/keyring"
-	"ksef/internal/certsdb"
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/client/v2/auth/token"
+	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -24,7 +26,8 @@ func InitClient(
 		// TODO: handle logout parameter here
 		return nil
 	}
-	certsDB, err := certsdb.OpenOrCreate(vip)
+
+	certsDB, err := CertsDB(vip)
 	if err != nil {
 		return nil, err
 	}
@@ -50,4 +53,16 @@ func InitClient(
 	)
 
 	return cli, err
+}
+
+func CertsDB(vip *viper.Viper) (*certsdb.CertsDB, error) {
+	certsStorage, err := fs.Init(vip)
+	if err != nil {
+		return nil, err
+	}
+	return certsdb.Init(
+		certsStorage,
+		certsdb.WithEnvironment(runtime.GetEnvironmentId(vip)),
+		certsdb.WithPreferredCertProfile(runtime.GetPreferredCertProfile(vip)),
+	)
 }

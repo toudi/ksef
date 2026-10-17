@@ -57,17 +57,40 @@ func (f fsCertificate) Filename() string {
 
 func (f fsCertificate) AsCertificate() certsdb.Certificate {
 	return certsdb.Certificate{
+		CertificateHash: certsdb.CertificateHash{
+			Gateway:   ksef.KSeFGateway(f.EnvironmentId),
+			Usage:     f.Usage,
+			ValidFrom: f.ValidFrom,
+			ValidTo:   f.ValidTo,
+		},
 		UID:          f.UID,
 		CN:           f.CN,
-		Gateway:      ksef.KSeFGateway(f.EnvironmentId),
 		SerialNumber: f.SerialNumber,
 		SelfSigned:   f.SelfSigned,
 		ProfileName:  f.ProfileName,
 		NIP:          f.NIP,
 		PrivateKeyId: f.UID,
 
-		ValidFrom: f.ValidFrom,
-		ValidTo:   f.ValidTo,
-		Usage:     f.Usage,
+		InternalIDs:     f.InternalIDs,
+		ReferenceNumber: f.ReferenceNumber,
+		CSRData:         f.CSRData,
+	}
+}
+
+func fromCertsDBCertificate(input certsdb.Certificate) *fsCertificate {
+	return &fsCertificate{
+		CertificateHash: CertificateHash{
+			EnvironmentId: string(input.Gateway),
+			Usage:         input.Usage,
+			ValidFrom:     input.ValidFrom,
+			ValidTo:       input.ValidTo,
+		},
+		CN:              input.CN,
+		SerialNumber:    input.SerialNumber,
+		SelfSigned:      input.SelfSigned,
+		ProfileName:     input.ProfileName,
+		NIP:             input.NIP,
+		InternalIDs:     input.InternalIDs,
+		ReferenceNumber: input.ReferenceNumber,
 	}
 }

@@ -9,23 +9,81 @@ import (
 	"github.com/samber/lo"
 )
 
+// userCertificateUsages are the usages a user may import their own certificate
+// for. The other usages (KsefTokenEncryption, SymmetricKeyEncryption) are issued
+// by the ministry of finance and enter the database via StoreMinistryCertificate only.
+var userCertificateUsages = []CertificateUsage{
+	CertificateUsageAuthentication,
+	CertificateUsageOffline,
+}
+
+type CertificateHash struct {
+	Gateway   ksef.KSeFGateway
+	Usage     []CertificateUsage
+	ValidFrom time.Time
+	ValidTo   time.Time
+}
+
+func (c CertificateHash) UsageAsString() string {
+	return strings.Join(lo.Map(c.Usage, func(u CertificateUsage, _ int) string { return string(u) }), ", ")
+}
+
 type Certificate struct {
+	CertificateHash
 	UID          string
-	Gateway      ksef.KSeFGateway
 	SerialNumber string
 	NIP          []string
 	ProfileName  string
 	SelfSigned   bool
 	CN           *string
 	// KSeF certificate is combined with privateKey
-	PrivateKeyId string
-	Usage        []CertificateUsage
-	ValidFrom    time.Time
-	ValidTo      time.Time
+	PrivateKeyId    string
+	InternalIDs     []string
+	CSRData         string
+	ReferenceNumber string
 }
 
-func (c Certificate) UsageAsString() string {
-	return strings.Join(lo.Map(c.Usage, func(u CertificateUsage, _ int) string { return string(u) }), ", ")
+// Validate checks the properties common to certificates of every origin
+// (user-imported or ministry-issued).
+func (c Certificate) Validate() error {
+	if len(c.Usage) == 0 {
+		return ErrInvalidCertificateUsage
+	}
+	return nil
+}
+
+// ValidateUserCertificate extends Validate with the rules for certificates a
+// user imports themselves (in contrast to ministry-issued ones).
+func (c Certificate) ValidateUserCertificate() error {
+	if err := c.Validate(); err != nil {
+		return err
+	}
+	for _, usage := range c.Usage {
+		if !slices.Contains(userCertificateUsages, usage) {
+			return ErrInvalidCertificateUsage
+		}
+	}
+	return nil
+}
+
+type CertificateUpdateData struct {
+	SerialNumber    *string
+	ReferenceNumber *string
+	ValidFrom       *time.Time
+	ValidTo         *time.Time
+	DERBytes        []byte
+	ProfileName     *string
+}
+
+type MinistryCertificateData struct {
+	Certificate Certificate
+	DERBytes    []byte
+}
+
+type UserCertificateData struct {
+	PrivateKeyPEMBytes []byte
+	Certificate        Certificate
+	DERBytes           []byte
 }
 
 func (c Certificate) IsEncryptable() bool {

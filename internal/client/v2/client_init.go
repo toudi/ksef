@@ -2,17 +2,19 @@ package v2
 
 import (
 	"context"
-
-	kr "ksef/core/keyring"
-	"ksef/internal/certsdb"
+	"ksef/core/certsdb"
 	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/validator"
 	"ksef/internal/client/v2/certificates"
-	ratelimits "ksef/internal/client/v2/rate-limits"
 	"ksef/internal/http"
-	httpClient "ksef/internal/http"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
+
+	kr "ksef/core/keyring"
+
+	ratelimits "ksef/internal/client/v2/rate-limits"
+
+	httpClient "ksef/internal/http"
 
 	"github.com/spf13/viper"
 )
@@ -25,7 +27,7 @@ type APIClient struct {
 	ctx                    context.Context
 	// for uploading sessions
 	certificates *certificates.Manager
-	certsDB      *certsdb.CertificatesDB
+	certsDB      *certsdb.CertsDB
 	// init options
 	runTokenManager     bool
 	tokenManagerStarted bool
@@ -54,7 +56,7 @@ func NewClient(ctx context.Context, vip *viper.Viper, options ...InitializerFunc
 
 	if client.authChallengeValidator != nil {
 		var err error
-		if client.tokenManager, err = auth.NewTokenManager(ctx, vip, client.authChallengeValidator, client.keyring); err != nil {
+		if client.tokenManager, err = auth.NewTokenManager(ctx, vip, client.authChallengeValidator, client.keyring, client.certsDB); err != nil {
 			return nil, err
 		}
 		if client.runTokenManager {
@@ -97,7 +99,7 @@ func WithAuthValidator(validator validator.AuthChallengeValidator) func(client *
 	}
 }
 
-func WithCertificatesDB(certsDB *certsdb.CertificatesDB) func(client *APIClient) {
+func WithCertificatesDB(certsDB *certsdb.CertsDB) func(client *APIClient) {
 	return func(client *APIClient) {
 		client.certsDB = certsDB
 	}

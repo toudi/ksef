@@ -1,7 +1,7 @@
 package v2
 
 import (
-	"ksef/internal/certsdb"
+	"ksef/core/certsdb"
 	"ksef/internal/client/v2/invoices"
 	downloaderinterface "ksef/internal/client/v2/invoices/downloader/interface"
 	invoiceTypes "ksef/internal/client/v2/types/invoices"
@@ -12,7 +12,7 @@ import (
 
 func (c *APIClient) InvoiceDownloader(
 	vip *viper.Viper,
-	certsDB *certsdb.CertificatesDB,
+	certsDB *certsdb.CertsDB,
 	params invoiceTypes.DownloadParams,
 	registry *monthlyregistry.Registry,
 ) downloaderinterface.InvoiceDownloader {

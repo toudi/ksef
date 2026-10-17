@@ -7,9 +7,10 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
+	"ksef/core/certsdb"
 	"ksef/core/keyring"
-	"ksef/internal/certsdb"
 	"ksef/internal/invoicesdb/config"
 	"ksef/internal/logging"
 	"ksef/internal/utils"
@@ -103,6 +104,7 @@ func init() {
 
 func prepareBackupEnv(cmd *cobra.Command, _ []string) (err error) {
 	vip := viper.GetViper()
+	ctx := cmd.Context()
 	// for retrieving the password (optionally)
 	ring, err = keyring.NewKeyring(vip)
 	if err != nil {
@@ -125,12 +127,15 @@ func prepareBackupEnv(cmd *cobra.Command, _ []string) (err error) {
 		sourceType: backupSourceCertificates,
 		path:       "certificates",
 	}
+	var certsDB *certsdb.CertsDB
 	if backupConfig.nip != "" {
-		certsDB, err := certsdb.OpenOrCreate(vip)
+		certsDB, err = client.CertsDB(vip)
 		if err != nil {
 			return errors.Join(errOpeningCertsDB, err)
 		}
-		certsBackupSource.certUIDs = certsDB.FetchUIDsByNIP(backupConfig.nip)
+		if certsBackupSource.certUIDs, err = certsDB.FetchUIDsByNIP(ctx, backupConfig.nip); err != nil {
+			return err
+		}
 		if backupConfig.password, err = ring.Get(keyring.AppPrefix, backupConfig.nip, keyring.KeyBackupPassword); err != nil && err != keyring.ErrNotFound {
 			return errors.Join(errReadingPassword, err)
 		}
@@ -144,6 +149,9 @@ func prepareBackupEnv(cmd *cobra.Command, _ []string) (err error) {
 	}
 	if backupConfig.password == "" {
 		logging.SeiLogger.Warn("brak zdefiniowanego hasła do archiwizacji. Archiwum nie będzie zaszyfrowane")
+	}
+	if certsDB != nil {
+		return certsDB.Close(ctx)
 	}
 	return nil
 }

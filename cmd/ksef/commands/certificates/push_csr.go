@@ -25,20 +25,22 @@ func init() {
 }
 
 func syncEnrollments(cmd *cobra.Command, _ []string) error {
-	keyring, err := kr.NewKeyring(viper.GetViper())
+	vip := viper.GetViper()
+	keyring, err := kr.NewKeyring(vip)
+	ctx := cmd.Context()
 	if err != nil {
 		logging.SeiLogger.Error("błąd inicjalizacji keyringu", "err", err)
 		return err
 	}
 	defer keyring.Close()
 
-	if cli, err = client.InitClient(cmd, viper.GetViper(), keyring); err != nil {
+	if cli, err = client.InitClient(cmd, vip, keyring); err != nil {
 		return err
 	}
-	certsManager, err := cli.Certificates(runtime.GetEnvironmentId(viper.GetViper()))
+	certsManager, err := cli.Certificates(runtime.GetEnvironmentId(vip))
 	if err != nil {
 		return err
 	}
-	defer certsManager.SaveDB()
-	return certsManager.SyncEnrollments(cmd.Context())
+	defer certsManager.SaveDB(ctx)
+	return certsManager.SyncEnrollments(ctx)
 }

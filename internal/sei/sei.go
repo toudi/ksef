@@ -1,20 +1,15 @@
 package sei
 
 import (
-	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"io"
+	"ksef/internal/interfaces"
+	"ksef/internal/sei/generators"
+	"ksef/internal/sei/parser"
 	"path/filepath"
 	"strings"
 
-	"ksef/internal/certsdb"
-	"ksef/internal/interfaces"
-	"ksef/internal/sei/generators"
 	inputprocessors "ksef/internal/sei/input_processors"
-	"ksef/internal/sei/parser"
-	"ksef/internal/xml"
 
 	"github.com/spf13/viper"
 )
@@ -26,13 +21,11 @@ type SEI struct {
 	// conversion parameters for the input processor
 	conversionParameters inputprocessors.InputProcessorConfig
 	// this function will be called each time the invoice will be ready
-	invoiceReadyFunc          func(i *ParsedInvoice) error
-	parser                    *parser.Parser
-	IssuerTIN                 string
-	generator                 interfaces.Generator
-	invoiceContentBuffer      bytes.Buffer
-	certificateForOfflineMode *certsdb.Certificate
-	invoiceExistsFunc         func(refNo string) bool
+	invoiceReadyFunc  func(i *ParsedInvoice) error
+	parser            *parser.Parser
+	IssuerTIN         string
+	generator         interfaces.Generator
+	invoiceExistsFunc func(refNo string) bool
 }
 
 func SEI_Init(vip *viper.Viper, initializers ...func(s *SEI)) (*SEI, error) {
@@ -98,6 +91,7 @@ func (s *SEI) ProcessReader(src io.Reader, filename string) error {
 func (s *SEI) getProcessorFromFilename(filename string) (processor inputprocessors.InputProcessor, err error) {
 	extension := strings.ToLower(filepath.Ext(filename))
 
+	// TODO: convert to switch after done refactoring certsDB
 	if extension == ".csv" {
 		processor, err = inputprocessors.CSVDecoder_Init(s.conversionParameters.CSV)
 		if err != nil {
@@ -116,16 +110,4 @@ func (s *SEI) getProcessorFromFilename(filename string) (processor inputprocesso
 	}
 
 	return processor, nil
-}
-
-func (s *SEI) calculateInvoiceHash(root *xml.Node) (checksum string, err error) {
-	if _, err = s.invoiceContentBuffer.WriteString("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"); err != nil {
-		return checksum, err
-	}
-	if err = root.DumpToWriter(&s.invoiceContentBuffer, 0); err != nil {
-		return checksum, err
-	}
-	hashBytes := sha256.Sum256(s.invoiceContentBuffer.Bytes())
-	checksum = hex.EncodeToString(hashBytes[:])
-	return checksum, nil
 }

@@ -4,61 +4,81 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/base64"
-
-	"ksef/internal/certsdb"
+	"ksef/core/certsdb"
 	"ksef/internal/logging"
 )
 
 func (m *Manager) SyncEnrollments(ctx context.Context) error {
 	var err error
 	// check if we have some awaiting csr's to send:
-	if err = m.certsDB.ForEach(
-		func(cert certsdb.Certificate) bool {
-			return cert.CSRData != "" && cert.ReferenceNumber == ""
-		},
-		func(cert *certsdb.Certificate) error {
-			logging.CertsDBLogger.With("typ", cert.UsageAsString()).Debug("wysyłam wniosek o certyfikat")
-			resp, err := m.PushCSR(ctx, cert)
-			if err != nil {
-				return err
-			}
-			cert.ReferenceNumber = resp.ReferenceNumber
-			return nil
-		},
-	); err != nil {
+	awaitingSend, err := m.certsDB.FilterCertificates(ctx, func(c certsdb.Certificate) bool {
+		return c.CSRData != "" && c.ReferenceNumber == ""
+	})
+	if err != nil {
 		return err
 	}
+
+	for _, cert := range awaitingSend {
+		logging.CertsDBLogger.With("typ", cert.UsageAsString()).Debug("wysyłam wniosek o certyfikat")
+		resp, err := m.PushCSR(ctx, cert)
+		if err != nil {
+			return err
+		}
+		if err = m.certsDB.UpdateCertificate(
+			ctx,
+			cert.UID,
+			certsdb.CertificateUpdateData{
+				ReferenceNumber: &resp.ReferenceNumber,
+			},
+		); err != nil {
+			return err
+		}
+	}
+
 	// now check if we have some awaiting certs to download
-	return m.certsDB.ForEach(
-		func(cert certsdb.Certificate) bool {
-			return cert.ReferenceNumber != "" && cert.SerialNumber == ""
-		},
-		func(cert *certsdb.Certificate) error {
-			statusResp, err := m.GetEnrollmentStatus(ctx, cert)
-			if err != nil {
-				return err
-			}
-			if statusResp.Status.Code == enrollmentSuccess {
-				// we're ready to download
-				logging.CertsDBLogger.Debug("pobieram certyfikat")
-				certResp, err := m.DownloadCertificate(ctx, *statusResp.SerialNumber)
-				if err != nil {
-					return err
-				}
-				cert.SerialNumber = *statusResp.SerialNumber
-				derBytes, err := base64.StdEncoding.DecodeString(certResp.Certificates[0].Certificate)
-				if err != nil {
-					return err
-				}
-				certData, err := x509.ParseCertificate(derBytes)
-				if err != nil {
-					return err
-				}
-				cert.ValidFrom = certData.NotBefore
-				cert.ValidTo = certData.NotAfter
-				return cert.SaveCert(derBytes)
-			}
-			return nil
-		},
-	)
+	awaitingDownload, err := m.certsDB.FilterCertificates(ctx, func(c certsdb.Certificate) bool {
+		return c.ReferenceNumber != "" && c.SerialNumber == ""
+	})
+	if err != nil {
+		return err
+	}
+
+	for _, cert := range awaitingDownload {
+		statusResp, err := m.GetEnrollmentStatus(ctx, cert)
+		if err != nil {
+			return err
+		}
+		if statusResp.Status.Code != enrollmentSuccess || statusResp.SerialNumber == nil {
+			logging.CertsDBLogger.Debug("certyfikat nieprzetworzony, pomijam", "cert", cert.UID)
+			continue
+		}
+		logging.CertsDBLogger.Debug("pobieram certyfikat")
+		certResp, err := m.DownloadCertificate(ctx, *statusResp.SerialNumber)
+		if err != nil {
+			return err
+		}
+		certSerialNumber := *statusResp.SerialNumber
+		derBytes, err := base64.StdEncoding.DecodeString(certResp.Certificates[0].Certificate)
+		if err != nil {
+			return err
+		}
+		certData, err := x509.ParseCertificate(derBytes)
+		if err != nil {
+			return err
+		}
+		if err = m.certsDB.UpdateCertificate(
+			ctx,
+			cert.UID,
+			certsdb.CertificateUpdateData{
+				SerialNumber: &certSerialNumber,
+				ValidFrom:    &certData.NotBefore,
+				ValidTo:      &certData.NotAfter,
+				DERBytes:     derBytes,
+			},
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

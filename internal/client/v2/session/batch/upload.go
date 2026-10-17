@@ -4,16 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"ksef/core/certsdb"
+	"ksef/internal/client/v2/session/status"
+	"ksef/internal/client/v2/session/types"
+	"ksef/internal/encryption"
+	"ksef/internal/logging"
 	baseHTTP "net/http"
 	"os"
 	"time"
 
-	"ksef/internal/certsdb"
-	"ksef/internal/client/v2/session/status"
-	"ksef/internal/client/v2/session/types"
-	"ksef/internal/encryption"
 	HTTP "ksef/internal/http"
-	"ksef/internal/logging"
 )
 
 const (
@@ -77,11 +77,15 @@ func (b *Session) uploadInvoicesForForm(
 	}
 
 	logger.Debug("fetch symmetric key encryption certificate")
-	certificate, err := b.certsDB.GetByUsage(certsdb.UsageSymmetricKeyEncryption, "")
+	certificate, err := b.certsDB.GetCertificateByUsage(ctx, certsdb.CertificateUsageSymmetricKeyEncryption)
 	if err != nil {
 		return nil, err
 	}
-	initSessionReq.Encryption, err = cipher.PrepareHTTPRequestPayload(certificate.Filename())
+	certificateFileBytes, err := b.certsDB.GetCertificateBytes(ctx, certificate.UID)
+	if err != nil {
+		return nil, err
+	}
+	initSessionReq.Encryption, err = cipher.PrepareHTTPRequestPayload(certificateFileBytes)
 	if err != nil {
 		return nil, err
 	}

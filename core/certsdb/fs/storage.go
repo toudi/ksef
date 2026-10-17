@@ -21,28 +21,18 @@ type fsCertsStorage struct {
 	certs []*fsCertificate
 	kr    keyring.Keyring
 
-	dirty    bool
-	index    map[string]int
-	uidIndex map[string]int
-	env      string
-	vip      *viper.Viper
+	dirty     bool
+	uidIndex  map[string]int
+	hashIndex map[string]int
 }
 
 var _ certsdb.CertificateStorage = (*fsCertsStorage)(nil)
 
-func Init(vip *viper.Viper) (*fsCertsStorage, error) {
-	environment := runtime.GetEnvironmentId(vip)
-	// initialize keyring instance
-	kr, err := keyring.NewKeyring(vip)
-	if err != nil {
-		return nil, err
-	}
-
+func NewFSCertStorage(environmentId string, kr keyring.Keyring) (*fsCertsStorage, error) {
 	certificatesDB := fsCertsStorage{
-		uidIndex: make(map[string]int),
-		env:      environment,
-		vip:      vip,
-		kr:       kr,
+		uidIndex:  make(map[string]int),
+		hashIndex: make(map[string]int),
+		kr:        kr,
 	}
 
 	if err := os.MkdirAll(path.Dir(certificatesDBFile), 0775); err != nil {
@@ -66,15 +56,26 @@ func Init(vip *viper.Viper) (*fsCertsStorage, error) {
 		certificatesDB.certs = make([]*fsCertificate, 0, len(certificates))
 
 		for index, cert := range certificates {
-			if cert.postReadHook(environment) {
+			if cert.postReadHook(environmentId) {
 				certificatesDB.dirty = true
 			}
 			certificatesDB.certs = append(certificatesDB.certs, cert)
 			certificatesDB.uidIndex[cert.UID] = index
+			certificatesDB.hashIndex[cert.Hash()] = index
 		}
 	}
 
 	return &certificatesDB, nil
+}
+
+func Init(vip *viper.Viper) (*fsCertsStorage, error) {
+	environment := runtime.GetEnvironmentId(vip)
+	// initialize keyring instance
+	kr, err := keyring.NewKeyring(vip)
+	if err != nil {
+		return nil, err
+	}
+	return NewFSCertStorage(environment, kr)
 }
 
 func (f *fsCertsStorage) Close(ctx context.Context) error {

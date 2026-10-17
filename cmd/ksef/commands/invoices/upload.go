@@ -31,6 +31,8 @@ func init() {
 
 func uploadInvoicesRun(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
+	ctx := cmd.Context()
+
 	if err := runtime.CheckNIPIsSet(vip); err != nil {
 		return err
 	}
@@ -47,10 +49,15 @@ func uploadInvoicesRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 	defer ksefClient.Close()
+	certsDB, err := client.CertsDB(vip)
+	if err != nil {
+		return err
+	}
 
 	// initialize the invoicesdb
 	invoicesDB, err := invoicesdb.NewInvoicesDB(
 		vip,
+		certsDB,
 		invoicesdb.WithKSeFClient(ksefClient),
 		invoicesdb.WithKeyring(keyring),
 		invoicesdb.WithMonthsRangeGenerator(invoicesdb.MonthsRangePreviousMonthGenerator),
@@ -59,9 +66,13 @@ func uploadInvoicesRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	return invoicesDB.UploadOutstandingInvoices(
-		cmd.Context(),
+	if err = invoicesDB.UploadOutstandingInvoices(
+		ctx,
 		uploaderconfig.GetUploaderConfig(vip),
 		statuscheckerconfig.GetStatusCheckerConfig(vip),
-	)
+	); err != nil {
+		return err
+	}
+
+	return certsDB.Close(ctx)
 }

@@ -3,15 +3,15 @@ package interactive
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"time"
-
-	"ksef/internal/certsdb"
+	"ksef/core/certsdb"
 	"ksef/internal/client/v2/session/status"
 	"ksef/internal/client/v2/session/types"
 	"ksef/internal/encryption"
-	HTTP "ksef/internal/http"
 	"ksef/internal/logging"
+	"net/http"
+	"time"
+
+	HTTP "ksef/internal/http"
 )
 
 const (
@@ -46,11 +46,17 @@ func (s *Session) initialize(ctx context.Context, invoiceFormCode types.InvoiceF
 	var req uploadSessionRequest = uploadSessionRequest{
 		FormCode: invoiceFormCode,
 	}
-	certificate, err := s.certsDB.GetByUsage(certsdb.UsageSymmetricKeyEncryption, "")
+	certificate, err := s.certsDB.GetCertificateByUsage(
+		ctx, certsdb.CertificateUsageSymmetricKeyEncryption,
+	)
 	if err != nil {
 		return nil, err
 	}
-	req.Encryption, err = cipher.PrepareHTTPRequestPayload(certificate.Filename())
+	certificateFileBytes, err := s.certsDB.GetCertificateBytes(ctx, certificate.UID)
+	if err != nil {
+		return nil, err
+	}
+	req.Encryption, err = cipher.PrepareHTTPRequestPayload(certificateFileBytes)
 	if err != nil {
 		return nil, err
 	}

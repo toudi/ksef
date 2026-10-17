@@ -7,6 +7,7 @@ import (
 	"ksef/internal/utils"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/goccy/go-yaml"
 )
@@ -22,13 +23,22 @@ type FileBasedKeyring struct {
 	cfg      *FileBasedKeyringConfig
 	contents map[string]string
 	dirty    bool
+	// a bit of an explanation. ironically, the mutex is primarily for the unbuffered mode
+	// which I don't suspect anybody would actually be using (hence the irony).
+	// in the buffered mode there's still a risk, though significantly smaller since the
+	// services that actually use the keyring are using different keyspaces and so they
+	// don't collide with each other (though it's always best to be safe than sorry) and
+	// the flush happens during program close (and even then, it's protected by the dirty flag)
+	// anyhow, in the unbuffered call, each call to Read/Write results in a file operation.
+	// and so if we've got two concurrent functions - one doing Read, another doing Write,
+	// then what may happen is the reading routine would read garbage (because the Write
+	// would be trying to save the file)
+	mu sync.Mutex
 }
 
 var (
-	errCorruptedKeyringFile     = errors.New("keyring file corrupted")
-	errUnableToInitializeCipher = errors.New("unable to initialize cipher")
-	errDecryption               = errors.New("decryption failed")
-	errReading                  = errors.New("reading decrypted keyring failed")
+	errCorruptedKeyringFile = errors.New("keyring file corrupted")
+	errReading              = errors.New("reading decrypted keyring failed")
 )
 
 func keyName(bucket, nip, key string) string {
@@ -57,6 +67,8 @@ func NewFileBasedKeyring(config *FileBasedKeyringConfig) (*FileBasedKeyring, err
 }
 
 func (f *FileBasedKeyring) Delete(bucket string, nip string, key string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	keyName := keyName(bucket, nip, key)
 	logging.KeyringLogger.Debug("delete key", "keyName", keyName)
 	if f.cfg.Buffered {
@@ -70,6 +82,8 @@ func (f *FileBasedKeyring) Delete(bucket string, nip string, key string) error {
 }
 
 func (f *FileBasedKeyring) Get(bucket string, nip string, key string) (string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	keyName := keyName(bucket, nip, key)
 	logging.KeyringLogger.Debug("get key value", "keyName", keyName)
 	if f.cfg.Buffered {
@@ -82,6 +96,8 @@ func (f *FileBasedKeyring) Get(bucket string, nip string, key string) (string, e
 }
 
 func (f *FileBasedKeyring) Set(bucket string, nip string, key string, contents string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	keyName := keyName(bucket, nip, key)
 	logging.KeyringLogger.Debug("set key", "keyName", keyName)
 	if f.cfg.Buffered {
@@ -97,6 +113,8 @@ func (f *FileBasedKeyring) Set(bucket string, nip string, key string, contents s
 // this function is only going to be called from the CLI which explicitly sets the buffred flag
 // therefore we can be certain that the inner contents map will be populated.
 func (f *FileBasedKeyring) ForEach(callback func(bucket, nip, key, contents string) error) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	var err error
 	for encodedKey, value := range f.contents {
 		keyParts := strings.Split(encodedKey, "|")
@@ -178,6 +196,8 @@ func (f *FileBasedKeyring) saveKeyring(contents map[string]string) error {
 }
 
 func (f *FileBasedKeyring) Close() error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	logging.KeyringLogger.Debug("file-based keyring close()", "buffered", f.cfg.Buffered, "dirty", f.dirty)
 	if !f.cfg.Buffered || !f.dirty {
 		return nil

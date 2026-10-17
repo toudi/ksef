@@ -4,10 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	baseHTTP "net/http"
-
-	"ksef/internal/certsdb"
+	"ksef/core/certsdb"
 	"ksef/internal/http"
+	baseHTTP "net/http"
 )
 
 const (
@@ -27,7 +26,7 @@ type enrollmentStatusResponse struct {
 	SerialNumber *string `json:"certificateSerialNumber"`
 }
 
-func (m *Manager) GetEnrollmentStatus(ctx context.Context, cert *certsdb.Certificate) (*enrollmentStatusResponse, error) {
+func (m *Manager) GetEnrollmentStatus(ctx context.Context, cert certsdb.Certificate) (*enrollmentStatusResponse, error) {
 	if cert.ReferenceNumber == "" {
 		return nil, errInvalidEnrollment
 	}

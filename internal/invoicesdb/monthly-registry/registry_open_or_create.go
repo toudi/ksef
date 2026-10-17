@@ -2,20 +2,19 @@ package monthlyregistry
 
 import (
 	"errors"
+	"ksef/core/certsdb"
+	"ksef/internal/invoicesdb/config"
+	"ksef/internal/runtime"
+	"ksef/internal/utils"
 	"os"
 	"path"
 	"path/filepath"
 	"time"
 
-	"ksef/internal/certsdb"
-	"ksef/internal/invoicesdb/config"
-	"ksef/internal/runtime"
-	"ksef/internal/utils"
-
 	"github.com/spf13/viper"
 )
 
-func OpenOrCreate(dir string, certsDB *certsdb.CertificatesDB, vip *viper.Viper) (*Registry, error) {
+func OpenOrCreate(dir string, certsDB *certsdb.CertsDB, vip *viper.Viper) (*Registry, error) {
 	regFile, exists, err := utils.FileExists(path.Join(dir, registryName))
 	if err != nil && !os.IsNotExist(err) {
 		// the only way for the err to be not nil is when there's a problem opening

@@ -2,9 +2,9 @@ package authorization
 
 import (
 	"fmt"
+	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
 	kr "ksef/core/keyring"
-	"ksef/internal/certsdb"
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/token"
@@ -34,7 +34,7 @@ func dumpAuthChallenge(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
 	vip.Set(auth.FlagDoNotRestoreTokens, "true")
 
-	certsDB, err := certsdb.OpenOrCreate(vip)
+	certsDB, err := client.CertsDB(vip)
 	if err != nil {
 		return err
 	}

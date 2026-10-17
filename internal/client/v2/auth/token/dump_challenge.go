@@ -3,10 +3,9 @@ package token
 import (
 	_ "embed"
 	"io"
-	"text/template"
-
-	"ksef/internal/certsdb"
+	"ksef/core/certsdb"
 	"ksef/internal/client/v2/auth/validator"
+	"text/template"
 )
 
 var (
@@ -29,7 +28,12 @@ func init() {
 	challengeRequestTemplateSubjectInternalId, _ = template.New("context-internal-id").Parse(challengeRequestSubjectInternalId)
 }
 
-func dumpChallengeToWriter(challenge validator.AuthChallenge, nip string, certificate certsdb.Certificate, dest io.Writer) error {
+func dumpChallengeToWriter(
+	challenge validator.AuthChallenge,
+	nip string,
+	certificate certsdb.Certificate,
+	dest io.Writer,
+) error {
 	internalId := certificate.GetInternalIDForNIP(nip)
 	if internalId != nil {
 		return challengeRequestTemplateSubjectInternalId.Execute(

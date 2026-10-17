@@ -10,3 +10,14 @@ const (
 	CertificateUsageAuthentication CertificateUsage = "Authentication"
 	CertificateUsageOffline        CertificateUsage = "Offline"
 )
+
+func (c CertificateUsage) Description() (string, error) {
+	switch c {
+	case CertificateUsageAuthentication:
+		return "certyfikat autoryzacyjny", nil
+	case CertificateUsageOffline:
+		return "certyfikat offline", nil
+	default:
+		return "", ErrUnsupportedCertificateUsage
+	}
+}

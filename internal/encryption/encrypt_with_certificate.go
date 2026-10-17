@@ -7,19 +7,13 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"os"
 )
 
-func EncryptMessageWithCertificate(certificateFile string, message []byte) ([]byte, error) {
-	certFileBytes, err := os.ReadFile(certificateFile)
-	if err != nil {
-		return nil, fmt.Errorf("cannot read certificate file: %v", err)
-	}
-
-	block, _ := pem.Decode(certFileBytes)
+func EncryptMessageWithCertificate(certificateFileBytes []byte, message []byte) ([]byte, error) {
+	block, _ := pem.Decode(certificateFileBytes)
 	parsedCert, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		return nil, fmt.Errorf("could not parse certificate from %s: %v", certificateFile, err)
+		return nil, fmt.Errorf("could not parse certificate: %w", err)
 	}
 	var publicKey *rsa.PublicKey
 	var ok bool

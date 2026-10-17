@@ -70,3 +70,12 @@ func (f *fsCertsStorage) encryptPrivateKeyBytes(certId string, pemBytes []byte, 
 	_, err = io.Copy(dest, bytes.NewReader(encryptedKeyBytes))
 	return err
 }
+
+func (f *fsCertsStorage) encryptPrivateKeyBytesToFile(certId string, pemBytes []byte, privateKeyFilename string) error {
+	privateKeyFile, err := os.OpenFile(privateKeyFilename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
+	if err != nil {
+		return err
+	}
+	defer privateKeyFile.Close()
+	return f.encryptPrivateKeyBytes(certId, pemBytes, privateKeyFile)
+}

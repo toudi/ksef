@@ -3,8 +3,8 @@ package certificates
 import (
 	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
+	"ksef/core/certsdb"
 	kr "ksef/core/keyring"
-	"ksef/internal/certsdb"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
 
@@ -58,20 +58,20 @@ func sendCsrs(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-	defer certsManager.SaveDB()
+	defer certsManager.SaveDB(cmd.Context())
 	ed, err := certsManager.GetEnrollmentsData(cmd.Context())
 	if err != nil {
 		return err
 	}
 	if prepareAuth, _ := cmd.Flags().GetBool(flagAuth); prepareAuth {
 		logging.CertsDBLogger.Debug("przygotowuję CSR dla certyfikatu autoryzacji")
-		if err = certsManager.PrepareEnrollmentCSR(ed, certsdb.UsageAuthentication, nip, keyring); err != nil {
+		if err = certsManager.PrepareEnrollmentCSR(ed, certsdb.CertificateUsageAuthentication, nip, keyring); err != nil {
 			return err
 		}
 	}
 	if prepareOffline, _ := cmd.Flags().GetBool(flagOffline); prepareOffline {
 		logging.CertsDBLogger.Debug("przygotowuję CSR dla certyfikatu offline")
-		if err = certsManager.PrepareEnrollmentCSR(ed, certsdb.UsageOffline, nip, keyring); err != nil {
+		if err = certsManager.PrepareEnrollmentCSR(ed, certsdb.CertificateUsageOffline, nip, keyring); err != nil {
 			return err
 		}
 	}

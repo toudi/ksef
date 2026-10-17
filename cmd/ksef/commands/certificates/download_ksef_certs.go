@@ -2,7 +2,8 @@ package certificates
 
 import (
 	"encoding/base64"
-	"ksef/internal/certsdb"
+	"ksef/cmd/ksef/commands/client"
+	"ksef/core/certsdb"
 	"ksef/internal/client/v2/security"
 	"ksef/internal/http"
 	"ksef/internal/logging"
@@ -24,45 +25,55 @@ func init() {
 
 func downloadKSeFCerts(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
-	env := runtime.GetEnvironment(vip)
+	ctx := cmd.Context()
 
-	certsDB, err := certsdb.OpenOrCreate(vip)
+	gatewayConfig, err := runtime.GatewayConfig(vip)
 	if err != nil {
 		return err
 	}
 
-	httpClient := http.NewClient(env.API)
+	certsDB, err := client.CertsDB(vip)
+	if err != nil {
+		return err
+	}
 
-	certificates, err := security.DownloadCertificates(cmd.Context(), httpClient)
+	httpClient := http.NewClient(gatewayConfig.API)
+
+	certificates, err := security.DownloadCertificates(ctx, httpClient)
 	if err != nil {
 		return err
 	}
 
 	for _, cert := range certificates {
 		certHash := certsdb.CertificateHash{
-			Usage:         cert.Usage,
-			EnvironmentId: env.ID,
-			ValidFrom:     cert.ValidFrom,
-			ValidTo:       cert.ValidTo,
+			Usage:     cert.Usage,
+			Gateway:   gatewayConfig.Gateway,
+			ValidFrom: cert.ValidFrom,
+			ValidTo:   cert.ValidTo,
 		}
 
-		if err = certsDB.AddIfHashNotFound(certHash, func(newCert *certsdb.Certificate) error {
-			logging.CertsDBLogger.Debug("zapisywanie certyfikatu ministerstwa finansów", "usage", certHash.UsageAsString())
-			var err error
-			var derBytes []byte
-			if derBytes, err = base64.StdEncoding.DecodeString(cert.Certificate); err != nil {
-				return err
-			}
-			newCert.EnvironmentId = env.ID
-			newCert.CertificateHash = certHash
-			if err = newCert.SaveCert(derBytes); err != nil {
-				return err
-			}
-			return nil
-		}); err != nil {
+		var derBytes []byte
+		if derBytes, err = base64.StdEncoding.DecodeString(cert.Certificate); err != nil {
 			return err
+		}
+
+		created, err := certsDB.StoreMinistryCertificate(
+			ctx,
+			certsdb.MinistryCertificateData{
+				Certificate: certsdb.Certificate{
+					CertificateHash: certHash,
+				},
+				DERBytes: derBytes,
+			},
+		)
+		if err != nil {
+			return err
+		}
+
+		if created {
+			logging.CertsDBLogger.Debug("certyfikat ministerstwa finansów dodany do bazy", "usage", certHash.UsageAsString())
 		}
 	}
 
-	return certsDB.Save()
+	return certsDB.Close(ctx)
 }

@@ -5,9 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-
+	"ksef/core/certsdb"
 	"ksef/core/keyring"
-	"ksef/internal/certsdb"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
 )
@@ -34,7 +33,9 @@ func (tm *TokenManager) persistTokens() error {
 		logger.Error("nieprawidłowy numer NIP", "err", err)
 		return err
 	}
-	authCert, err := tm.certsDB.GetByUsage(certsdb.UsageAuthentication, nip)
+	authCert, err := tm.certsDB.GetCertificateByUsageAndNIP(
+		context.Background(), certsdb.CertificateUsageAuthentication, nip,
+	)
 	if err != nil {
 		logger.Error("nie udało się odczytać certyfikatu", "err", err)
 	}
@@ -57,7 +58,9 @@ func (tm *TokenManager) clearSessionTokens() error {
 	if err != nil {
 		return err
 	}
-	authCert, err := tm.certsDB.GetByUsage(certsdb.UsageAuthentication, nip)
+	authCert, err := tm.certsDB.GetCertificateByUsageAndNIP(
+		context.Background(), certsdb.CertificateUsageAuthentication, nip,
+	)
 	if err != nil {
 		logger.Error("nie udało się odczytać certyfikatu", "err", err)
 	}
@@ -75,7 +78,9 @@ func (tm *TokenManager) restoreTokens(ctx context.Context) error {
 	}
 	gateway := runtime.GetEnvironmentId(tm.vip)
 	logger.Debug("próba odczytania certyfikatu odpowiedzialnego za autoryzację")
-	authCert, err := tm.certsDB.GetByUsage(certsdb.UsageAuthentication, nip)
+	authCert, err := tm.certsDB.GetCertificateByUsageAndNIP(
+		ctx, certsdb.CertificateUsageAuthentication, nip,
+	)
 	if err != nil {
 		logger.Error("nie udało się odczytać certyfikatu", "err", err)
 	}

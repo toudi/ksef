@@ -1,16 +1,15 @@
 package monthlyregistry
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
+	"ksef/core/certsdb"
+	"ksef/internal/sei"
 	"net/url"
 	"strings"
 	"time"
-
-	kr "ksef/core/keyring"
-	"ksef/internal/certsdb"
-	"ksef/internal/sei"
 )
 
 const (
@@ -48,10 +47,11 @@ func (i *Invoice) generateInvoiceQRCode(qrcodeURL string, parsed *sei.ParsedInvo
 
 // https://github.com/CIRFMF/ksef-docs/blob/main/kody-qr.md#2-kodii--weryfikacja-certyfikatu
 func (i *Invoice) generateCertificateQRCode(
+	ctx context.Context,
 	qrcodeURL string,
 	parsed *sei.ParsedInvoice,
-	certificate certsdb.Certificate,
-	keyring kr.Keyring,
+	certificate *certsdb.Certificate,
+	certsDB *certsdb.CertsDB,
 ) (string, error) {
 	checksumBytes, err := hex.DecodeString(i.Checksum)
 	if err != nil {
@@ -76,7 +76,7 @@ func (i *Invoice) generateCertificateQRCode(
 		base64.RawURLEncoding.EncodeToString(checksumBytes),
 	)
 	// now that we have signing content we can sign it with certificate
-	signature, err := certificate.SignContent([]byte(signingContent), keyring)
+	signature, err := certsDB.SignContent(ctx, certificate.UID, []byte(signingContent))
 	if err != nil {
 		return "", err
 	}

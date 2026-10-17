@@ -1,13 +1,13 @@
 package token
 
 import (
+	"ksef/core/certsdb"
 	kr "ksef/core/keyring"
-	"ksef/internal/certsdb"
 )
 
 type initializerFunc = func(handler *TokenHandler)
 
-func WithCertsDB(certsDB *certsdb.CertificatesDB) initializerFunc {
+func WithCertsDB(certsDB *certsdb.CertsDB) initializerFunc {
 	return func(handler *TokenHandler) {
 		handler.certsDB = certsDB
 	}

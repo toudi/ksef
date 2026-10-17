@@ -42,6 +42,7 @@ func init() {
 
 func importRun(cmd *cobra.Command, args []string) error {
 	vip := viper.GetViper()
+	ctx := cmd.Context()
 
 	keyring, err := kr.NewKeyring(vip)
 	if err != nil {
@@ -56,9 +57,15 @@ func importRun(cmd *cobra.Command, args []string) error {
 	}
 	defer ksefClient.Close()
 
+	certsDB, err := client.CertsDB(vip)
+	if err != nil {
+		return err
+	}
+
 	// initialize the invoicesdb
 	invoicesDB, err := invoicesdb.NewInvoicesDB(
 		vip,
+		certsDB,
 		invoicesdb.WithKSeFClient(ksefClient),
 		invoicesdb.WithoutInitializingPrefix(),
 		invoicesdb.WithKeyring(keyring),
@@ -66,10 +73,14 @@ func importRun(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return errors.Join(errInvoicesDBInit, err)
 	}
-	return invoicesDB.Import(
-		cmd.Context(),
+	if err = invoicesDB.Import(
+		ctx,
 		vip,
 		args[0],
 		vip.GetBool(flagNameConfirm),
-	)
+	); err != nil {
+		return err
+	}
+
+	return certsDB.Close(ctx)
 }

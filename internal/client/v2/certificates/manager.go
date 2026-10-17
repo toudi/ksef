@@ -1,17 +1,18 @@
 package certificates
 
 import (
-	"ksef/internal/certsdb"
+	"context"
+	"ksef/core/certsdb"
 	"ksef/internal/http"
 )
 
 type Manager struct {
 	httpClient *http.Client
-	certsDB    *certsdb.CertificatesDB
+	certsDB    *certsdb.CertsDB
 	env        string
 }
 
-func NewManager(httpClient *http.Client, certsDB *certsdb.CertificatesDB, env string) *Manager {
+func NewManager(httpClient *http.Client, certsDB *certsdb.CertsDB, env string) *Manager {
 	return &Manager{
 		httpClient: httpClient,
 		certsDB:    certsDB,
@@ -19,6 +20,6 @@ func NewManager(httpClient *http.Client, certsDB *certsdb.CertificatesDB, env st
 	}
 }
 
-func (m *Manager) SaveDB() error {
-	return m.certsDB.Save()
+func (m *Manager) SaveDB(ctx context.Context) error {
+	return m.certsDB.Close(ctx)
 }

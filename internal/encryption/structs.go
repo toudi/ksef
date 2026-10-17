@@ -14,11 +14,11 @@ type CipherHTTPRequest struct {
 	IV  string `json:"initializationVector"`
 }
 
-func (c Cipher) PrepareHTTPRequestPayload(certificateFile string) (CipherHTTPRequest, error) {
+func (c Cipher) PrepareHTTPRequestPayload(certificateBytes []byte) (CipherHTTPRequest, error) {
 	var chr CipherHTTPRequest
 	encoder := base64.StdEncoding
 
-	encryptedKeyBytes, err := EncryptMessageWithCertificate(certificateFile, c.Key)
+	encryptedKeyBytes, err := EncryptMessageWithCertificate(certificateBytes, c.Key)
 	if err != nil {
 		return chr, err
 	}

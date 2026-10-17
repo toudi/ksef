@@ -3,15 +3,14 @@ package auth
 import (
 	"context"
 	"errors"
-	"sync"
-	"time"
-
+	"ksef/core/certsdb"
 	"ksef/core/keyring"
-	"ksef/internal/certsdb"
 	"ksef/internal/client/v2/auth/validator"
 	"ksef/internal/http"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
+	"sync"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -50,7 +49,7 @@ type TokenManager struct {
 	vip                 *viper.Viper
 	obtainNewChallenge  bool
 	keyring             keyring.Keyring
-	certsDB             *certsdb.CertificatesDB
+	certsDB             *certsdb.CertsDB
 }
 
 func NewTokenManager(
@@ -58,6 +57,7 @@ func NewTokenManager(
 	vip *viper.Viper,
 	challengeValidator validator.AuthChallengeValidator,
 	keyring keyring.Keyring,
+	certsDB *certsdb.CertsDB,
 ) (*TokenManager, error) {
 	environment := runtime.GetEnvironment(vip)
 	httpClient := http.NewClient(environment.API)
@@ -66,11 +66,6 @@ func NewTokenManager(
 		if err := challengeValidator.Initialize(ctx, httpClient); err != nil {
 			return nil, err
 		}
-	}
-
-	certsDB, err := certsdb.OpenOrCreate(vip)
-	if err != nil {
-		return nil, err
 	}
 
 	tm := &TokenManager{

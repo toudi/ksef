@@ -5,11 +5,11 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
+	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
-	kr "ksef/core/keyring"
-	"ksef/internal/certsdb"
+	"ksef/core/certsdb"
+	"ksef/internal/logging"
 	"ksef/internal/runtime"
-	"ksef/internal/utils"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -60,13 +60,13 @@ func init() {
 
 func importCertificateRun(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
-	envId := runtime.GetEnvironmentId(vip)
-
-	certsDB, err := certsdb.OpenOrCreate(vip)
+	ctx := cmd.Context()
+	gateway, err := runtime.Gateway(vip)
 	if err != nil {
 		return err
 	}
-	keyring, err := kr.NewKeyring(vip)
+
+	certsDB, err := client.CertsDB(vip)
 	if err != nil {
 		return err
 	}
@@ -100,10 +100,7 @@ func importCertificateRun(cmd *cobra.Command, _ []string) error {
 	}
 	serialNumber, _ := cmd.Flags().GetString(flagNameSerial)
 	usageString, _ := cmd.Flags().GetString(flagNameUsage)
-	usage, err := certsdb.ValidateUsage(usageString)
-	if err != nil {
-		return err
-	}
+
 	nipSlice, err := runtime.GetNIPSlice(vip)
 	if err != nil {
 		return err
@@ -112,46 +109,32 @@ func importCertificateRun(cmd *cobra.Command, _ []string) error {
 
 	// prepare certificate hash
 	certificateHash := certsdb.CertificateHash{
-		EnvironmentId: envId,
-		Usage:         []certsdb.Usage{usage},
-		ValidFrom:     certificate.NotBefore,
-		ValidTo:       certificate.NotAfter,
+		Gateway:   gateway,
+		Usage:     []certsdb.CertificateUsage{certsdb.CertificateUsage(usageString)},
+		ValidFrom: certificate.NotBefore,
+		ValidTo:   certificate.NotAfter,
 	}
 
-	if err = certsDB.AddIfHashNotFound(certificateHash, func(newCert *certsdb.Certificate) (err error) {
-		if err = utils.CopyFile(
-			privateKeyFile, newCert.PrivateKeyFilename(),
-		); err != nil {
-			return errCopyingPKeyFile
-		}
-
-		// yeah, that's ugly - we're touching the disk twice. though it only has to be done once
-		// desperate times .. you know the drill
-		if err = newCert.EncryptPrivateKey(keyring); err != nil {
-			return err
-		}
-
-		if err = utils.CopyFile(
-			certificateFile, newCert.Filename(),
-		); err != nil {
-			return errCopyingCertFile
-		}
-
-		newCert.NIP = nipSlice
-		newCert.SerialNumber = serialNumber
-		newCert.Usage = []certsdb.Usage{usage}
-		newCert.ValidFrom = certificate.NotBefore
-		newCert.ValidTo = certificate.NotAfter
-		newCert.ProfileName = profile
-
-		return nil
-	}); err != nil {
+	stored, err := certsDB.AddUserCertificate(
+		ctx,
+		certsdb.UserCertificateData{
+			Certificate: certsdb.Certificate{
+				CertificateHash: certificateHash,
+				NIP:             nipSlice,
+				SerialNumber:    serialNumber,
+				ProfileName:     profile,
+			},
+			PrivateKeyPEMBytes: privateKeyBytes,
+			DERBytes:           certificateData,
+		},
+	)
+	if err != nil {
 		return err
 	}
 
-	if err = keyring.Close(); err != nil {
-		return err
+	if stored {
+		logging.CertsDBLogger.Debug("certyfikat dodany do bazy", "serialNumber", serialNumber)
 	}
 
-	return certsDB.Save()
+	return certsDB.Close(ctx)
 }

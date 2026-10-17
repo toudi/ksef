@@ -4,15 +4,15 @@ import (
 	"bytes"
 	"context"
 	"io"
-	"os"
-
-	kr "ksef/core/keyring"
-	"ksef/internal/certsdb"
+	"ksef/core/certsdb"
 	"ksef/internal/client/v2/auth/validator"
 	"ksef/internal/client/v2/auth/xades"
 	"ksef/internal/http"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
+	"os"
+
+	kr "ksef/core/keyring"
 
 	"github.com/spf13/viper"
 )
@@ -29,7 +29,7 @@ type TokenHandler struct {
 	vip                 *viper.Viper
 	httpClient          *http.Client
 	eventChannel        chan validator.AuthEvent
-	certsDB             *certsdb.CertificatesDB
+	certsDB             *certsdb.CertsDB
 	mode                mode
 	challengeDumpPath   string
 	signedChallengeFile string
@@ -120,12 +120,14 @@ func (e *TokenHandler) ValidateChallenge(ctx context.Context, challenge validato
 		return err
 	}
 
-	certificate, err := e.certsDB.GetByUsage(certsdb.UsageAuthentication, nip)
+	certificate, err := e.certsDB.GetCertificateByUsageAndNIP(
+		ctx, certsdb.CertificateUsageAuthentication, nip,
+	)
 	if err != nil {
 		return err
 	}
 
-	if err = dumpChallengeToWriter(challenge, nip, certificate, sourceDocument); err != nil {
+	if err = dumpChallengeToWriter(challenge, nip, *certificate, sourceDocument); err != nil {
 		logging.AuthLogger.Error("nie udało się zapisać wyzwania do bufora", "err", err)
 		return err
 	}
@@ -139,7 +141,13 @@ func (e *TokenHandler) ValidateChallenge(ctx context.Context, challenge validato
 	}
 	// great. now we can sign it using the certificate
 	var signedDocument bytes.Buffer
-	if err = xades.SignAuthChallenge(sourceDocument, certificate, e.keyring, &signedDocument); err != nil {
+	if err = xades.SignAuthChallenge(
+		ctx,
+		sourceDocument,
+		e.certsDB,
+		certificate.UID,
+		&signedDocument,
+	); err != nil {
 		return err
 	}
 	// perfect. final step - let's post it to the validation endpoint

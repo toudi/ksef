@@ -4,7 +4,8 @@ import (
 	"bufio"
 	"errors"
 	"iter"
-	"ksef/internal/certsdb"
+	"ksef/cmd/ksef/commands/client"
+	"ksef/core/certsdb"
 	"os"
 	"strings"
 
@@ -38,7 +39,7 @@ const (
 	flagNameIds           = "ids"
 )
 
-var certsDB *certsdb.CertificatesDB
+var certsDB *certsdb.CertsDB
 
 func init() {
 	internalIdsFlags := internalIdsCommand.PersistentFlags()
@@ -53,7 +54,7 @@ func init() {
 func prepareCertsDB(cmd *cobra.Command, _ []string) (err error) {
 	vip := viper.GetViper()
 
-	certsDB, err = certsdb.OpenOrCreate(vip)
+	certsDB, err = client.CertsDB(vip)
 	if err != nil {
 		return err
 	}
@@ -89,24 +90,26 @@ func internalIdsIterator(flagSet *pflag.FlagSet) iter.Seq[string] {
 
 func addInternalIdsToCertificate(cmd *cobra.Command, _ []string) error {
 	flags := cmd.Flags()
+	ctx := cmd.Context()
 	certId, _ := flags.GetString(flagNameCertificateId)
 	idsIterator := internalIdsIterator(flags)
 
-	if err := certsDB.AddInternalIDsToCertificate(idsIterator, certId); err != nil {
+	if err := certsDB.AddInternalIDsToCertificate(ctx, certId, idsIterator); err != nil {
 		return err
 	}
 
-	return certsDB.Save()
+	return certsDB.Close(ctx)
 }
 
 func removeInternalIdsFromCertificate(cmd *cobra.Command, _ []string) error {
 	flags := cmd.Flags()
+	ctx := cmd.Context()
 	certId, _ := flags.GetString(flagNameCertificateId)
 	idsIterator := internalIdsIterator(flags)
 
-	if err := certsDB.RemoveInternalIdsFromCertificate(idsIterator, certId); err != nil {
+	if err := certsDB.RemoveInternalIdsFromCertificate(ctx, certId, idsIterator); err != nil {
 		return err
 	}
 
-	return certsDB.Save()
+	return certsDB.Close(ctx)
 }

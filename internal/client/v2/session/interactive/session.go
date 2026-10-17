@@ -3,16 +3,19 @@ package interactive
 import (
 	"context"
 	"errors"
-
-	"ksef/internal/certsdb"
+	"ksef/core/certsdb"
 	"ksef/internal/client/v2/session/types"
-	HTTP "ksef/internal/http"
 	"ksef/internal/logging"
+
+	HTTP "ksef/internal/http"
+
+	"github.com/spf13/viper"
 )
 
 type Session struct {
 	httpClient *HTTP.Client
-	certsDB    *certsdb.CertificatesDB
+	certsDB    *certsdb.CertsDB
+	vip        *viper.Viper
 }
 
 var (
@@ -20,10 +23,11 @@ var (
 	ErrProbablyUsedSend          = errors.New("upload command probably used previously")
 )
 
-func NewSession(httpClient *HTTP.Client, certsDB *certsdb.CertificatesDB) *Session {
+func NewSession(httpClient *HTTP.Client, certsDB *certsdb.CertsDB, vip *viper.Viper) *Session {
 	return &Session{
 		httpClient: httpClient,
 		certsDB:    certsDB,
+		vip:        vip,
 	}
 }
 
