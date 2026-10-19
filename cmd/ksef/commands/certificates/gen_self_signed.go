@@ -4,8 +4,8 @@ import (
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"errors"
-	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
+	"ksef/internal/resources"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
@@ -45,7 +45,7 @@ func generateSelfSignedCert(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
 	ctx := cmd.Context()
 
-	certsDB, err := client.CertsDB(vip)
+	certsDB, err := resources.CertsDB(vip)
 	if err != nil {
 		return err
 	}
@@ -93,5 +93,5 @@ func generateSelfSignedCert(cmd *cobra.Command, _ []string) error {
 	if err = certsDB.RegenerateSelfSignedCert(ctx, subject); err != nil {
 		return err
 	}
-	return certsDB.Close(ctx)
+	return resources.Close(ctx)
 }

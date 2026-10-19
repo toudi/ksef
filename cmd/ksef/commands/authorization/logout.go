@@ -3,9 +3,9 @@ package authorization
 import (
 	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
-	kr "ksef/core/keyring"
 	"ksef/internal/client/v2/auth"
 	"ksef/internal/logging"
+	"ksef/internal/resources"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -24,15 +24,16 @@ func init() {
 }
 
 func logout(cmd *cobra.Command, _ []string) error {
+	ctx := cmd.Context()
 	vip := viper.GetViper()
 	vip.Set(auth.FlagExitAfterPersistingToken, "true")
 
-	keyring, err := kr.NewKeyring(vip)
+	keyring, err := resources.Keyring(vip)
 	if err != nil {
 		logging.SeiLogger.Error("błąd inicjalizacji keyringu", "err", err)
 		return err
 	}
-	defer keyring.Close()
+	defer resources.Close(ctx)
 
 	cli, err := client.InitClient(cmd, vip, keyring)
 	if err != nil {

@@ -2,11 +2,13 @@ package invoices
 
 import (
 	"ksef/cmd/ksef/commands/client"
+	"ksef/core/certsdb"
 	kr "ksef/core/keyring"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/invoicesdb"
 	downloaderconfig "ksef/internal/invoicesdb/downloader/config"
 	"ksef/internal/logging"
+	"ksef/internal/resources"
 	"ksef/internal/runtime"
 	"sync"
 
@@ -31,12 +33,18 @@ func downloadRunParalell(cmd *cobra.Command, baseViper *viper.Viper, numWorkers 
 		return err
 	}
 
-	keyring, err := kr.NewKeyring(baseViper)
+	keyring, err := resources.Keyring(baseViper)
 	if err != nil {
 		logging.SeiLogger.Error("błąd inicjalizacji keyringu", "err", err)
 		return err
 	}
-	defer keyring.Close()
+	// the certificates database is a process-wide singleton - create it here,
+	// on the main goroutine, before the workers start. the workers only read it.
+	certsDB, err := resources.CertsDB(baseViper)
+	if err != nil {
+		return err
+	}
+	defer resources.Close(cmd.Context())
 
 	// now let's determine if there is less nip's to process than number of
 	// declared workers. if so - let's decrement it to not waste resources
@@ -51,7 +59,7 @@ func downloadRunParalell(cmd *cobra.Command, baseViper *viper.Viper, numWorkers 
 	errChannel := make(chan downloadError)
 
 	for range numWorkers {
-		go downloadWorker(cmd, &wg, baseViper, downloaderConfig, keyring, nipChannel, errChannel)
+		go downloadWorker(cmd, &wg, baseViper, downloaderConfig, keyring, certsDB, nipChannel, errChannel)
 	}
 
 	// start the error listening function
@@ -92,6 +100,7 @@ func downloadWorker(
 	baseViper *viper.Viper,
 	downloaderConfig invoices.DownloadParams,
 	keyring kr.Keyring,
+	certsDB *certsdb.CertsDB,
 	nipChannel <-chan string,
 	errorsChannel chan<- downloadError,
 ) {
@@ -101,7 +110,7 @@ func downloadWorker(
 		vip := cloneViper(baseViper)
 		runtime.SetNIP(vip, nip)
 
-		if err := doDownload(cmd, vip, nip, downloaderConfig, keyring); err != nil {
+		if err := doDownload(cmd, vip, nip, downloaderConfig, keyring, certsDB); err != nil {
 			errorsChannel <- downloadError{
 				NIP: nip,
 				err: err,
@@ -121,6 +130,7 @@ func doDownload(
 	nip string,
 	downloaderConfig invoices.DownloadParams,
 	keyring kr.Keyring,
+	certsDB *certsdb.CertsDB,
 ) error {
 	ksefClient, err := client.InitClient(cmd, vip, keyring)
 	if err != nil {
@@ -129,7 +139,7 @@ func doDownload(
 	defer ksefClient.Close()
 
 	invoicesDB, err := invoicesdb.OpenForNIP(
-		nip, vip, invoicesdb.WithKSeFClient(ksefClient),
+		nip, vip, certsDB, invoicesdb.WithKSeFClient(ksefClient),
 	)
 	if err != nil {
 		return err

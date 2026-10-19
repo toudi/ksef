@@ -1,8 +1,8 @@
 package certificates
 
 import (
-	fsCertsStorage "ksef/core/certsdb/fs"
 	"ksef/internal/logging"
+	"ksef/internal/resources"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -39,12 +39,17 @@ func pkeysEncrypt(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
 	ctx := cmd.Context()
 
-	certsStorage, err := fsCertsStorage.Init(vip)
+	metaStorage, err := resources.CertsMetaStorage(vip)
 	if err != nil {
 		return err
 	}
+	dataStorage, err := resources.CertsDataStorage(vip)
+	if err != nil {
+		return err
+	}
+	defer resources.Close(ctx)
 
-	certs, err := certsStorage.Certs(ctx)
+	certs, err := metaStorage.Certificates(ctx)
 	if err != nil {
 		return err
 	}
@@ -55,7 +60,7 @@ func pkeysEncrypt(cmd *cobra.Command, _ []string) error {
 			continue
 		}
 
-		isEncrypted, err := certsStorage.IsPrivateKeyEncrypted(ctx, cert.UID)
+		isEncrypted, err := dataStorage.IsPrivateKeyEncrypted(ctx, cert.UID)
 		if err != nil {
 			return err
 		}
@@ -67,50 +72,55 @@ func pkeysEncrypt(cmd *cobra.Command, _ []string) error {
 		}
 
 		logging.CertsDBLogger.Info("Szyfruję klucz prywatny certyfikatu", "cert", cert.UID)
-		if err := certsStorage.EncryptPrivateKey(ctx, cert.UID); err != nil {
+		if err := dataStorage.EncryptPrivateKey(ctx, cert.UID); err != nil {
 			return err
 		}
 	}
 
-	return certsStorage.Close(ctx)
+	return nil
 }
 
 func pkeysDecrypt(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
 	ctx := cmd.Context()
 
-	certsStorage, err := fsCertsStorage.Init(vip)
+	meta, err := resources.CertsMetaStorage(vip)
+	if err != nil {
+		return err
+	}
+	data, err := resources.CertsDataStorage(vip)
+	if err != nil {
+		return err
+	}
+	defer resources.Close(ctx)
+
+	certs, err := meta.Certificates(ctx)
 	if err != nil {
 		return err
 	}
 
-	certs, err := certsStorage.Certs(ctx)
-	if err != nil {
-		return err
-	}
-
-	// let's iterate over certs from the storage and check whether they need encryption.
+	// let's iterate over certs from the storage and check whether they need decryption.
 	for _, cert := range certs {
 		if !cert.IsEncryptable() {
 			continue
 		}
 
-		isEncrypted, err := certsStorage.IsPrivateKeyEncrypted(ctx, cert.UID)
+		isEncrypted, err := data.IsPrivateKeyEncrypted(ctx, cert.UID)
 		if err != nil {
 			return err
 		}
 
 		if !isEncrypted {
-			// private key is already encrypted, can no-op
+			// private key is already decrypted, can no-op
 			logging.CertsDBLogger.Info("klucz prywatny certyfikatu jest już odszyfrowany. no-op", "cert", cert.UID)
 			continue
 		}
 
-		logging.CertsDBLogger.Info("Szyfruję klucz prywatny certyfikatu", "cert", cert.UID)
-		if err := certsStorage.DecryptPrivateKey(ctx, cert.UID); err != nil {
+		logging.CertsDBLogger.Info("Odszyfruję klucz prywatny certyfikatu", "cert", cert.UID)
+		if err := data.DecryptPrivateKey(ctx, cert.UID); err != nil {
 			return err
 		}
 	}
 
-	return certsStorage.Close(ctx)
+	return nil
 }

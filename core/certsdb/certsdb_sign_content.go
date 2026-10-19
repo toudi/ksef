@@ -10,13 +10,18 @@ import (
 	"strings"
 )
 
-func (c *CertsDB) SignContent(ctx context.Context, certId string, content []byte) ([]byte, error) {
-	// we can only do it if we have a private key
-	privateKeyId, err := c.storage.GetPrivateKeyId(ctx, certId)
-	if err != nil {
-		return nil, err
+// SignContent signs the given content with the private key addressed by the
+// given key ID (a certificate's PrivateKeyId). Therefore it is up to the
+// caller to first retrieve certificate and then retrieve the certificate's
+// PrivateKeyId. This may seem weird, however due to the usage of XaDES, the
+// signature also contains certificate metadata therefore you have to retrieve
+// the certificate meta regardless.
+func (c *CertsDB) SignContent(ctx context.Context, privateKeyId string, content []byte) ([]byte, error) {
+	if privateKeyId == "" {
+		return nil, ErrNoPrivateKey
 	}
-	privKeyBytes, err := c.storage.GetPrivateKeyBytes(ctx, privateKeyId)
+
+	privKeyBytes, err := c.dataStorage.GetPrivateKeyBytes(ctx, privateKeyId)
 	if err != nil {
 		return nil, err
 	}

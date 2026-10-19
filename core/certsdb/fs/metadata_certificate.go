@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"ksef/core/certsdb"
 	"ksef/core/ksef"
-	"path"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -52,7 +51,7 @@ type fsCertificate struct {
 }
 
 func (f fsCertificate) Filename() string {
-	return filepath.Join(path.Dir(certificatesDBFile), f.EnvironmentId+"-"+f.UID+".pem")
+	return filepath.Join(certificatesDir, f.EnvironmentId+"-"+f.UID+".pem")
 }
 
 func (f fsCertificate) AsCertificate() certsdb.Certificate {

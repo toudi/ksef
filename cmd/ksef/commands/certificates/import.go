@@ -5,10 +5,10 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
-	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
 	"ksef/core/certsdb"
 	"ksef/internal/logging"
+	"ksef/internal/resources"
 	"ksef/internal/runtime"
 	"os"
 
@@ -66,7 +66,7 @@ func importCertificateRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	certsDB, err := client.CertsDB(vip)
+	certsDB, err := resources.CertsDB(vip)
 	if err != nil {
 		return err
 	}
@@ -136,5 +136,5 @@ func importCertificateRun(cmd *cobra.Command, _ []string) error {
 		logging.CertsDBLogger.Debug("certyfikat dodany do bazy", "serialNumber", serialNumber)
 	}
 
-	return certsDB.Close(ctx)
+	return resources.Close(ctx)
 }

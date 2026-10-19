@@ -5,7 +5,7 @@ import (
 	"ksef/core/certsdb"
 )
 
-func (fs *fsCertsStorage) UpsertSelfSignedCertificate(
+func (fs *FSCertsStorage) UpsertSelfSignedCertificate(
 	ctx context.Context,
 	selfSignedCertData certsdb.UserCertificateData,
 ) error {
@@ -32,20 +32,16 @@ func (fs *fsCertsStorage) UpsertSelfSignedCertificate(
 	selfSigned = fromCertsDBCertificate(selfSignedCertData.Certificate)
 	selfSigned.UID = uid
 
-	// overwrite private key bytes
-	if err = fs.storePrivateKeyBytes(ctx, selfSigned, selfSignedCertData.PrivateKeyPEMBytes); err != nil {
-		return err
-	}
-	// overwrite certificate DER bytes
-	if err = fs.storeCertificateBytes(ctx, selfSigned, selfSignedCertData.DERBytes); err != nil {
-		return err
-	}
-
 	if addToIndex {
 		fs.addCertToIndex(selfSigned)
 	} else {
 		fs.replaceCertIndex(selfSigned, currentHash)
 	}
 
-	return nil
+	// overwrite private key bytes
+	if err = fs.dataStorage.StorePrivateKeyBytes(ctx, uid, selfSignedCertData.PrivateKeyPEMBytes); err != nil {
+		return err
+	}
+	// overwrite certificate DER bytes
+	return fs.dataStorage.StoreCertificateBytes(ctx, uid, selfSignedCertData.DERBytes)
 }

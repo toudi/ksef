@@ -5,7 +5,7 @@ import (
 	"slices"
 )
 
-func (fs *fsCertsStorage) AddNIPToCertificate(
+func (fs *FSCertsStorage) AddNIPToCertificate(
 	ctx context.Context,
 	certId string,
 	NIP string,
@@ -21,7 +21,7 @@ func (fs *fsCertsStorage) AddNIPToCertificate(
 	return nil
 }
 
-func (fs *fsCertsStorage) RemoveNIPFromCertificate(
+func (fs *FSCertsStorage) RemoveNIPFromCertificate(
 	ctx context.Context,
 	certId string,
 	NIP string,

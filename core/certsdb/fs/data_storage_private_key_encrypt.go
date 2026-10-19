@@ -15,12 +15,8 @@ var encryptionHeader = []byte{
 	'E', 'P', 'K', 0x00, 0x99,
 }
 
-func (f *fsCertsStorage) IsPrivateKeyEncrypted(ctx context.Context, certId string) (bool, error) {
-	cert, err := f.getCertByID(certId)
-	if err != nil {
-		return false, err
-	}
-	privateKeyBytes, err := os.ReadFile(f.privateKeyFilename(cert))
+func (d *FSDataStorage) IsPrivateKeyEncrypted(ctx context.Context, keyId string) (bool, error) {
+	privateKeyBytes, err := os.ReadFile(d.privateKeyFileName(keyId))
 	if err != nil {
 		return false, err
 	}
@@ -28,13 +24,8 @@ func (f *fsCertsStorage) IsPrivateKeyEncrypted(ctx context.Context, certId strin
 	return bytes.HasPrefix(privateKeyBytes, encryptionHeader), nil
 }
 
-func (f *fsCertsStorage) EncryptPrivateKey(ctx context.Context, certId string) error {
-	cert, err := f.getCertByID(certId)
-	if err != nil {
-		return err
-	}
-
-	privateKeyFilename := f.privateKeyFilename(cert)
+func (d *FSDataStorage) EncryptPrivateKey(ctx context.Context, keyId string) error {
+	privateKeyFilename := d.privateKeyFileName(keyId)
 	privateKeyBytes, err := os.ReadFile(privateKeyFilename)
 	if err != nil {
 		return err
@@ -44,20 +35,20 @@ func (f *fsCertsStorage) EncryptPrivateKey(ctx context.Context, certId string) e
 		return err
 	}
 	defer privateKeyFile.Close()
-	return f.encryptPrivateKeyBytes(cert.UID, privateKeyBytes, privateKeyFile)
+	return d.encryptPrivateKeyBytes(keyId, privateKeyBytes, privateKeyFile)
 }
 
-func (f *fsCertsStorage) encryptPrivateKeyBytes(certId string, pemBytes []byte, dest io.Writer) error {
+func (d *FSDataStorage) encryptPrivateKeyBytes(keyId string, pemBytes []byte, dest io.Writer) error {
 	encryptionKey := make([]byte, 16)
 	_, err := rand.Read(encryptionKey)
 	if err != nil {
 		return err
 	}
 	// let's save the key to keyring first before proceeding further
-	if err = f.kr.Set(
+	if err = d.kr.Set(
 		keyring.AppPrefix,
 		keyring.EncryptionKeyUser,
-		keyring.PrivateKeyEncryptionKey(certId),
+		keyring.PrivateKeyEncryptionKey(keyId),
 		base64.StdEncoding.EncodeToString(encryptionKey),
 	); err != nil {
 		return err
@@ -71,11 +62,11 @@ func (f *fsCertsStorage) encryptPrivateKeyBytes(certId string, pemBytes []byte, 
 	return err
 }
 
-func (f *fsCertsStorage) encryptPrivateKeyBytesToFile(certId string, pemBytes []byte, privateKeyFilename string) error {
+func (d *FSDataStorage) encryptPrivateKeyBytesToFile(keyId string, pemBytes []byte, privateKeyFilename string) error {
 	privateKeyFile, err := os.OpenFile(privateKeyFilename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
 	if err != nil {
 		return err
 	}
 	defer privateKeyFile.Close()
-	return f.encryptPrivateKeyBytes(certId, pemBytes, privateKeyFile)
+	return d.encryptPrivateKeyBytes(keyId, pemBytes, privateKeyFile)
 }

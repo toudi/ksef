@@ -1,9 +1,13 @@
 package certsdb
 
-import "context"
+import (
+	"context"
+	"errors"
+)
 
 type CertsDB struct {
-	storage          CertificateStorage
+	metadataStorage  CertificateMetadataStorage
+	dataStorage      CertificateDataStorage
 	preferredProfile string
 	env              string
 }
@@ -20,23 +24,25 @@ func WithPreferredCertProfile(name string) CertsDBInitializer {
 	}
 }
 
-// WithEnvironment sets the environment that certificate selection operates on.
-func WithEnvironment(id string) CertsDBInitializer {
-	return func(c *CertsDB) {
-		c.env = id
-	}
-}
-
-func Init(storage CertificateStorage, initializers ...CertsDBInitializer) (*CertsDB, error) {
+func Init(
+	metadataStorage CertificateMetadataStorage,
+	dataStorage     CertificateDataStorage,
+	initializers ...CertsDBInitializer,
+) (*CertsDB, error) {
 	certsDB := &CertsDB{
-		storage: storage,
+		metadataStorage: metadataStorage,
+		dataStorage:     dataStorage,
 	}
 	for _, init := range initializers {
 		init(certsDB)
 	}
+
 	return certsDB, nil
 }
 
 func (c *CertsDB) Close(ctx context.Context) error {
-	return c.storage.Close(ctx)
+	return errors.Join(
+		c.metadataStorage.Close(ctx),
+		c.dataStorage.Close(ctx),
+	)
 }

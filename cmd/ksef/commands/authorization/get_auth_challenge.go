@@ -2,12 +2,11 @@ package authorization
 
 import (
 	"fmt"
-	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
-	kr "ksef/core/keyring"
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/token"
+	"ksef/internal/resources"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -31,19 +30,20 @@ func init() {
 }
 
 func dumpAuthChallenge(cmd *cobra.Command, _ []string) error {
+	ctx := cmd.Context()
 	vip := viper.GetViper()
 	vip.Set(auth.FlagDoNotRestoreTokens, "true")
 
-	certsDB, err := client.CertsDB(vip)
+	certsDB, err := resources.CertsDB(vip)
 	if err != nil {
 		return err
 	}
 
-	keyring, err := kr.NewKeyring(vip)
+	keyring, err := resources.Keyring(vip)
 	if err != nil {
 		return err
 	}
-	defer keyring.Close()
+	defer resources.Close(ctx)
 
 	output, err := cmd.Flags().GetString(flagOutput)
 	if output == "" || err != nil {
@@ -57,7 +57,7 @@ func dumpAuthChallenge(cmd *cobra.Command, _ []string) error {
 		token.WithKeyring(keyring),
 	)
 	cli, err := v2.NewClient(
-		cmd.Context(),
+		ctx,
 		vip,
 		v2.WithAuthValidator(authValidator),
 		v2.WithKeyring(keyring),

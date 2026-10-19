@@ -1,11 +1,11 @@
 package keyring
 
 import (
-	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
 	"ksef/core/certsdb"
 	"ksef/core/keyring"
 	"ksef/internal/config"
+	"ksef/internal/resources"
 	"ksef/internal/runtime"
 	"slices"
 
@@ -31,10 +31,11 @@ func setKeyringKeys(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
 	ctx := cmd.Context()
 
-	certsDB, err := client.CertsDB(vip)
+	certsDB, err := resources.CertsDB(vip)
 	if err != nil {
 		return err
 	}
+	defer resources.Close(ctx)
 	nip, err := runtime.GetNIP(vip)
 	if err != nil {
 		return err
@@ -50,7 +51,7 @@ func setKeyringKeys(cmd *cobra.Command, _ []string) error {
 	for _, cert := range filtered {
 		allKeyringKeys = append(allKeyringKeys, keyring.SessionTokensKey(cert.UID))
 	}
-	return certsDB.Close(ctx)
+	return nil
 }
 
 func dumpKeyringToFileRun(cmd *cobra.Command, _ []string) error {

@@ -3,13 +3,13 @@ package authorization
 import (
 	"errors"
 	"ksef/cmd/ksef/commands/authorization/challenge"
-	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
 	kr "ksef/core/keyring"
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/token"
 	"ksef/internal/client/v2/auth/validator"
+	"ksef/internal/resources"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
@@ -37,6 +37,7 @@ func init() {
 }
 
 func authSessionDebug(cmd *cobra.Command, _ []string) error {
+	ctx := cmd.Context()
 	var authValidator validator.AuthChallengeValidator
 	vip := viper.GetViper()
 	vip.Set(auth.FlagExitAfterPersistingToken, "true")
@@ -45,11 +46,11 @@ func authSessionDebug(cmd *cobra.Command, _ []string) error {
 	var err error
 	var keyring kr.Keyring
 
-	keyring, err = kr.NewKeyring(vip)
+	keyring, err = resources.Keyring(vip)
 	if err != nil {
 		return err
 	}
-	defer keyring.Close()
+	defer resources.Close(ctx)
 
 	// there are couple of modes here:
 	// 1. if the user passed path to a signed file - let's use it
@@ -67,7 +68,7 @@ func authSessionDebug(cmd *cobra.Command, _ []string) error {
 			return errors.New("brak numeru NIP")
 		}
 		// pick up cert from the database
-		certsDB, err := client.CertsDB(vip)
+		certsDB, err := resources.CertsDB(vip)
 		if err != nil {
 			return err
 		}
@@ -79,7 +80,7 @@ func authSessionDebug(cmd *cobra.Command, _ []string) error {
 	authValidator = token.NewAuthHandler(vip, initializerFuncs...)
 
 	cli, err := v2.NewClient(
-		cmd.Context(),
+		ctx,
 		vip,
 		v2.WithAuthValidator(authValidator),
 		v2.WithKeyring(keyring),

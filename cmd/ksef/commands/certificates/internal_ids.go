@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"errors"
 	"iter"
-	"ksef/cmd/ksef/commands/client"
 	"ksef/core/certsdb"
+	"ksef/internal/resources"
 	"os"
 	"strings"
 
@@ -54,7 +54,7 @@ func init() {
 func prepareCertsDB(cmd *cobra.Command, _ []string) (err error) {
 	vip := viper.GetViper()
 
-	certsDB, err = client.CertsDB(vip)
+	certsDB, err = resources.CertsDB(vip)
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func addInternalIdsToCertificate(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	return certsDB.Close(ctx)
+	return resources.Close(ctx)
 }
 
 func removeInternalIdsFromCertificate(cmd *cobra.Command, _ []string) error {
@@ -111,5 +111,5 @@ func removeInternalIdsFromCertificate(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	return certsDB.Close(ctx)
+	return resources.Close(ctx)
 }

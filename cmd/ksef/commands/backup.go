@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
 	"ksef/core/certsdb"
 	"ksef/core/keyring"
 	"ksef/internal/invoicesdb/config"
 	"ksef/internal/logging"
+	"ksef/internal/resources"
 	"ksef/internal/utils"
 	"os"
 	"path/filepath"
@@ -106,10 +106,11 @@ func prepareBackupEnv(cmd *cobra.Command, _ []string) (err error) {
 	vip := viper.GetViper()
 	ctx := cmd.Context()
 	// for retrieving the password (optionally)
-	ring, err = keyring.NewKeyring(vip)
+	ring, err = resources.Keyring(vip)
 	if err != nil {
 		return errors.Join(errOpeningKeyring, err)
 	}
+	defer resources.Close(ctx)
 
 	backupConfig = BackupConfig{
 		InvoicePDF: vip.GetBool(flagNameInvoicePDF),
@@ -129,7 +130,7 @@ func prepareBackupEnv(cmd *cobra.Command, _ []string) (err error) {
 	}
 	var certsDB *certsdb.CertsDB
 	if backupConfig.nip != "" {
-		certsDB, err = client.CertsDB(vip)
+		certsDB, err = resources.CertsDB(vip)
 		if err != nil {
 			return errors.Join(errOpeningCertsDB, err)
 		}
@@ -151,7 +152,7 @@ func prepareBackupEnv(cmd *cobra.Command, _ []string) (err error) {
 		logging.SeiLogger.Warn("brak zdefiniowanego hasła do archiwizacji. Archiwum nie będzie zaszyfrowane")
 	}
 	if certsDB != nil {
-		return certsDB.Close(ctx)
+		return resources.Close(ctx)
 	}
 	return nil
 }
@@ -291,11 +292,11 @@ func setBackupPassword(cmd *cobra.Command, _ []string) error {
 	nip := vip.GetString(flags.FlagNameNIP)
 	clearPassword := vip.GetBool(flagNameClear)
 
-	ring, err := keyring.NewKeyring(vip)
+	ring, err := resources.Keyring(vip)
 	if err != nil {
 		return errors.Join(errOpeningKeyring, err)
 	}
-	defer ring.Close()
+	defer resources.Close(cmd.Context())
 
 	var password string
 

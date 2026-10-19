@@ -6,7 +6,7 @@ func (c *CertsDB) StoreMinistryCertificate(
 	ctx context.Context,
 	certData MinistryCertificateData,
 ) (bool, error) {
-	return c.storage.StoreMinistryCertificate(ctx, certData)
+	return c.metadataStorage.StoreMinistryCertificate(ctx, certData)
 }
 
 func (c *CertsDB) AddUserCertificate(
@@ -17,5 +17,5 @@ func (c *CertsDB) AddUserCertificate(
 		return false, err
 	}
 
-	return c.storage.StoreUserCertificate(ctx, newCert)
+	return c.metadataStorage.StoreUserCertificate(ctx, newCert)
 }

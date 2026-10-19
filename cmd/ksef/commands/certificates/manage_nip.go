@@ -1,8 +1,8 @@
 package certificates
 
 import (
-	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
+	"ksef/internal/resources"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
@@ -50,7 +50,7 @@ func addNIPToCertRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	certsDB, err := client.CertsDB(vip)
+	certsDB, err := resources.CertsDB(vip)
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func addNIPToCertRun(cmd *cobra.Command, _ []string) error {
 	if err = certsDB.AddNIPToCertificate(ctx, certID, nip); err != nil {
 		return err
 	}
-	return certsDB.Close(ctx)
+	return resources.Close(ctx)
 }
 
 func dropNIPFromCertRun(cmd *cobra.Command, _ []string) error {
@@ -71,7 +71,7 @@ func dropNIPFromCertRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	certsDB, err := client.CertsDB(vip)
+	certsDB, err := resources.CertsDB(vip)
 	if err != nil {
 		return err
 	}
@@ -79,5 +79,5 @@ func dropNIPFromCertRun(cmd *cobra.Command, _ []string) error {
 	if err = certsDB.RemoveNIPFromCertificate(ctx, certID, nip); err != nil {
 		return err
 	}
-	return certsDB.Close(ctx)
+	return resources.Close(ctx)
 }

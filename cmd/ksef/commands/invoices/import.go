@@ -3,13 +3,13 @@ package invoices
 import (
 	"errors"
 	"ksef/cmd/ksef/commands/client"
-	kr "ksef/core/keyring"
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/invoicesdb"
 	invoicesdbconfig "ksef/internal/invoicesdb/config"
 	statuscheckerconfig "ksef/internal/invoicesdb/status-checker/config"
 	uploaderconfig "ksef/internal/invoicesdb/uploader/config"
 	"ksef/internal/logging"
+	"ksef/internal/resources"
 	"ksef/internal/runtime"
 	inputprocessors "ksef/internal/sei/input_processors"
 
@@ -44,23 +44,24 @@ func importRun(cmd *cobra.Command, args []string) error {
 	vip := viper.GetViper()
 	ctx := cmd.Context()
 
-	keyring, err := kr.NewKeyring(vip)
+	keyring, err := resources.Keyring(vip)
 	if err != nil {
 		logging.SeiLogger.Error("błąd inicjalizacji keyringu", "err", err)
 		return err
 	}
-	defer keyring.Close()
+
+	certsDB, err := resources.CertsDB(vip)
+	if err != nil {
+		return err
+	}
+
+	defer resources.Close(ctx)
 
 	ksefClient, err := client.InitClient(cmd, vip, keyring, v2.WithoutTokenManager())
 	if err != nil {
 		return errors.Join(errClientInit, err)
 	}
 	defer ksefClient.Close()
-
-	certsDB, err := client.CertsDB(vip)
-	if err != nil {
-		return err
-	}
 
 	// initialize the invoicesdb
 	invoicesDB, err := invoicesdb.NewInvoicesDB(
@@ -73,14 +74,10 @@ func importRun(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return errors.Join(errInvoicesDBInit, err)
 	}
-	if err = invoicesDB.Import(
+	return invoicesDB.Import(
 		ctx,
 		vip,
 		args[0],
 		vip.GetBool(flagNameConfirm),
-	); err != nil {
-		return err
-	}
-
-	return certsDB.Close(ctx)
+	)
 }

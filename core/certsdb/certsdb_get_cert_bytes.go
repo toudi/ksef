@@ -6,5 +6,5 @@ func (c *CertsDB) GetCertificateBytes(
 	ctx context.Context,
 	certId string,
 ) ([]byte, error) {
-	return c.storage.GetCertificateBytes(ctx, certId)
+	return c.dataStorage.GetCertificateBytes(ctx, certId)
 }

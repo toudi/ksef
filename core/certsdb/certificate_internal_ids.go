@@ -23,7 +23,7 @@ func (c *CertsDB) AddInternalIDsToCertificate(
 	certificateId string,
 	internalIds iter.Seq[string],
 ) error {
-	return c.storage.AddInternalIDsToCertificate(
+	return c.metadataStorage.AddInternalIDsToCertificate(
 		ctx,
 		certificateId,
 		internalIds,
@@ -35,7 +35,7 @@ func (c *CertsDB) RemoveInternalIdsFromCertificate(
 	certificateId string,
 	internalIds iter.Seq[string],
 ) error {
-	return c.storage.RemoveInternalIDsFromCertificate(
+	return c.metadataStorage.RemoveInternalIDsFromCertificate(
 		ctx,
 		certificateId,
 		internalIds,

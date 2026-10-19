@@ -10,13 +10,13 @@ func init() {
 	uidFactory = nanoid.MustCustomASCII("abcdefgh0123456789", 5)
 }
 
-func (fs *fsCertsStorage) generateUID() (string, error) {
+func (f *FSCertsStorage) generateUID() (string, error) {
 	collision := true
 	var uid string
 	var generationAttempt int
 	for collision {
 		uid = uidFactory()
-		_, collision = fs.uidIndex[uid]
+		_, collision = f.uidIndex[uid]
 		generationAttempt += 1
 		if generationAttempt > maxUIDGenerationAttempts {
 			return "", ErrUIDGenerationAttemptsExceeded

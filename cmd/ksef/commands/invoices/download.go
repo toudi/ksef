@@ -3,10 +3,10 @@ package invoices
 import (
 	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
-	kr "ksef/core/keyring"
 	"ksef/internal/invoicesdb"
 	downloaderconfig "ksef/internal/invoicesdb/downloader/config"
 	"ksef/internal/logging"
+	"ksef/internal/resources"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
@@ -35,6 +35,7 @@ func init() {
 }
 
 func downloadRun(cmd *cobra.Command, _ []string) error {
+	ctx := cmd.Context()
 	vip := viper.GetViper()
 	workers := vip.GetInt(flagNameWorkersLong)
 	if workers > 0 {
@@ -49,12 +50,16 @@ func downloadRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	keyring, err := kr.NewKeyring(vip)
+	keyring, err := resources.Keyring(vip)
 	if err != nil {
 		logging.SeiLogger.Error("błąd inicjalizacji keyringu", "err", err)
 		return err
 	}
-	defer keyring.Close()
+	certsDB, err := resources.CertsDB(vip)
+	if err != nil {
+		return err
+	}
+	defer resources.Close(ctx)
 
 	ksefClient, err := client.InitClient(cmd, vip, keyring)
 	if err != nil {
@@ -63,7 +68,7 @@ func downloadRun(cmd *cobra.Command, _ []string) error {
 	defer ksefClient.Close()
 
 	invoicesDB, err := invoicesdb.OpenForNIP(
-		nip, vip,
+		nip, vip, certsDB,
 		invoicesdb.WithKSeFClient(ksefClient),
 	)
 	if err != nil {
@@ -75,7 +80,7 @@ func downloadRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	return invoicesDB.DownloadInvoices(cmd.Context(), vip, downloaderConfig)
+	return invoicesDB.DownloadInvoices(ctx, vip, downloaderConfig)
 }
 
 func cloneViper(src *viper.Viper) *viper.Viper {

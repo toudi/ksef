@@ -5,8 +5,8 @@ import (
 	"iter"
 )
 
-func (c *CertsDB) Certs(ctx context.Context) (iter.Seq[Certificate], error) {
-	certs, err := c.storage.Certs(ctx)
+func (c *CertsDB) Certificates(ctx context.Context) (iter.Seq[Certificate], error) {
+	certs, err := c.metadataStorage.Certificates(ctx)
 	if err != nil {
 		return nil, err
 	}

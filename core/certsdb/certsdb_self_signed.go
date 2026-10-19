@@ -75,7 +75,7 @@ func (c *CertsDB) RegenerateSelfSignedCert(ctx context.Context, subject pkix.Nam
 		return err
 	}
 
-	return c.storage.UpsertSelfSignedCertificate(
+	return c.metadataStorage.UpsertSelfSignedCertificate(
 		ctx,
 		UserCertificateData{
 			Certificate: Certificate{

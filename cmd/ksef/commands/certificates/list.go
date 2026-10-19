@@ -2,7 +2,7 @@ package certificates
 
 import (
 	"fmt"
-	"ksef/cmd/ksef/commands/client"
+	"ksef/internal/resources"
 	"ksef/internal/runtime"
 	"strings"
 
@@ -32,11 +32,11 @@ func listCerts(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
 	ctx := cmd.Context()
 
-	certsDB, err := client.CertsDB(vip)
+	certsDB, err := resources.CertsDB(vip)
 	if err != nil {
 		return err
 	}
-	defer certsDB.Close(ctx)
+	defer resources.Close(ctx)
 
 	table := simpletable.New()
 
@@ -54,7 +54,7 @@ func listCerts(cmd *cobra.Command, _ []string) error {
 
 	certSerial := vip.GetString(certSerial)
 
-	certs, err := certsDB.Certs(cmd.Context())
+	certs, err := certsDB.Certificates(ctx)
 	if err != nil {
 		return err
 	}

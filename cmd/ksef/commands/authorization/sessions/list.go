@@ -2,11 +2,10 @@ package sessions
 
 import (
 	"fmt"
-	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
-	kr "ksef/core/keyring"
 	"ksef/internal/client/v2/auth"
 	"ksef/internal/logging"
+	"ksef/internal/resources"
 
 	"github.com/alexeyco/simpletable"
 	"github.com/spf13/cobra"
@@ -36,17 +35,16 @@ func getSessions(cmd *cobra.Command, _ []string) error {
 	vip := viper.GetViper()
 	ctx := cmd.Context()
 
-	keyring, err := kr.NewKeyring(vip)
+	keyring, err := resources.Keyring(vip)
 	if err != nil {
 		logging.SeiLogger.Error("błąd inicjalizacji keyringu", "err", err)
 		return err
 	}
-	defer keyring.Close()
-	certsDB, err := client.CertsDB(vip)
+	certsDB, err := resources.CertsDB(vip)
 	if err != nil {
 		return err
 	}
-	defer certsDB.Close(ctx)
+	defer resources.Close(ctx)
 
 	tokenManager, err = auth.NewTokenManager(
 		cmd.Context(),
@@ -59,7 +57,7 @@ func getSessions(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	activeSessions, err = tokenManager.GetAuthSessions(cmd.Context())
+	activeSessions, err = tokenManager.GetAuthSessions(ctx)
 	if err != nil {
 		return err
 	}

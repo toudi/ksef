@@ -66,6 +66,10 @@ func (c Certificate) ValidateUserCertificate() error {
 	return nil
 }
 
+// CertificateUpdateData holds potential updates to the certificate
+// - hence everything is optional here. the metadata implementation
+// interprets this structure and updates certificate's properties
+// accordingly.
 type CertificateUpdateData struct {
 	SerialNumber    *string
 	ReferenceNumber *string
@@ -84,6 +88,15 @@ type UserCertificateData struct {
 	PrivateKeyPEMBytes []byte
 	Certificate        Certificate
 	DERBytes           []byte
+}
+
+// a CSR stands for Certificate Signing Request. Basically a customer
+// can generate it, then send it to KSeF - along with private key.
+// KSeF will process it (it's an asynchronous process) and generate a
+// certificate file.
+type CSRRequestData struct {
+	Certificate        Certificate
+	PrivateKeyPEMBytes []byte
 }
 
 func (c Certificate) IsEncryptable() bool {

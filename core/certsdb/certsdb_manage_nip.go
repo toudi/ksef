@@ -7,7 +7,7 @@ func (c *CertsDB) AddNIPToCertificate(
 	certId string,
 	NIP string,
 ) error {
-	return c.storage.AddNIPToCertificate(ctx, certId, NIP)
+	return c.metadataStorage.AddNIPToCertificate(ctx, certId, NIP)
 }
 
 func (c *CertsDB) RemoveNIPFromCertificate(
@@ -15,5 +15,5 @@ func (c *CertsDB) RemoveNIPFromCertificate(
 	certId string,
 	NIP string,
 ) error {
-	return c.storage.RemoveNIPFromCertificate(ctx, certId, NIP)
+	return c.metadataStorage.RemoveNIPFromCertificate(ctx, certId, NIP)
 }

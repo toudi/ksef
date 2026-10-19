@@ -4,8 +4,8 @@ import (
 	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
 	"ksef/core/certsdb"
-	kr "ksef/core/keyring"
 	"ksef/internal/logging"
+	"ksef/internal/resources"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
@@ -37,6 +37,7 @@ func init() {
 }
 
 func sendCsrs(cmd *cobra.Command, _ []string) error {
+	ctx := cmd.Context()
 	vip := viper.GetViper()
 	envId := runtime.GetEnvironmentId(vip)
 	nip, err := runtime.GetNIP(vip)
@@ -44,12 +45,12 @@ func sendCsrs(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	keyring, err := kr.NewKeyring(vip)
+	keyring, err := resources.Keyring(vip)
 	if err != nil {
 		logging.SeiLogger.Error("unable to initialize keyring", "err", err)
 		return err
 	}
-	defer keyring.Close()
+	defer resources.Close(ctx)
 
 	if cli, err = client.InitClient(cmd, vip, keyring); err != nil {
 		return err
@@ -58,8 +59,7 @@ func sendCsrs(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-	defer certsManager.SaveDB(cmd.Context())
-	ed, err := certsManager.GetEnrollmentsData(cmd.Context())
+	ed, err := certsManager.GetEnrollmentsData(ctx)
 	if err != nil {
 		return err
 	}

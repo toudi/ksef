@@ -2,11 +2,10 @@ package authorization
 
 import (
 	"ksef/cmd/ksef/commands/authorization/challenge"
-	"ksef/cmd/ksef/commands/client"
-	kr "ksef/core/keyring"
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/token"
+	"ksef/internal/resources"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
@@ -27,6 +26,7 @@ func init() {
 }
 
 func login(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
 	signedChallengeFile := args[0]
 	vip := viper.GetViper()
 	vip.Set(auth.FlagDoNotRestoreTokens, "true")
@@ -38,13 +38,13 @@ func login(cmd *cobra.Command, args []string) error {
 	}
 	runtime.SetNIP(vip, nip)
 
-	keyring, err := kr.NewKeyring(vip)
+	keyring, err := resources.Keyring(vip)
 	if err != nil {
 		return err
 	}
-	defer keyring.Close()
+	defer resources.Close(ctx)
 
-	certsDB, err := client.CertsDB(vip)
+	certsDB, err := resources.CertsDB(vip)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func login(cmd *cobra.Command, args []string) error {
 	)
 
 	cli, err := v2.NewClient(
-		cmd.Context(),
+		ctx,
 		vip,
 		v2.WithAuthValidator(authValidator),
 		v2.WithKeyring(keyring),

@@ -8,7 +8,7 @@ import (
 )
 
 func (c *CertsDB) FilterCertificates(ctx context.Context, checker func(c Certificate) bool) ([]Certificate, error) {
-	certificates, err := c.storage.Certs(ctx)
+	certificates, err := c.metadataStorage.Certificates(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -18,7 +18,7 @@ func (c *CertsDB) FilterCertificates(ctx context.Context, checker func(c Certifi
 }
 
 func (c *CertsDB) FetchUIDsByNIP(ctx context.Context, nip string) (uids []string, err error) {
-	certs, err := c.storage.Certs(ctx)
+	certs, err := c.metadataStorage.Certificates(ctx)
 	if err != nil {
 		return nil, err
 	}

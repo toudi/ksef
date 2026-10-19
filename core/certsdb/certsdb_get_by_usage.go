@@ -27,7 +27,7 @@ func (c *CertsDB) GetCertificateByUsageAndNIP(ctx context.Context, usage Certifi
 }
 
 func (c *CertsDB) matchCertificate(ctx context.Context, usage CertificateUsage, nip string) (*Certificate, error) {
-	all, err := c.storage.Certs(ctx)
+	all, err := c.metadataStorage.Certificates(ctx)
 	if err != nil {
 		return nil, err
 	}

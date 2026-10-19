@@ -3,7 +3,6 @@ package invoicesdb
 import (
 	"errors"
 	"ksef/core/certsdb"
-	fsStorage "ksef/core/certsdb/fs"
 	"ksef/internal/invoicesdb/config"
 	"ksef/internal/runtime"
 	"os"
@@ -14,7 +13,12 @@ import (
 
 var errInvalidRegistry = errors.New("specified invoices registry does not exist")
 
-func OpenForNIP(nip string, vip *viper.Viper, initializers ...func(*InvoicesDB)) (*InvoicesDB, error) {
+func OpenForNIP(
+	nip string,
+	vip *viper.Viper,
+	certsDB *certsdb.CertsDB,
+	initializers ...func(*InvoicesDB),
+) (*InvoicesDB, error) {
 	cfg := config.GetInvoicesDBConfig(vip)
 	environmentId := runtime.GetEnvironmentId(vip)
 
@@ -36,19 +40,6 @@ func OpenForNIP(nip string, vip *viper.Viper, initializers ...func(*InvoicesDB))
 
 	idb := newInvoicesDB(vip)
 	idb.prefix = prefix
-
-	certsStorage, err := fsStorage.Init(vip)
-	if err != nil {
-		return nil, err
-	}
-	certsDB, err := certsdb.Init(
-		certsStorage,
-		certsdb.WithEnvironment(runtime.GetEnvironmentId(vip)),
-		certsdb.WithPreferredCertProfile(runtime.GetPreferredCertProfile(vip)),
-	)
-	if err != nil {
-		return nil, err
-	}
 	idb.certsDB = certsDB
 
 	for _, initializer := range initializers {

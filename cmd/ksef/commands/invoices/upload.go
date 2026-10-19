@@ -3,11 +3,11 @@ package invoices
 import (
 	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
-	kr "ksef/core/keyring"
 	"ksef/internal/invoicesdb"
 	statuscheckerconfig "ksef/internal/invoicesdb/status-checker/config"
 	uploaderconfig "ksef/internal/invoicesdb/uploader/config"
 	"ksef/internal/logging"
+	"ksef/internal/resources"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
@@ -37,22 +37,22 @@ func uploadInvoicesRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	keyring, err := kr.NewKeyring(vip)
+	keyring, err := resources.Keyring(vip)
 	if err != nil {
 		logging.SeiLogger.Error("błąd inicjalizacji keyringu", "err", err)
 		return err
 	}
-	defer keyring.Close()
+	certsDB, err := resources.CertsDB(vip)
+	if err != nil {
+		return err
+	}
+	defer resources.Close(ctx)
 
 	ksefClient, err := client.InitClient(cmd, vip, keyring)
 	if err != nil {
 		return err
 	}
 	defer ksefClient.Close()
-	certsDB, err := client.CertsDB(vip)
-	if err != nil {
-		return err
-	}
 
 	// initialize the invoicesdb
 	invoicesDB, err := invoicesdb.NewInvoicesDB(
@@ -66,13 +66,9 @@ func uploadInvoicesRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	if err = invoicesDB.UploadOutstandingInvoices(
+	return invoicesDB.UploadOutstandingInvoices(
 		ctx,
 		uploaderconfig.GetUploaderConfig(vip),
 		statuscheckerconfig.GetStatusCheckerConfig(vip),
-	); err != nil {
-		return err
-	}
-
-	return certsDB.Close(ctx)
+	)
 }

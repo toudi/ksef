@@ -10,7 +10,7 @@ import (
 	"github.com/samber/lo"
 )
 
-func (f *fsCertsStorage) AddInternalIDsToCertificate(
+func (f *FSCertsStorage) AddInternalIDsToCertificate(
 	ctx context.Context,
 	certId string,
 	internalIds iter.Seq[string],
@@ -36,7 +36,7 @@ func (f *fsCertsStorage) AddInternalIDsToCertificate(
 	return nil
 }
 
-func (f *fsCertsStorage) RemoveInternalIDsFromCertificate(
+func (f *FSCertsStorage) RemoveInternalIDsFromCertificate(
 	ctx context.Context,
 	certId string,
 	internalIds iter.Seq[string],

@@ -3,10 +3,10 @@ package invoices
 import (
 	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
-	kr "ksef/core/keyring"
 	"ksef/internal/invoicesdb"
 	"ksef/internal/invoicesdb/config"
 	"ksef/internal/logging"
+	"ksef/internal/resources"
 	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
@@ -28,6 +28,7 @@ func init() {
 }
 
 func syncInvoicesRun(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
 	vip := viper.GetViper()
 	if err := runtime.CheckNIPIsSet(vip); err != nil {
 		return err
@@ -38,12 +39,17 @@ func syncInvoicesRun(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	keyring, err := kr.NewKeyring(vip)
+	keyring, err := resources.Keyring(vip)
 	if err != nil {
 		logging.SeiLogger.Error("błąd inicjalizacji keyringu", "err", err)
 		return err
 	}
-	defer keyring.Close()
+	certsDB, err := resources.CertsDB(vip)
+	if err != nil {
+		return err
+	}
+
+	defer resources.Close(ctx)
 
 	ksefClient, err := client.InitClient(cmd, vip, keyring)
 	if err != nil {
@@ -53,6 +59,7 @@ func syncInvoicesRun(cmd *cobra.Command, args []string) error {
 	invoicesDB, err := invoicesdb.OpenForNIP(
 		nip,
 		vip,
+		certsDB,
 		invoicesdb.WithKSeFClient(ksefClient),
 		invoicesdb.WithMonthsRangeGenerator(invoicesdb.MonthsRangePreviousMonthGenerator),
 	)
@@ -60,7 +67,7 @@ func syncInvoicesRun(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	if err = invoicesDB.Sync(
-		cmd.Context(),
+		ctx,
 		vip,
 	); err != nil {
 		return err

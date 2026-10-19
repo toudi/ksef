@@ -2,8 +2,8 @@ package certificates
 
 import (
 	"errors"
-	"ksef/cmd/ksef/commands/client"
 	"ksef/core/certsdb"
+	"ksef/internal/resources"
 	"slices"
 
 	"github.com/spf13/cobra"
@@ -49,7 +49,7 @@ func setCertProfileRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	certsDB, err := client.CertsDB(vip)
+	certsDB, err := resources.CertsDB(vip)
 	if err != nil {
 		return err
 	}
@@ -69,5 +69,5 @@ func setCertProfileRun(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	return certsDB.Close(ctx)
+	return resources.Close(ctx)
 }
