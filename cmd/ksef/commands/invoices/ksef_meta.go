@@ -5,7 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"ksef/cmd/ksef/flags"
-	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
+	"ksef/core/invoicedb"
+	"ksef/internal/resources"
 	"ksef/internal/runtime"
 	"os"
 	"text/template"
@@ -51,13 +52,21 @@ type ksefInvoiceMeta struct {
 
 func getKsefMeta(cmd *cobra.Command, args []string) error {
 	vip := viper.GetViper()
+	ctx := cmd.Context()
 	if err := runtime.CheckNIPIsSet(vip); err != nil {
 		return err
 	}
 
+	invoiceDB, err := resources.InvoiceDB(vip)
+	if err != nil {
+		return err
+	}
+
+	defer invoiceDB.Close(ctx)
+
 	refNo := args[0]
 
-	invoice, _, err := findInvoiceByRefNo(vip, refNo)
+	invoice, err := invoiceDB.GetInvoiceByRefNo(ctx, refNo)
 	if err != nil {
 		return err
 	}
@@ -65,12 +74,14 @@ func getKsefMeta(cmd *cobra.Command, args []string) error {
 	return dumpInvoiceData(invoice, vip)
 }
 
-func dumpInvoiceData(invoice *monthlyregistry.Invoice, vip *viper.Viper) error {
+func dumpInvoiceData(storedInvoice *invoicedb.StoredInvoice, vip *viper.Viper) error {
 	format := vip.GetString("format")
 	output := vip.GetString("output")
 
 	var content []byte
 	var err error
+
+	invoice := storedInvoice.Invoice
 
 	invoiceMeta := ksefInvoiceMeta{
 		RefNo:     invoice.RefNo,

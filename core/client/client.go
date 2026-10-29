@@ -2,20 +2,20 @@ package client
 
 import (
 	"ksef/core/certsdb"
-	invoiceregistry "ksef/core/invoice-registry"
+	"ksef/core/invoicedb"
 )
 
 type Client struct {
-	certsDB         *certsdb.CertsDB
-	invoiceRegistry invoiceregistry.InvoiceRegistry
+	certsDB   *certsdb.CertsDB
+	invoiceDB *invoicedb.InvoiceDB
 }
 
 func Init(
 	certsDB *certsdb.CertsDB,
-	invoiceRegistry invoiceregistry.InvoiceRegistry,
+	invoiceDB *invoicedb.InvoiceDB,
 ) *Client {
 	return &Client{
-		certsDB:         certsDB,
-		invoiceRegistry: invoiceRegistry,
+		certsDB:   certsDB,
+		invoiceDB: invoiceDB,
 	}
 }

@@ -1,9 +1,11 @@
 package invoices
 
 import (
+	"ksef/cmd/ksef/flags"
+	"ksef/core/invoicedb/invoice"
 	"ksef/internal/logging"
+	"ksef/internal/resources"
 	"ksef/internal/runtime"
-	"ksef/internal/utils"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -24,29 +26,49 @@ const (
 func init() {
 	InvoicesCommand.AddCommand(importPdfCommand)
 	importPdfCommand.Flags().BoolP(flagNameForce, "f", false, "nadpisz plik PDF nawet jeśli istnieje")
+	flags.NIP(importPdfCommand.Flags())
 }
 
 func importPDFRun(cmd *cobra.Command, args []string) error {
 	vip := viper.GetViper()
+	ctx := cmd.Context()
 	if err := runtime.CheckNIPIsSet(vip); err != nil {
 		return err
 	}
 
-	refNo := args[0]
-	invoice, reg, err := findInvoiceByRefNo(vip, refNo)
+	invoiceDataStorage, err := resources.InvoiceDataStorage(vip)
 	if err != nil {
 		return err
 	}
 
-	targetPDFName := reg.InvoiceFilename(invoice).PDF
-
-	if _, err = os.Stat(targetPDFName); err == nil {
-		// file exists
-		if !vip.GetBool(flagNameForce) {
-			logging.SeiLogger.Info("plik PDF istnieje - pomijam.")
-			return nil
-		}
+	invoiceDB, err := resources.InvoiceDB(vip)
+	if err != nil {
+		return err
 	}
 
-	return utils.CopyFile(args[1], targetPDFName)
+	defer invoiceDB.Close(ctx)
+
+	refNo := args[0]
+	storedInvoice, err := invoiceDB.GetInvoiceByRefNo(ctx, refNo)
+	if err != nil {
+		return err
+	}
+
+	storageId := storedInvoice.StorageId(invoice.InvoiceFilePDF)
+	srcPDF, err := os.Open(args[1])
+	if err != nil {
+		return err
+	}
+	defer srcPDF.Close()
+
+	stored, err := invoiceDataStorage.Store(ctx, srcPDF, storageId, vip.GetBool(flagNameForce))
+	if err != nil {
+		return err
+	}
+
+	if !stored {
+		logging.SeiLogger.Info("plik PDF istnieje - pominięto.")
+	}
+
+	return nil
 }
