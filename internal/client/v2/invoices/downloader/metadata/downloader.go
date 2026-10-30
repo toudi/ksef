@@ -2,13 +2,15 @@ package metadata
 
 import (
 	"context"
+	"ksef/core/downloader"
+	"ksef/core/ksef"
+	"ksef/internal/client/v2/types/invoices"
+	"ksef/internal/http"
 	baseHttp "net/http"
 	"strconv"
 
 	downloadertypes "ksef/internal/client/v2/invoices/downloader/types"
 	ratelimits "ksef/internal/client/v2/rate-limits"
-	"ksef/internal/client/v2/types/invoices"
-	"ksef/internal/http"
 )
 
 const (
@@ -18,8 +20,8 @@ const (
 func InvoicesMetadataPage(
 	ctx context.Context,
 	httpClient *http.Client,
-	subjectType invoices.SubjectType,
-	params invoices.DownloadParams,
+	subjectType ksef.SubjectType,
+	params downloader.Config,
 	pageNo int,
 ) (
 	resp *invoices.InvoiceMetadataResponse, err error,

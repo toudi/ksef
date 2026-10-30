@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"ksef/core/certsdb"
+	"ksef/core/ksef"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/encryption"
 	"ksef/internal/http"
@@ -19,7 +20,7 @@ var errFetchingInvoicesWithExport = errors.New("error fetching invoices with exp
 func (ed *ExportDownloader) Download(
 	ctx context.Context,
 	invoiceReady func(
-		subjectType invoices.SubjectType,
+		subjectType ksef.SubjectType,
 		invoice invoices.InvoiceMetadata,
 		content bytes.Buffer,
 	) error,

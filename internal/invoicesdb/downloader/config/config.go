@@ -3,12 +3,12 @@ package config
 import (
 	"errors"
 	"fmt"
-	"time"
-
 	"ksef/cmd/ksef/flags"
-	"ksef/internal/client/v2/types/invoices"
+	"ksef/core/downloader"
+	"ksef/core/ksef"
 	"ksef/internal/runtime"
 	"ksef/internal/utils"
+	"time"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -26,7 +26,7 @@ const (
 )
 
 var (
-	subjectTypes              []invoices.SubjectType
+	subjectTypes              []ksef.SubjectType
 	errEndDateBeforeStartDate = errors.New("end-date is set in the past with regards to start-date")
 )
 
@@ -42,19 +42,19 @@ func DownloaderFlags(flagSet *pflag.FlagSet, prefix string) {
 	firstDayOfMonth := today.AddDate(0, 0, -today.Day()+1)
 
 	flagSet.BoolFunc(prefixedFlag(prefix, "income"), "pobieranie faktur przychodowych (Subject=Subject1)", func(s string) error {
-		subjectTypes = append(subjectTypes, invoices.SubjectTypeIssuer)
+		subjectTypes = append(subjectTypes, ksef.SubjectTypeIssuer)
 		return nil
 	})
 	flagSet.BoolFunc(prefixedFlag(prefix, "cost"), "pobieranie faktur kosztowych (Subject=Subject2)", func(s string) error {
-		subjectTypes = append(subjectTypes, invoices.SubjectTypeRecipient)
+		subjectTypes = append(subjectTypes, ksef.SubjectTypeRecipient)
 		return nil
 	})
 	flagSet.BoolFunc(prefixedFlag(prefix, "payer"), "pobieranie faktur płatnika (Subject=Subject3)", func(s string) error {
-		subjectTypes = append(subjectTypes, invoices.SubjectTypePayer)
+		subjectTypes = append(subjectTypes, ksef.SubjectTypePayer)
 		return nil
 	})
 	flagSet.BoolFunc(prefixedFlag(prefix, "authorized"), "pobieranie faktur strony upoważnionej (Subject=SubjectAuthorized)", func(s string) error {
-		subjectTypes = append(subjectTypes, invoices.SubjectTypeAuthorized)
+		subjectTypes = append(subjectTypes, ksef.SubjectTypeAuthorized)
 		return nil
 	})
 	flagSet.Bool(prefixedFlag(prefix, flagPDF), false, "generuj PDF dla pobranych faktur")
@@ -63,9 +63,9 @@ func DownloaderFlags(flagSet *pflag.FlagSet, prefix string) {
 	flagSet.String(prefixedFlag(prefix, flagEndDate), "", "data końcowa")
 	flagSet.IntP(prefixedFlag(prefix, flagPageSize), "", 50, "liczba faktur na stronę odpowiedzi")
 	flagSet.Var(flags.StringChoice([]string{
-		string(invoices.DateTypeIssue),
-		string(invoices.DateTypeInvoicing),
-		string(invoices.DateTypeStorage),
+		string(ksef.DateTypeIssue),
+		string(ksef.DateTypeInvoicing),
+		string(ksef.DateTypeStorage),
 	}), prefixedFlag(prefix, flagDateType), "typ daty używany do odpytywania listy faktur")
 	flagSet.Bool(prefixedFlag(prefix, flagUseExport), false, "używaj eksportu faktur do pobierania")
 	flagSet.Bool(prefixedFlag(prefix, flagUseSmartMode), false, "używaj inteligentnego trybu pobierania (detekcja czy potrzebny jest tryb eksportu)")
@@ -73,7 +73,7 @@ func DownloaderFlags(flagSet *pflag.FlagSet, prefix string) {
 	flagSet.SortFlags = false
 }
 
-func GetDownloaderConfig(vip *viper.Viper, prefix string) (params invoices.DownloadParams, err error) {
+func GetDownloaderConfig(vip *viper.Viper, prefix string) (params downloader.Config, err error) {
 	vip.SetDefault(
 		prefixedFlag(prefix, flagUseExport),
 		vip.GetBool(runtime.CfgKeyUseExportModeForDownloading),
@@ -88,17 +88,17 @@ func GetDownloaderConfig(vip *viper.Viper, prefix string) (params invoices.Downl
 	if params.SubjectTypes == nil {
 		// if no invoice types were selected - initialize to all possible values.
 		// otherwise, it will be initialized to what the user selected.
-		params.SubjectTypes = []invoices.SubjectType{
-			invoices.SubjectTypeRecipient,
-			invoices.SubjectTypePayer,
-			invoices.SubjectTypeAuthorized,
+		params.SubjectTypes = []ksef.SubjectType{
+			ksef.SubjectTypeRecipient,
+			ksef.SubjectTypePayer,
+			ksef.SubjectTypeAuthorized,
 		}
 	}
 	params.PageSize = vip.GetInt(prefixedFlag(prefix, flagPageSize))
 	dateRangeType := vip.GetString(prefixedFlag(prefix, flagDateType))
-	params.DateType = invoices.DateRangeType(dateRangeType)
+	params.DateType = ksef.DateRangeType(dateRangeType)
 	if params.Incremental || params.DateType == "" {
-		params.DateType = invoices.DateTypeStorage
+		params.DateType = ksef.DateTypeStorage
 	}
 
 	params.UseExportMode = vip.GetBool(prefixedFlag(prefix, flagUseExport))

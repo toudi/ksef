@@ -1,7 +1,7 @@
 package config
 
 import (
-	"ksef/internal/client/v2/types/invoices"
+	"ksef/core/downloader"
 	downloaderconfig "ksef/internal/invoicesdb/downloader/config"
 	statuscheckerconfig "ksef/internal/invoicesdb/status-checker/config"
 	uploaderconfig "ksef/internal/invoicesdb/uploader/config"
@@ -16,7 +16,7 @@ const (
 
 type SyncConfig struct {
 	Uploader            uploaderconfig.UploaderConfig
-	Downloader          invoices.DownloadParams
+	Downloader          downloader.Config
 	StatusCheckerConfig statuscheckerconfig.StatusCheckerConfig
 }
 

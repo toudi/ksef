@@ -1,11 +1,8 @@
 package invoices
 
 import (
-	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
-	"ksef/internal/invoicesdb"
 	downloaderconfig "ksef/internal/invoicesdb/downloader/config"
-	"ksef/internal/logging"
 	"ksef/internal/resources"
 	"ksef/internal/runtime"
 
@@ -50,37 +47,18 @@ func downloadRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	keyring, err := resources.Keyring(vip)
+	downloaderConfig, err := resources.DownloaderConfig(vip)
 	if err != nil {
-		logging.SeiLogger.Error("błąd inicjalizacji keyringu", "err", err)
 		return err
 	}
-	certsDB, err := resources.CertsDB(vip)
+
+	ksefClient, err := resources.Client(nip, vip)
 	if err != nil {
 		return err
 	}
 	defer resources.Close(ctx)
 
-	ksefClient, err := client.InitClient(cmd, vip, keyring)
-	if err != nil {
-		return err
-	}
-	defer ksefClient.Close()
-
-	invoicesDB, err := invoicesdb.OpenForNIP(
-		nip, vip, certsDB,
-		invoicesdb.WithKSeFClient(ksefClient),
-	)
-	if err != nil {
-		return err
-	}
-
-	downloaderConfig, err := downloaderconfig.GetDownloaderConfig(vip, "")
-	if err != nil {
-		return err
-	}
-
-	return invoicesDB.DownloadInvoices(ctx, vip, downloaderConfig)
+	return ksefClient.DownloadInvoices(cmd.Context(), downloaderConfig)
 }
 
 func cloneViper(src *viper.Viper) *viper.Viper {

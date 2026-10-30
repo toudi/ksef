@@ -2,7 +2,7 @@ package monthlyregistry
 
 import (
 	"ksef/core/certsdb"
-	"ksef/internal/client/v2/types/invoices"
+	"ksef/core/ksef"
 	"ksef/internal/invoicesdb/shared"
 	"time"
 
@@ -84,8 +84,8 @@ type UploadSession struct {
 }
 
 type SyncParams struct {
-	LastTimestamp time.Time              `yaml:"last-timestamp,omitempty"`
-	SubjectTypes  []invoices.SubjectType `yaml:"subject-types,omitempty"`
+	LastTimestamp time.Time          `yaml:"last-timestamp,omitempty"`
+	SubjectTypes  []ksef.SubjectType `yaml:"subject-types,omitempty"`
 }
 
 type OrdNumState struct {

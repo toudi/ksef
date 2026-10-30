@@ -2,10 +2,10 @@ package smart
 
 import (
 	"ksef/core/certsdb"
+	"ksef/core/downloader"
 	"ksef/internal/client/v2/invoices/downloader/export"
 	downloaderinterface "ksef/internal/client/v2/invoices/downloader/interface"
 	"ksef/internal/client/v2/invoices/downloader/simple"
-	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/http"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 
@@ -17,7 +17,7 @@ type smartDownloader struct {
 	certsDB    *certsdb.CertsDB
 	httpClient *http.Client
 	registry   *monthlyregistry.Registry
-	params     invoices.DownloadParams
+	params     downloader.Config
 	// downloader instances (for reusing)
 	simpleDownloader *simple.SimpleDownloader
 	exportDownloader *export.ExportDownloader
@@ -28,7 +28,7 @@ func NewDownloader(
 	certsDB *certsdb.CertsDB,
 	httpClient *http.Client,
 	registry *monthlyregistry.Registry,
-	params invoices.DownloadParams,
+	params downloader.Config,
 ) downloaderinterface.InvoiceDownloader {
 	return &smartDownloader{
 		vip:        vip,

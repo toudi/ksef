@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"ksef/cmd/ksef/commands/authorization"
 	"ksef/cmd/ksef/commands/certificates"
-	"ksef/cmd/ksef/commands/download"
 	"ksef/cmd/ksef/commands/invoices"
 	"ksef/cmd/ksef/commands/keyring"
 	subjectsettings "ksef/cmd/ksef/commands/subject-settings"
@@ -58,7 +57,6 @@ func init() {
 
 	RootCommand.AddCommand(authorization.AuthCommand)
 	RootCommand.AddCommand(certificates.CertificatesCommand)
-	RootCommand.AddCommand(download.DownloadCommand)
 	RootCommand.AddCommand(renderPDFCommand)
 	RootCommand.AddCommand(keyring.KeyringCommand)
 	RootCommand.AddCommand(invoices.InvoicesCommand)

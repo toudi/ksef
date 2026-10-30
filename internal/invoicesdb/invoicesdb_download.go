@@ -5,17 +5,19 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"ksef/core/downloader"
+	"ksef/core/ksef"
+	"ksef/internal/logging"
+	"ksef/internal/pdf"
+	"ksef/internal/runtime"
+	"ksef/internal/utils"
 	"strings"
 	"time"
 
-	"ksef/internal/client/v2/types/invoices"
 	invoiceTypes "ksef/internal/client/v2/types/invoices"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
-	"ksef/internal/logging"
-	"ksef/internal/pdf"
+
 	pdfconfig "ksef/internal/pdf/config"
-	"ksef/internal/runtime"
-	"ksef/internal/utils"
 
 	"github.com/spf13/viper"
 )
@@ -25,11 +27,11 @@ var errDownloadingInvoices = errors.New("error downloading invoices")
 func (i *InvoicesDB) DownloadInvoices(
 	ctx context.Context,
 	vip *viper.Viper,
-	cfg invoiceTypes.DownloadParams,
+	cfg downloader.Config,
 ) (err error) {
 	// not sure if that's the "proper" way to do it, but let's just always use persistent time
 	// and download invoices for all subjects. this way we can be incremental about it.
-	tmpDownloadParams := invoiceTypes.DownloadParams{
+	tmpDownloadParams := downloader.Config{
 		SubjectTypes:  cfg.SubjectTypes,
 		PageSize:      cfg.PageSize,
 		UseExportMode: cfg.UseExportMode,
@@ -55,7 +57,7 @@ func (i *InvoicesDB) DownloadInvoices(
 			return err
 		}
 
-		tmpDownloadParams.DateType = invoiceTypes.DateTypeStorage
+		tmpDownloadParams.DateType = ksef.DateTypeStorage
 
 		// initialize starting cutoff with month start:
 		tmpDownloadParams.StartDate = month
@@ -125,7 +127,7 @@ func (i *InvoicesDB) DownloadInvoices(
 
 		if err = downloader.Download(
 			ctx,
-			func(subjectType invoices.SubjectType, invoice invoiceTypes.InvoiceMetadata, content bytes.Buffer) error {
+			func(subjectType ksef.SubjectType, invoice invoiceTypes.InvoiceMetadata, content bytes.Buffer) error {
 				if registry.ContainsHash(invoice.Checksum()) {
 					logging.DownloadLogger.Info("Ta faktura już znajduje się w rejestrze", "KSeFRefNo", invoice.KSeFNumber, "checksum", invoice.Checksum())
 					return nil

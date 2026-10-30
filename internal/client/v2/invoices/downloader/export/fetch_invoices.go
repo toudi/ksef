@@ -5,15 +5,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	baseHTTP "net/http"
-	"time"
-
-	ratelimits "ksef/internal/client/v2/rate-limits"
+	"ksef/core/ksef"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/encryption"
 	"ksef/internal/http"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
+	baseHTTP "net/http"
+	"time"
+
+	ratelimits "ksef/internal/client/v2/rate-limits"
 )
 
 var (
@@ -27,7 +28,7 @@ func (ed *ExportDownloader) fetchInvoices(
 	exportRequest exportRequest,
 	exportResponse exportResponse,
 	invoiceReady func(
-		subjectType invoices.SubjectType,
+		subjectType ksef.SubjectType,
 		invoice invoices.InvoiceMetadata,
 		content bytes.Buffer,
 	) error,

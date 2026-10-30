@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"context"
 	"errors"
-
+	"ksef/core/ksef"
 	"ksef/internal/client/v2/invoices/downloader/metadata"
 	"ksef/internal/client/v2/types/invoices"
-	types "ksef/internal/client/v2/types/invoices"
 	"ksef/internal/logging"
+
+	types "ksef/internal/client/v2/types/invoices"
 )
 
 var (
@@ -19,8 +20,8 @@ var (
 func (sd *SimpleDownloader) DownloadInvoices(
 	ctx context.Context,
 	metadataPage *types.InvoiceMetadataResponse,
-	subjectType invoices.SubjectType,
-	invoiceReady func(subjectType invoices.SubjectType, invoiceMeta invoices.InvoiceMetadata, content bytes.Buffer) error,
+	subjectType ksef.SubjectType,
+	invoiceReady func(subjectType ksef.SubjectType, invoiceMeta invoices.InvoiceMetadata, content bytes.Buffer) error,
 ) (err error) {
 	var (
 		finished             bool

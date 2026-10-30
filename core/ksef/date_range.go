@@ -1,4 +1,4 @@
-package invoices
+package ksef
 
 type DateRangeType string
 

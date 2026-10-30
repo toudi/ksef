@@ -3,17 +3,17 @@ package smart
 import (
 	"bytes"
 	"context"
-
+	"ksef/core/ksef"
 	"ksef/internal/client/v2/invoices/downloader/simple"
 	"ksef/internal/client/v2/types/invoices"
 )
 
 func (sd *smartDownloader) downloadWithSimple(
 	ctx context.Context,
-	subjectType invoices.SubjectType,
+	subjectType ksef.SubjectType,
 	invoicesMetadata *invoices.InvoiceMetadataResponse,
 	invoiceReady func(
-		subjectType invoices.SubjectType,
+		subjectType ksef.SubjectType,
 		invoice invoices.InvoiceMetadata,
 		content bytes.Buffer,
 	) error,

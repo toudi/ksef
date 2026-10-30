@@ -1,7 +1,7 @@
 package simple
 
 import (
-	"ksef/internal/client/v2/types/invoices"
+	"ksef/core/downloader"
 	"ksef/internal/http"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 )
@@ -9,13 +9,13 @@ import (
 type SimpleDownloader struct {
 	httpClient *http.Client
 	registry   *monthlyregistry.Registry
-	params     invoices.DownloadParams
+	params     downloader.Config
 }
 
 func NewDownloader(
 	httpClient *http.Client,
 	registry *monthlyregistry.Registry,
-	params invoices.DownloadParams,
+	params downloader.Config,
 ) *SimpleDownloader {
 	return &SimpleDownloader{
 		httpClient: httpClient,

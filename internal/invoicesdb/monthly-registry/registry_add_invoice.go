@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"ksef/core/certsdb"
+	"ksef/core/ksef"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/runtime"
 	"ksef/internal/sei"
@@ -98,7 +99,11 @@ func (r *Registry) AddInvoice(
 	return nil
 }
 
-func (r *Registry) AddReceivedInvoice(ksefInvoice invoices.InvoiceMetadata, subjectType invoices.SubjectType, environment runtime.Environment) (err error) {
+func (r *Registry) AddReceivedInvoice(
+	ksefInvoice invoices.InvoiceMetadata,
+	subjectType ksef.SubjectType,
+	environment runtime.Environment,
+) (err error) {
 	var checksumBytes []byte
 	checksumBytes, err = base64.StdEncoding.DecodeString(ksefInvoice.InvoiceHashBase64)
 	if err != nil {

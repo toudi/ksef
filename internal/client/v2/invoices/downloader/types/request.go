@@ -1,9 +1,8 @@
 package downloadertypes
 
 import (
+	"ksef/core/ksef"
 	"time"
-
-	types "ksef/internal/client/v2/types/invoices"
 )
 
 type DateRangeType string
@@ -20,6 +19,6 @@ type DateRange struct {
 }
 
 type InvoiceListRequest struct {
-	SubjectType types.SubjectType `json:"subjectType"`
-	DateRange   DateRange         `json:"dateRange"`
+	SubjectType ksef.SubjectType `json:"subjectType"`
+	DateRange   DateRange        `json:"dateRange"`
 }

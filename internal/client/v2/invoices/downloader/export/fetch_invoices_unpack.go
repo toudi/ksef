@@ -3,7 +3,7 @@ package export
 import (
 	"bytes"
 	"context"
-
+	"ksef/core/ksef"
 	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/encryption"
 	"ksef/internal/logging"
@@ -15,7 +15,7 @@ func (ed *ExportDownloader) downloadAndExtract(
 	exportRequest exportRequest,
 	statusResponse *exportStatusResponse,
 	invoiceReady func(
-		subjectType invoices.SubjectType,
+		subjectType ksef.SubjectType,
 		invoice invoices.InvoiceMetadata,
 		content bytes.Buffer,
 	) error,

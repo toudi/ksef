@@ -3,8 +3,8 @@ package invoices
 import (
 	"ksef/cmd/ksef/commands/client"
 	"ksef/core/certsdb"
+	"ksef/core/downloader"
 	kr "ksef/core/keyring"
-	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/invoicesdb"
 	downloaderconfig "ksef/internal/invoicesdb/downloader/config"
 	"ksef/internal/logging"
@@ -98,7 +98,7 @@ func downloadWorker(
 	cmd *cobra.Command,
 	wg *sync.WaitGroup,
 	baseViper *viper.Viper,
-	downloaderConfig invoices.DownloadParams,
+	downloaderConfig downloader.Config,
 	keyring kr.Keyring,
 	certsDB *certsdb.CertsDB,
 	nipChannel <-chan string,
@@ -128,7 +128,7 @@ func doDownload(
 	cmd *cobra.Command,
 	vip *viper.Viper,
 	nip string,
-	downloaderConfig invoices.DownloadParams,
+	downloaderConfig downloader.Config,
 	keyring kr.Keyring,
 	certsDB *certsdb.CertsDB,
 ) error {

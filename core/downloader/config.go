@@ -1,16 +1,17 @@
-package invoices
+package downloader
 
 import (
+	"ksef/core/ksef"
 	"time"
 )
 
-type DownloadParams struct {
+type Config struct {
 	Incremental   bool
 	PDF           bool
 	UseExportMode bool
 	UseSmartMode  bool
-	SubjectTypes  []SubjectType
-	DateType      DateRangeType
+	SubjectTypes  []ksef.SubjectType
+	DateType      ksef.DateRangeType
 	StartDate     time.Time
 	EndDate       *time.Time
 	PageSize      int
