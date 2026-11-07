@@ -3,10 +3,10 @@ package export
 import (
 	"bytes"
 
-	"ksef/internal/client/v2/types/invoices"
+	"ksef/core/ksef"
 )
 
 type archivedInvoice struct {
-	Metadata      invoices.InvoiceMetadata
+	Metadata      ksef.InvoiceMetadata
 	ContentBuffer bytes.Buffer
 }

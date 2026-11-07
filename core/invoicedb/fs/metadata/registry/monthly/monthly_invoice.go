@@ -10,7 +10,7 @@ import (
 func (i Invoice) ID() string {
 	var builder strings.Builder
 	builder.WriteString(fmt.Sprintf("%04d-", i.OrdNum))
-	if i.Type == InvoiceTypeReceived {
+	if i.Type != InvoiceTypeIssued && i.Issuer != nil {
 		builder.WriteString(slugify.Slugify(i.Issuer.Name))
 		builder.WriteString("-")
 	}

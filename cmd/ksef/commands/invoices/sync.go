@@ -49,7 +49,7 @@ func syncInvoicesRun(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	defer resources.Close(ctx)
+	defer resources.Close(ctx, nil)
 
 	ksefClient, err := client.InitClient(cmd, vip, keyring)
 	if err != nil {

@@ -22,7 +22,7 @@ func Keyring(vip *viper.Viper) (kr.Keyring, error) {
 		return nil, err
 	}
 	keyringInstance = ring
-	destructors = append(destructors, func(ctx context.Context) error {
+	destructors = append(destructors, func(ctx context.Context, _ error) error {
 		return ring.Close()
 	})
 

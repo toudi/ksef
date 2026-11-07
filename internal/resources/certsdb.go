@@ -1,6 +1,8 @@
 package resources
 
 import (
+	"context"
+
 	"ksef/core/certsdb"
 	"ksef/core/certsdb/fs"
 	"ksef/internal/runtime"
@@ -56,7 +58,9 @@ func CertsMetaStorage(vip *viper.Viper) (*fs.FSCertsStorage, error) {
 		return nil, err
 	}
 	fsMetaStorageInstance = meta
-	destructors = append(destructors, meta.Close)
+	destructors = append(destructors, func(ctx context.Context, _ error) error {
+		return meta.Close(ctx)
+	})
 
 	return meta, nil
 }
@@ -86,7 +90,9 @@ func CertsDB(vip *viper.Viper) (*certsdb.CertsDB, error) {
 		return nil, err
 	}
 	certsDBInstance = db
-	destructors = append(destructors, db.Close)
+	destructors = append(destructors, func(ctx context.Context, _ error) error {
+		return db.Close(ctx)
+	})
 
 	return db, nil
 }

@@ -58,7 +58,8 @@ func addNIPToCertRun(cmd *cobra.Command, _ []string) error {
 	if err = certsDB.AddNIPToCertificate(ctx, certID, nip); err != nil {
 		return err
 	}
-	return resources.Close(ctx)
+	resources.Close(ctx, nil)
+	return nil
 }
 
 func dropNIPFromCertRun(cmd *cobra.Command, _ []string) error {
@@ -79,5 +80,6 @@ func dropNIPFromCertRun(cmd *cobra.Command, _ []string) error {
 	if err = certsDB.RemoveNIPFromCertificate(ctx, certID, nip); err != nil {
 		return err
 	}
-	return resources.Close(ctx)
+	resources.Close(ctx, nil)
+	return nil
 }

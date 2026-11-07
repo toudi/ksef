@@ -12,30 +12,30 @@ const (
 )
 
 type KSeFGatewayConfig struct {
-	Gateway      KSeFGateway
-	API          string // bramka API
-	QRCode       string // url do weryfikacji kodów QR
-	NIPValidator utils.NIPValidatorType
+	Gateway       KSeFGateway
+	APIBaseURL    string // bramka API
+	QRCodeBaseURL string // url do weryfikacji kodów QR
+	NIPValidator  utils.NIPValidatorType
 }
 
 var (
 	testEnvironment = KSeFGatewayConfig{
-		Gateway:      KSeFGatewayTest,
-		API:          "https://api-test.ksef.mf.gov.pl",
-		QRCode:       "https://qr-test.ksef.mf.gov.pl",
-		NIPValidator: utils.NIPLengthValidator,
+		Gateway:       KSeFGatewayTest,
+		APIBaseURL:    "https://api-test.ksef.mf.gov.pl",
+		QRCodeBaseURL: "https://qr-test.ksef.mf.gov.pl",
+		NIPValidator:  utils.NIPLengthValidator,
 	}
 	demoEnvironment = KSeFGatewayConfig{
-		Gateway:      KSeFGatewayDemo,
-		API:          "https://api-demo.ksef.mf.gov.pl",
-		QRCode:       "https://qr-demo.ksef.mf.gov.pl",
-		NIPValidator: utils.NIPValidator,
+		Gateway:       KSeFGatewayDemo,
+		APIBaseURL:    "https://api-demo.ksef.mf.gov.pl",
+		QRCodeBaseURL: "https://qr-demo.ksef.mf.gov.pl",
+		NIPValidator:  utils.NIPValidator,
 	}
 	prodEnvironment = KSeFGatewayConfig{
-		Gateway:      KSeFGatewayProd,
-		API:          "https://api.ksef.mf.gov.pl",
-		QRCode:       "https://qr.ksef.mf.gov.pl",
-		NIPValidator: utils.NIPValidator,
+		Gateway:       KSeFGatewayProd,
+		APIBaseURL:    "https://api.ksef.mf.gov.pl",
+		QRCodeBaseURL: "https://qr.ksef.mf.gov.pl",
+		NIPValidator:  utils.NIPValidator,
 	}
 
 	gateways = map[KSeFGateway]KSeFGatewayConfig{

@@ -3,16 +3,17 @@ package downloaderinterface
 import (
 	"bytes"
 	"context"
+	"ksef/core/downloader"
 	"ksef/core/ksef"
-	"ksef/internal/client/v2/types/invoices"
 )
 
 type InvoiceDownloader interface {
 	Download(
 		ctx context.Context,
+		params downloader.Config,
 		invoiceReady func(
 			subjectType ksef.SubjectType,
-			invoice invoices.InvoiceMetadata,
+			invoice ksef.InvoiceMetadata,
 			content bytes.Buffer,
 		) error,
 	) error

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	baseHTTP "net/http"
 
+	"ksef/core/ksef"
 	ratelimits "ksef/internal/client/v2/rate-limits"
-	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/http"
 )
 
@@ -17,7 +17,7 @@ const (
 
 func (sd *SimpleDownloader) downloadInvoice(
 	ctx context.Context,
-	invoiceMeta invoices.InvoiceMetadata,
+	invoiceMeta ksef.InvoiceMetadata,
 	dest *bytes.Buffer,
 ) (err error) {
 	_, err = sd.httpClient.Request(

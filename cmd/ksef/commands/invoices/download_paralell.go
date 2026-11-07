@@ -44,7 +44,7 @@ func downloadRunParalell(cmd *cobra.Command, baseViper *viper.Viper, numWorkers 
 	if err != nil {
 		return err
 	}
-	defer resources.Close(cmd.Context())
+	defer resources.Close(cmd.Context(), nil)
 
 	// now let's determine if there is less nip's to process than number of
 	// declared workers. if so - let's decrement it to not waste resources

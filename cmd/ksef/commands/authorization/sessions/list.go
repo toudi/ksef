@@ -44,7 +44,7 @@ func getSessions(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-	defer resources.Close(ctx)
+	defer resources.Close(ctx, nil)
 
 	tokenManager, err = auth.NewTokenManager(
 		cmd.Context(),

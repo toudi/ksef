@@ -43,7 +43,7 @@ func dumpAuthChallenge(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-	defer resources.Close(ctx)
+	defer resources.Close(ctx, nil)
 
 	output, err := cmd.Flags().GetString(flagOutput)
 	if output == "" || err != nil {

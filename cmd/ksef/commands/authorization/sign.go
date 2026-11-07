@@ -35,7 +35,7 @@ func signChallengeFile(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	defer resources.Close(ctx)
+	defer resources.Close(ctx, nil)
 	challengeBytes, nip, err := challenge.GetNIPFromChallengeFile(challengeFile)
 	if err != nil {
 		return err

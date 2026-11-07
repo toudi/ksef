@@ -3,34 +3,29 @@ package invoices
 import (
 	"ksef/core/certsdb"
 	"ksef/core/downloader"
-	"ksef/internal/client/v2/invoices/downloader/export"
+	"ksef/core/invoicedb"
 	downloaderinterface "ksef/internal/client/v2/invoices/downloader/interface"
 	"ksef/internal/client/v2/invoices/downloader/simple"
-	"ksef/internal/client/v2/invoices/downloader/smart"
 	"ksef/internal/http"
-	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
-
-	"github.com/spf13/viper"
 )
 
 func NewInvoiceDownloader(
-	vip *viper.Viper,
+	config downloader.Config,
 	certsDB *certsdb.CertsDB,
 	httpClient *http.Client,
-	downloadParams downloader.Config,
-	registry *monthlyregistry.Registry,
+	invoiceDB *invoicedb.InvoiceDB,
 ) downloaderinterface.InvoiceDownloader {
-	if downloadParams.UseSmartMode {
-		return smart.NewDownloader(
-			vip, certsDB, httpClient, registry, downloadParams,
-		)
-	}
-	if downloadParams.UseExportMode {
-		return export.NewDownloader(
-			vip, certsDB, httpClient, registry, downloadParams,
-		)
-	}
+	// if downloadParams.UseSmartMode {
+	// 	return smart.NewDownloader(
+	// 		vip, certsDB, httpClient, registry, downloadParams,
+	// 	)
+	// }
+	// if downloadParams.UseExportMode {
+	// 	return export.NewDownloader(
+	// 		vip, certsDB, httpClient, registry, downloadParams,
+	// 	)
+	// }
 	return simple.NewDownloader(
-		httpClient, registry, downloadParams,
+		httpClient, invoiceDB,
 	)
 }

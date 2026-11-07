@@ -5,14 +5,13 @@ import (
 	"context"
 	"ksef/core/ksef"
 	"ksef/internal/client/v2/invoices/downloader/export"
-	"ksef/internal/client/v2/types/invoices"
 )
 
 func (sd *smartDownloader) downloadWithExport(
 	ctx context.Context,
 	invoiceReady func(
 		subjectType ksef.SubjectType,
-		invoice invoices.InvoiceMetadata,
+		invoice ksef.InvoiceMetadata,
 		content bytes.Buffer,
 	) error,
 ) error {
@@ -22,8 +21,7 @@ func (sd *smartDownloader) downloadWithExport(
 			sd.certsDB,
 			sd.httpClient,
 			sd.registry,
-			sd.params,
 		)
 	}
-	return sd.exportDownloader.Download(ctx, invoiceReady)
+	return sd.exportDownloader.Download(ctx, sd.params, invoiceReady)
 }

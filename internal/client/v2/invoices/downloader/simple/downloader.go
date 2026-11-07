@@ -1,26 +1,31 @@
 package simple
 
 import (
+	"context"
 	"ksef/core/downloader"
+	"ksef/core/invoicedb"
 	"ksef/internal/http"
-	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 )
 
+// InvoiceHashChecker is the minimal storage lookup the simple downloader needs.
+// Both the new core InvoiceDB and the legacy monthly registry adapter satisfy it.
+type InvoiceHashChecker interface {
+	ContainsHash(ctx context.Context, yearMonth invoicedb.YearMonth, checksum string) (bool, error)
+}
+
 type SimpleDownloader struct {
-	httpClient *http.Client
-	registry   *monthlyregistry.Registry
-	params     downloader.Config
+	httpClient  *http.Client
+	hashChecker InvoiceHashChecker
+	params      downloader.Config
 }
 
 func NewDownloader(
 	httpClient *http.Client,
-	registry *monthlyregistry.Registry,
-	params downloader.Config,
+	hashChecker InvoiceHashChecker,
 ) *SimpleDownloader {
 	return &SimpleDownloader{
-		httpClient: httpClient,
-		registry:   registry,
-		params:     params,
+		httpClient:  httpClient,
+		hashChecker: hashChecker,
 	}
 }
 

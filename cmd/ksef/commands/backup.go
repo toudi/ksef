@@ -110,7 +110,7 @@ func prepareBackupEnv(cmd *cobra.Command, _ []string) (err error) {
 	if err != nil {
 		return errors.Join(errOpeningKeyring, err)
 	}
-	defer resources.Close(ctx)
+	defer resources.Close(ctx, nil)
 
 	backupConfig = BackupConfig{
 		InvoicePDF: vip.GetBool(flagNameInvoicePDF),
@@ -152,7 +152,8 @@ func prepareBackupEnv(cmd *cobra.Command, _ []string) (err error) {
 		logging.SeiLogger.Warn("brak zdefiniowanego hasła do archiwizacji. Archiwum nie będzie zaszyfrowane")
 	}
 	if certsDB != nil {
-		return resources.Close(ctx)
+		resources.Close(ctx, nil)
+		return nil
 	}
 	return nil
 }
@@ -296,7 +297,7 @@ func setBackupPassword(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return errors.Join(errOpeningKeyring, err)
 	}
-	defer resources.Close(cmd.Context())
+	defer resources.Close(cmd.Context(), nil)
 
 	var password string
 

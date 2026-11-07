@@ -46,7 +46,7 @@ func uploadInvoicesRun(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-	defer resources.Close(ctx)
+	defer resources.Close(ctx, nil)
 
 	ksefClient, err := client.InitClient(cmd, vip, keyring)
 	if err != nil {

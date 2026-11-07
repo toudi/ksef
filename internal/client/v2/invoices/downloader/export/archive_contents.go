@@ -7,14 +7,14 @@ import (
 	"io"
 	"path/filepath"
 
-	"ksef/internal/client/v2/types/invoices"
+	"ksef/core/ksef"
 	"ksef/internal/logging"
 )
 
 const metadataFilename = "_metadata.json"
 
 type archiveContents struct {
-	Invoices  []invoices.InvoiceMetadata `json:"invoices"`
+	Invoices  []ksef.InvoiceMetadata `json:"invoices"`
 	zipReader *zip.ReadCloser
 }
 

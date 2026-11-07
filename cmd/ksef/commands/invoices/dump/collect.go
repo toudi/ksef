@@ -2,10 +2,10 @@ package dump
 
 import (
 	"fmt"
-	"os"
 	"ksef/internal/invoicesdb/annotations"
-	"ksef/internal/invoicesdb/shared"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
+	"ksef/internal/invoicesdb/shared"
+	"os"
 )
 
 // InvoiceAnnotations holds annotations for a single invoice's items.

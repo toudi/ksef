@@ -42,7 +42,7 @@ func login(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	defer resources.Close(ctx)
+	defer resources.Close(ctx, nil)
 
 	certsDB, err := resources.CertsDB(vip)
 	if err != nil {

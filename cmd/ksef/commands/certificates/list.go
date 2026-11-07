@@ -36,7 +36,7 @@ func listCerts(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-	defer resources.Close(ctx)
+	defer resources.Close(ctx, nil)
 
 	table := simpletable.New()
 

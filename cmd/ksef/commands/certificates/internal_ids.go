@@ -98,7 +98,8 @@ func addInternalIdsToCertificate(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	return resources.Close(ctx)
+	resources.Close(ctx, nil)
+	return nil
 }
 
 func removeInternalIdsFromCertificate(cmd *cobra.Command, _ []string) error {
@@ -111,5 +112,6 @@ func removeInternalIdsFromCertificate(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	return resources.Close(ctx)
+	resources.Close(ctx, nil)
+	return nil
 }

@@ -31,7 +31,7 @@ func init() {
 	InvoicesCommand.AddCommand(downloadCommand)
 }
 
-func downloadRun(cmd *cobra.Command, _ []string) error {
+func downloadRun(cmd *cobra.Command, _ []string) (commandErr error) {
 	ctx := cmd.Context()
 	vip := viper.GetViper()
 	workers := vip.GetInt(flagNameWorkersLong)
@@ -52,11 +52,13 @@ func downloadRun(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	ksefClient, err := resources.Client(nip, vip)
+	ksefClient, err := resources.Client(vip, nip)
 	if err != nil {
 		return err
 	}
-	defer resources.Close(ctx)
+	defer func() {
+		resources.Close(ctx, commandErr)
+	}()
 
 	return ksefClient.DownloadInvoices(cmd.Context(), downloaderConfig)
 }

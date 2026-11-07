@@ -50,7 +50,7 @@ func authSessionDebug(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-	defer resources.Close(ctx)
+	defer resources.Close(ctx, nil)
 
 	// there are couple of modes here:
 	// 1. if the user passed path to a signed file - let's use it

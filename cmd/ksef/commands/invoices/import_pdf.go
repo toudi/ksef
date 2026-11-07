@@ -35,13 +35,14 @@ func importPDFRun(cmd *cobra.Command, args []string) error {
 	if err := runtime.CheckNIPIsSet(vip); err != nil {
 		return err
 	}
-
-	invoiceDataStorage, err := resources.InvoiceDataStorage(vip)
+	NIP, err := runtime.GetNIP(vip)
 	if err != nil {
 		return err
 	}
 
-	invoiceDB, err := resources.InvoiceDB(vip)
+	invoiceDataStorage := resources.InvoiceDataStorage(vip)
+
+	invoiceDB, err := resources.InvoiceDB(vip, NIP)
 	if err != nil {
 		return err
 	}

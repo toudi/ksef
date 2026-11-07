@@ -15,9 +15,9 @@ var (
 )
 
 type InvoiceContext struct {
-	AnnotationsMgr *annotations.Annotations
-	Invoice        *monthlyregistry.Invoice
-	XMLInvoice     *monthlyregistry.XMLInvoice
+	AnnotationsMgr  *annotations.Annotations
+	Invoice         *monthlyregistry.Invoice
+	XMLInvoice      *monthlyregistry.XMLInvoice
 	InvoiceRegistry *monthlyregistry.Registry
 }
 
@@ -54,9 +54,9 @@ func InitAnnotationsManagerFromInvoiceFile(cmd *cobra.Command, args []string) (*
 	}
 
 	return &InvoiceContext{
-		AnnotationsMgr: annotationsMgr,
-		Invoice:        invoice,
-		XMLInvoice:     xmlInvoice,
+		AnnotationsMgr:  annotationsMgr,
+		Invoice:         invoice,
+		XMLInvoice:      xmlInvoice,
 		InvoiceRegistry: invoiceRegistry,
 	}, nil
 }

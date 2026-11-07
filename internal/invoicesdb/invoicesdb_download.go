@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	invoiceTypes "ksef/internal/client/v2/types/invoices"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
 
 	pdfconfig "ksef/internal/pdf/config"
@@ -127,7 +126,8 @@ func (i *InvoicesDB) DownloadInvoices(
 
 		if err = downloader.Download(
 			ctx,
-			func(subjectType ksef.SubjectType, invoice invoiceTypes.InvoiceMetadata, content bytes.Buffer) error {
+			tmpDownloadParams,
+			func(subjectType ksef.SubjectType, invoice ksef.InvoiceMetadata, content bytes.Buffer) error {
 				if registry.ContainsHash(invoice.Checksum()) {
 					logging.DownloadLogger.Info("Ta faktura już znajduje się w rejestrze", "KSeFRefNo", invoice.KSeFNumber, "checksum", invoice.Checksum())
 					return nil

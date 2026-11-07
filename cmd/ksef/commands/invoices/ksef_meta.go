@@ -57,7 +57,12 @@ func getKsefMeta(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	invoiceDB, err := resources.InvoiceDB(vip)
+	NIP, err := runtime.GetNIP(vip)
+	if err != nil {
+		return err
+	}
+
+	invoiceDB, err := resources.InvoiceDB(vip, NIP)
 	if err != nil {
 		return err
 	}

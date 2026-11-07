@@ -6,7 +6,6 @@ import (
 	"errors"
 	"ksef/core/certsdb"
 	"ksef/core/ksef"
-	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/runtime"
 	"ksef/internal/sei"
 
@@ -100,7 +99,7 @@ func (r *Registry) AddInvoice(
 }
 
 func (r *Registry) AddReceivedInvoice(
-	ksefInvoice invoices.InvoiceMetadata,
+	ksefInvoice ksef.InvoiceMetadata,
 	subjectType ksef.SubjectType,
 	environment runtime.Environment,
 ) (err error) {

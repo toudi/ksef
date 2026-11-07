@@ -50,7 +50,7 @@ func sendCsrs(cmd *cobra.Command, _ []string) error {
 		logging.SeiLogger.Error("unable to initialize keyring", "err", err)
 		return err
 	}
-	defer resources.Close(ctx)
+	defer resources.Close(ctx, nil)
 
 	if cli, err = client.InitClient(cmd, vip, keyring); err != nil {
 		return err

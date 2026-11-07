@@ -1,6 +1,10 @@
 package monthly
 
-import "ksef/internal/invoicesdb/shared"
+import (
+	"ksef/core/ksef"
+	"ksef/internal/invoicesdb/shared"
+	"time"
+)
 
 type InvoiceType uint8
 
@@ -10,6 +14,13 @@ const (
 	InvoiceTypePayer      InvoiceType = 2
 	InvoiceTypeAuthorized InvoiceType = 3
 )
+
+var subjectTypeToInvoiceType = map[ksef.SubjectType]InvoiceType{
+	ksef.SubjectTypeIssuer:     InvoiceTypeIssued,
+	ksef.SubjectTypeRecipient:  InvoiceTypeReceived,
+	ksef.SubjectTypePayer:      InvoiceTypePayer,
+	ksef.SubjectTypeAuthorized: InvoiceTypeAuthorized,
+}
 
 type InvoiceQRCodes struct {
 	Invoice string `yaml:"invoice"`
@@ -55,6 +66,37 @@ type Invoice struct {
 	Annotations  Annotations    `yaml:"annotations,omitempty"`
 }
 
+// SyncParams mirrors the legacy registry's sync section exactly.
+type SyncParams struct {
+	LastTimestamp time.Time          `yaml:"last-timestamp,omitempty"`
+	SubjectTypes  []ksef.SubjectType `yaml:"subject-types,omitempty"`
+}
+
+type OrdNumState struct {
+	InvoiceType InvoiceType `yaml:"invoice-type"`
+	Count       int         `yaml:"count"`
+}
+
+type OrdNums []OrdNumState
+
+func (o OrdNums) ToMap() map[InvoiceType]int {
+	result := make(map[InvoiceType]int)
+	for _, entry := range o {
+		result[entry.InvoiceType] = entry.Count
+	}
+	return result
+}
+
+func ordNumsToSlice(input map[InvoiceType]int) OrdNums {
+	result := make(OrdNums, 0, len(input))
+	for invoiceType, count := range input {
+		result = append(result, OrdNumState{InvoiceType: invoiceType, Count: count})
+	}
+	return result
+}
+
 type state struct {
-	Invoices []*Invoice `yaml:"invoices"`
+	Invoices     []*Invoice  `yaml:"invoices"`
+	SyncParams   *SyncParams `yaml:"sync,omitempty"`
+	SavedOrdNums OrdNums     `yaml:"ord-nums,omitempty"`
 }

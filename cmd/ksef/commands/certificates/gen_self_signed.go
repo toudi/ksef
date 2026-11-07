@@ -93,5 +93,6 @@ func generateSelfSignedCert(cmd *cobra.Command, _ []string) error {
 	if err = certsDB.RegenerateSelfSignedCert(ctx, subject); err != nil {
 		return err
 	}
-	return resources.Close(ctx)
+	resources.Close(ctx, nil)
+	return nil
 }

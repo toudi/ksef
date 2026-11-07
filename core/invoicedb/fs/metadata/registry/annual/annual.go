@@ -1,12 +1,14 @@
 package annual
 
 import (
-	"ksef/core/invoicedb"
-	"ksef/internal/logging"
-	"ksef/internal/utils"
+	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
+
+	"ksef/core/invoicedb"
+	"ksef/internal/logging"
+	"ksef/internal/utils"
 )
 
 const registryName = "invoices.yaml"
@@ -34,27 +36,27 @@ func Open(root string, yearMonth invoicedb.YearMonth) (*Registry, error) {
 		logging.InvoicesDBLogger.Debug("found annual registry in cache - reusing", "root", root, "year", yearMonth.Year)
 		return registry, nil
 	}
-	// if we're here then it means we've got to try to find the registry
+
 	dbFileName := filepath.Join(root, strconv.Itoa(yearMonth.Year), registryName)
-	dbFile, _, err := utils.FileExists(dbFileName)
+	registry := &Registry{dbfile: dbFileName}
+
+	dbFile, err := os.Open(dbFileName)
 	if err != nil {
-		return nil, err
-	}
-	defer dbFile.Close()
-	// TODO: parse db
-	var invoices []*Invoice
-	if err := utils.ReadYAML(dbFile, &invoices); err != nil {
-		return nil, err
-	}
-	registry := &Registry{
-		dbfile:   dbFileName,
-		invoices: invoices,
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+	} else {
+		defer dbFile.Close()
+		var invoices []*Invoice
+		if err := utils.ReadYAML(dbFile, &invoices); err != nil {
+			return nil, err
+		}
+		registry.invoices = invoices
 	}
 
 	if openedRegistries[root] == nil {
 		openedRegistries[root] = make(map[int]*Registry)
 	}
-
 	openedRegistries[root][yearMonth.Year] = registry
 	logging.InvoicesDBLogger.Debug("set annual registry to cache", "root", root, "year", yearMonth.Year)
 

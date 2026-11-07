@@ -3,9 +3,9 @@ package smart
 import (
 	"bytes"
 	"context"
+	"ksef/core/downloader"
 	"ksef/core/ksef"
 	"ksef/internal/client/v2/invoices/downloader/metadata"
-	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/logging"
 	"time"
 
@@ -14,12 +14,14 @@ import (
 
 func (sd *smartDownloader) Download(
 	ctx context.Context,
+	params downloader.Config,
 	invoiceReady func(
 		subjectType ksef.SubjectType,
-		invoice invoices.InvoiceMetadata,
+		invoice ksef.InvoiceMetadata,
 		content bytes.Buffer,
 	) error,
 ) error {
+	sd.params = params
 	perMinuteLimit, err := sd.httpClient.GetLimit(
 		ratelimits.OperationInvoiceDownload,
 		time.Minute,

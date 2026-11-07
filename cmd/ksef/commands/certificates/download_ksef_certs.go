@@ -37,7 +37,7 @@ func downloadKSeFCerts(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	httpClient := http.NewClient(gatewayConfig.API)
+	httpClient := http.NewClient(gatewayConfig.APIBaseURL)
 
 	certificates, err := security.DownloadCertificates(ctx, httpClient)
 	if err != nil {
@@ -75,5 +75,6 @@ func downloadKSeFCerts(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	return resources.Close(ctx)
+	resources.Close(ctx, nil)
+	return nil
 }

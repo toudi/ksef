@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"ksef/core/ksef"
-	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/encryption"
 	"ksef/internal/http"
 	"ksef/internal/logging"
@@ -29,7 +28,7 @@ func (ed *ExportDownloader) fetchInvoices(
 	exportResponse exportResponse,
 	invoiceReady func(
 		subjectType ksef.SubjectType,
-		invoice invoices.InvoiceMetadata,
+		invoice ksef.InvoiceMetadata,
 		content bytes.Buffer,
 	) error,
 ) error {

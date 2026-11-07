@@ -32,7 +32,7 @@ func syncEnrollments(cmd *cobra.Command, _ []string) error {
 		logging.SeiLogger.Error("błąd inicjalizacji keyringu", "err", err)
 		return err
 	}
-	defer resources.Close(ctx)
+	defer resources.Close(ctx, nil)
 
 	if cli, err = client.InitClient(cmd, vip, keyring); err != nil {
 		return err

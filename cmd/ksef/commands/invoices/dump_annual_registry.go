@@ -8,6 +8,7 @@ import (
 	"ksef/internal/resources"
 	"ksef/internal/runtime"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -57,10 +58,11 @@ func annualRegistryRun(cmd *cobra.Command, _ []string) error {
 	today := time.Now().Local()
 	month := time.Date(today.Year(), 1, 1, 0, 0, 0, 0, time.Local)
 
-	invoicesRoot, err := resources.InvoiceStorageRoot(vip)
+	nip, err := runtime.GetNIP(vip)
 	if err != nil {
 		return err
 	}
+	invoicesRoot := filepath.Join(resources.InvoiceStorageRoot(vip), nip)
 
 	// so basically all we have to do is to simply iterate over the months,
 	// open the monthly registries and append the invoices which have been
@@ -69,7 +71,7 @@ func annualRegistryRun(cmd *cobra.Command, _ []string) error {
 		// there are portions of the code that need to be backend/implementation agnostic but this is not one of them.
 		// this is a command that's used for managing the CLI (i.e. not a library) therefore it's safe to
 		// forcefully initialize the filesystem-based API
-		registry, err := registry.Open(invoicesRoot, invoicedb.YearMonth{Year: month.Year(), Month: int(month.Month())})
+		registry, err := registry.Open(invoicesRoot, invoicedb.YearMonth{Year: month.Year(), Month: int(month.Month())}, nip)
 		// registry that does not exist is not a problem per se
 		if err != nil && !os.IsNotExist(err) {
 			return err

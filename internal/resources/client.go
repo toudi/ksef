@@ -4,18 +4,14 @@ import (
 	"ksef/core/client"
 	"ksef/internal/http"
 	"ksef/internal/runtime"
-	"sync"
 
 	"github.com/spf13/viper"
 )
 
-var (
-	clientInstances map[string]*client.Client
-	mu              sync.Mutex
-)
+var clientInstance map[string]*client.Client
 
 func init() {
-	clientInstances = make(map[string]*client.Client)
+	clientInstance = make(map[string]*client.Client)
 }
 
 func HTTPClient(vip *viper.Viper) (*http.Client, error) {
@@ -24,14 +20,18 @@ func HTTPClient(vip *viper.Viper) (*http.Client, error) {
 		return nil, err
 	}
 
-	return http.NewClient(gateway.API), nil
+	return http.NewClient(gateway.APIBaseURL), nil
 }
 
-func Client(NIP string, vip *viper.Viper) (*client.Client, error) {
+func Client(vip *viper.Viper, NIP string) (*client.Client, error) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	if instance, exists := clientInstances[NIP]; exists {
+	return clientLocked(vip, NIP)
+}
+
+func clientLocked(vip *viper.Viper, NIP string) (*client.Client, error) {
+	if instance, exists := clientInstance[NIP]; exists {
 		return instance, nil
 	}
 
@@ -45,23 +45,26 @@ func Client(NIP string, vip *viper.Viper) (*client.Client, error) {
 		return nil, err
 	}
 
-	invoiceDB, err := InvoiceDB(vip)
+	invoiceDB, err := invoiceDBLocked(vip, NIP)
 	if err != nil {
 		return nil, err
 	}
 
-	httpClient, err := HTTPClient(vip)
+	dataStorage := invoiceDataStorageLocked(vip)
+
+	gateway, err := runtime.GatewayConfig(vip)
 	if err != nil {
 		return nil, err
 	}
 
-	client := client.Init(
+	cli := client.Init(
 		certsDB,
 		invoiceDB,
 		keyring,
-		httpClient,
+		gateway,
+		client.WithPDFRenderer(NewPDFRenderer(vip, dataStorage)),
 	)
 
-	clientInstances[NIP] = client
-	return client, nil
+	clientInstance[NIP] = cli
+	return cli, nil
 }

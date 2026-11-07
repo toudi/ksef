@@ -3,7 +3,6 @@ package monthlyregistry
 import (
 	"fmt"
 	"ksef/core/ksef"
-	"ksef/internal/client/v2/types/invoices"
 	"ksef/internal/sei"
 
 	"github.com/mozillazg/go-slugify"
@@ -74,7 +73,7 @@ func (r *Registry) GetDestFileName(inv *sei.ParsedInvoice, invoiceType InvoiceTy
 }
 
 func (r *Registry) GetDestFileNameForAPIInvoice(
-	subjectType ksef.SubjectType, inv invoices.InvoiceMetadata,
+	subjectType ksef.SubjectType, inv ksef.InvoiceMetadata,
 ) string {
 	invoiceType := ksefSubjectTypeToRegistryInvoiceType[subjectType]
 	numInvoices := r.countInvoicesByType(invoiceType)

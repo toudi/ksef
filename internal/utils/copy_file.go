@@ -40,6 +40,12 @@ func CopyFileToWriter(srcPath string, writer io.Writer) error {
 }
 
 func SaveBufferToFile(buffer bytes.Buffer, destFileName string) error {
+	return SaveReaderToFile(&buffer, destFileName)
+}
+
+// SaveReaderToFile copies src to destFileName, creating any missing parent
+// directories.
+func SaveReaderToFile(src io.Reader, destFileName string) error {
 	if err := os.MkdirAll(filepath.Dir(destFileName), 0o755); err != nil {
 		return err
 	}
@@ -50,6 +56,6 @@ func SaveBufferToFile(buffer bytes.Buffer, destFileName string) error {
 	}
 	defer destFile.Close()
 
-	_, err = io.Copy(destFile, &buffer)
+	_, err = io.Copy(destFile, src)
 	return err
 }

@@ -34,6 +34,26 @@ func TestInvoiceID(t *testing.T) {
 					},
 				},
 			},
+			{
+				expected: "0002-wystawca-f-789",
+				input: monthly.Invoice{
+					Type:   monthly.InvoiceTypePayer,
+					RefNo:  "f/789",
+					OrdNum: 2,
+					Issuer: &monthly.InvoiceIssuer{
+						Name: "WYsTaWcA",
+					},
+				},
+			},
+			{
+				// Legacy invoices may have no issuer. ID must not panic.
+				expected: "0003-f-999",
+				input: monthly.Invoice{
+					Type:   monthly.InvoiceTypeReceived,
+					RefNo:  "f/999",
+					OrdNum: 3,
+				},
+			},
 		} {
 			require.Equal(t, test.expected, test.input.ID())
 		}

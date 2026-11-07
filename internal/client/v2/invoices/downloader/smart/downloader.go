@@ -28,14 +28,12 @@ func NewDownloader(
 	certsDB *certsdb.CertsDB,
 	httpClient *http.Client,
 	registry *monthlyregistry.Registry,
-	params downloader.Config,
 ) downloaderinterface.InvoiceDownloader {
 	return &smartDownloader{
 		vip:        vip,
 		certsDB:    certsDB,
 		httpClient: httpClient,
 		registry:   registry,
-		params:     params,
 	}
 }
 

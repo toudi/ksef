@@ -136,5 +136,6 @@ func importCertificateRun(cmd *cobra.Command, _ []string) error {
 		logging.CertsDBLogger.Debug("certyfikat dodany do bazy", "serialNumber", serialNumber)
 	}
 
-	return resources.Close(ctx)
+	resources.Close(ctx, nil)
+	return nil
 }

@@ -1,29 +1,56 @@
 package client
 
 import (
+	"context"
+
 	"ksef/core/certsdb"
 	"ksef/core/invoicedb"
 	"ksef/core/keyring"
+	"ksef/core/ksef"
 	"ksef/internal/http"
 )
 
+// InvoicePDFRenderer renders a PDF for an already-stored invoice.
+type InvoicePDFRenderer interface {
+	RenderInvoice(
+		ctx context.Context,
+		stored *invoicedb.StoredInvoice,
+	) error
+}
+
+type ClientInitializer func(*Client)
+
+func WithPDFRenderer(renderer InvoicePDFRenderer) ClientInitializer {
+	return func(c *Client) {
+		c.pdfRenderer = renderer
+	}
+}
+
 type Client struct {
-	certsDB    *certsdb.CertsDB
-	invoiceDB  *invoicedb.InvoiceDB
-	keyring    keyring.Keyring
-	httpClient *http.Client
+	certsDB     *certsdb.CertsDB
+	invoiceDB   *invoicedb.InvoiceDB
+	keyring     keyring.Keyring
+	httpClient  *http.Client
+	gateway     ksef.KSeFGatewayConfig
+	pdfRenderer InvoicePDFRenderer
 }
 
 func Init(
 	certsDB *certsdb.CertsDB,
 	invoiceDB *invoicedb.InvoiceDB,
 	keyring keyring.Keyring,
-	httpClient *http.Client,
+	gateway ksef.KSeFGatewayConfig,
+	initializers ...ClientInitializer,
 ) *Client {
-	return &Client{
+	client := &Client{
 		certsDB:    certsDB,
 		invoiceDB:  invoiceDB,
 		keyring:    keyring,
-		httpClient: httpClient,
+		httpClient: http.NewClient(gateway.APIBaseURL),
+		gateway:    gateway,
 	}
+	for _, initializer := range initializers {
+		initializer(client)
+	}
+	return client
 }

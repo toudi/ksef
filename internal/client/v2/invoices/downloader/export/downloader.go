@@ -23,14 +23,12 @@ func NewDownloader(
 	certsDB *certsdb.CertsDB,
 	httpClient *http.Client,
 	registry *monthlyregistry.Registry,
-	params downloader.Config,
 ) *ExportDownloader {
 	return &ExportDownloader{
 		vip:        vip,
 		certsDB:    certsDB,
 		httpClient: httpClient,
 		registry:   registry,
-		params:     params,
 	}
 }
 

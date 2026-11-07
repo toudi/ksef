@@ -1,84 +1,103 @@
 package resources
 
 import (
+	"context"
+	"path/filepath"
+
 	"ksef/core/invoicedb"
 	fsInvoiceData "ksef/core/invoicedb/fs/data"
 	fsInvoiceMeta "ksef/core/invoicedb/fs/metadata"
 	"ksef/internal/invoicesdb/config"
 	"ksef/internal/runtime"
-	"path/filepath"
 
 	"github.com/spf13/viper"
 )
 
 var (
-	invoiceDBInstance                *invoicedb.InvoiceDB
+	invoiceDBInstance                map[string]*invoicedb.InvoiceDB
 	invoiceFSDataStorageInstance     *fsInvoiceData.FSDataStorage
-	invoiceFSMetadataStorageInstance *fsInvoiceMeta.FSInvoiceMetadataStorage
+	invoiceFSMetadataStorageInstance map[string]*fsInvoiceMeta.FSInvoiceMetadataStorage
 )
 
-func InvoiceDataStorage(vip *viper.Viper) (*fsInvoiceData.FSDataStorage, error) {
+func init() {
+	invoiceDBInstance = make(map[string]*invoicedb.InvoiceDB)
+	invoiceFSMetadataStorageInstance = make(map[string]*fsInvoiceMeta.FSInvoiceMetadataStorage)
+}
+
+func InvoiceDataStorage(vip *viper.Viper) *fsInvoiceData.FSDataStorage {
+	mu.Lock()
+	defer mu.Unlock()
+
+	return invoiceDataStorageLocked(vip)
+}
+
+func invoiceDataStorageLocked(vip *viper.Viper) *fsInvoiceData.FSDataStorage {
 	if invoiceFSDataStorageInstance != nil {
-		return invoiceFSDataStorageInstance, nil
+		return invoiceFSDataStorageInstance
 	}
 
-	root, err := InvoiceStorageRoot(vip)
-	if err != nil {
-		return nil, err
-	}
+	root := InvoiceStorageRoot(vip)
 
 	invoiceFSDataStorageInstance = fsInvoiceData.NewFSDataStorage(root)
-	return invoiceFSDataStorageInstance, nil
+	return invoiceFSDataStorageInstance
 }
 
-func InvoiceMetadataStorage(vip *viper.Viper) (*fsInvoiceMeta.FSInvoiceMetadataStorage, error) {
-	if invoiceFSMetadataStorageInstance != nil {
-		return invoiceFSMetadataStorageInstance, nil
-	}
+func InvoiceMetadataStorage(vip *viper.Viper, NIP string) *fsInvoiceMeta.FSInvoiceMetadataStorage {
+	mu.Lock()
+	defer mu.Unlock()
 
-	root, err := InvoiceStorageRoot(vip)
-	if err != nil {
-		return nil, err
-	}
-
-	invoiceFSMetadataStorageInstance = fsInvoiceMeta.NewFSInvoiceMetadataStorage(root)
-	return invoiceFSMetadataStorageInstance, nil
+	return invoiceMetadataStorageLocked(vip, NIP)
 }
 
-func InvoiceStorageRoot(vip *viper.Viper) (string, error) {
+func invoiceMetadataStorageLocked(vip *viper.Viper, NIP string) *fsInvoiceMeta.FSInvoiceMetadataStorage {
+	if instance, exists := invoiceFSMetadataStorageInstance[NIP]; exists {
+		return instance
+	}
+
+	root := filepath.Join(InvoiceStorageRoot(vip), NIP)
+
+	instance := fsInvoiceMeta.NewFSInvoiceMetadataStorage(root, NIP)
+	invoiceFSMetadataStorageInstance[NIP] = instance
+	return instance
+}
+
+func InvoiceStorageRoot(vip *viper.Viper) string {
 	cfg := config.GetInvoicesDBConfig(vip)
 	environmentId := runtime.GetEnvironmentId(vip)
-	nip, err := runtime.GetNIP(vip)
-	if err != nil {
-		return "", err
-	}
 
 	return filepath.Join(
 		cfg.Root,
 		environmentId,
-		nip,
-	), nil
+	)
 }
 
-func InvoiceDB(vip *viper.Viper) (*invoicedb.InvoiceDB, error) {
-	if invoiceDBInstance != nil {
-		return invoiceDBInstance, nil
+func InvoiceDB(vip *viper.Viper, NIP string) (*invoicedb.InvoiceDB, error) {
+	mu.Lock()
+	defer mu.Unlock()
+
+	return invoiceDBLocked(vip, NIP)
+}
+
+func invoiceDBLocked(vip *viper.Viper, NIP string) (*invoicedb.InvoiceDB, error) {
+	if instance, exists := invoiceDBInstance[NIP]; exists {
+		return instance, nil
 	}
 
-	invoiceMetadataStorage, err := InvoiceMetadataStorage(vip)
-	if err != nil {
-		return nil, err
-	}
-	invoiceDataStorage, err := InvoiceDataStorage(vip)
-	if err != nil {
-		return nil, err
-	}
+	invoiceMetadataStorage := invoiceMetadataStorageLocked(vip, NIP)
+	invoiceDataStorage := invoiceDataStorageLocked(vip)
 
 	invoiceDB, err := invoicedb.NewInvoiceDB(invoiceMetadataStorage, invoiceDataStorage)
 	if err != nil {
 		return nil, err
 	}
 
-	invoiceDBInstance = invoiceDB
-	return invoiceDBInstance, nil
+	destructors = append(destructors, func(ctx context.Context, commandErr error) error {
+		if commandErr != nil {
+			return nil
+		}
+		return invoiceDB.Close(ctx)
+	})
+
+	invoiceDBInstance[NIP] = invoiceDB
+	return invoiceDB, nil
 }

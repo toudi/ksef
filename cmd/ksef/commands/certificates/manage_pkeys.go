@@ -47,7 +47,7 @@ func pkeysEncrypt(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-	defer resources.Close(ctx)
+	defer resources.Close(ctx, nil)
 
 	certs, err := metaStorage.Certificates(ctx)
 	if err != nil {
@@ -92,7 +92,7 @@ func pkeysDecrypt(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-	defer resources.Close(ctx)
+	defer resources.Close(ctx, nil)
 
 	certs, err := meta.Certificates(ctx)
 	if err != nil {

@@ -69,5 +69,6 @@ func setCertProfileRun(cmd *cobra.Command, _ []string) error {
 		}
 	}
 
-	return resources.Close(ctx)
+	resources.Close(ctx, nil)
+	return nil
 }

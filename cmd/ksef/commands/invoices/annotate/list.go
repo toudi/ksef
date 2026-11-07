@@ -2,8 +2,8 @@ package annotate
 
 import (
 	annotationspkg "ksef/internal/invoicesdb/annotations"
-	"ksef/internal/invoicesdb/shared"
 	monthlyregistry "ksef/internal/invoicesdb/monthly-registry"
+	"ksef/internal/invoicesdb/shared"
 
 	"github.com/alexeyco/simpletable"
 	"github.com/spf13/cobra"
