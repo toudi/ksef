@@ -56,11 +56,17 @@ func login(cmd *cobra.Command, args []string) error {
 		token.WithKeyring(keyring),
 	)
 
+	rateLimitsState, err := resources.RateLimitsState(vip, nip)
+	if err != nil {
+		return err
+	}
+
 	cli, err := v2.NewClient(
 		ctx,
 		vip,
 		v2.WithAuthValidator(authValidator),
 		v2.WithKeyring(keyring),
+		v2.WithRateLimitsStateStorage(rateLimitsState),
 	)
 	if err != nil {
 		return err

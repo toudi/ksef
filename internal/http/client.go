@@ -6,15 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"net/http"
-	"strconv"
-	"time"
-
+	"ksef/core/ratelimits"
 	"ksef/internal/interfaces"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
-
-	"github.com/spf13/viper"
+	"net/http"
+	"strconv"
+	"time"
 )
 
 var (
@@ -49,11 +47,21 @@ type Client struct {
 	rateLimiter            *RequestRateLimit
 	AuthTokenRetrieverFunc interfaces.TokenRetrieverFunc
 	RateLimitsDiscoverFunc interfaces.RateLimitsDiscoverFunc
-	Vip                    *viper.Viper
+
+	// RateLimitsState persists the rate limiter state between runs. When nil,
+	// the state is neither restored nor saved.
+	RateLimitsState ratelimits.StateStorage
+	// MaxRetries is the number of attempts a request is retried. Values <= 0
+	// fall back to runtime.DefaultHttpRetries.
+	MaxRetries int
 }
 
-func NewClient(host string) *Client {
-	return &Client{Base: host}
+func NewClient(host string, opts ...Option) *Client {
+	client := &Client{Base: host}
+	for _, opt := range opts {
+		opt(client)
+	}
+	return client
 }
 
 func (rb *Client) Request(
@@ -61,9 +69,9 @@ func (rb *Client) Request(
 	config RequestConfig,
 	endpoint string,
 ) (*http.Response, error) {
-	maxRetries := runtime.DefaultHttpRetries
-	if rb.Vip != nil {
-		maxRetries = runtime.HttpMaxRetries(rb.Vip)
+	maxRetries := rb.MaxRetries
+	if maxRetries <= 0 {
+		maxRetries = runtime.DefaultHttpRetries
 	}
 
 	var err error
@@ -105,6 +113,8 @@ func (rb *Client) Request(
 		break
 	}
 
+	rb.tryToPersistRateLimiterState(ctx)
+
 	return resp, err
 }
 
@@ -130,20 +140,4 @@ func jsonBodyReader(body any) (*bytes.Buffer, error) {
 	encoder := json.NewEncoder(&buffer)
 	err := encoder.Encode(body)
 	return &buffer, err
-}
-
-func (rb *Client) SetRateLimiter(limiter *RequestRateLimit) {
-	rb.rateLimiter = limiter
-	if rb.Vip != nil {
-		if err := rb.restoreRateLimitsState(rb.Vip); err != nil {
-			logging.HTTPLogger.Error("Unable to restore rate limits state", "err", err)
-		}
-	}
-}
-
-func (rb *Client) GetLimit(operationId string, slot time.Duration) (int, error) {
-	if rb.rateLimiter == nil {
-		return 0, errLimitNotFound
-	}
-	return rb.rateLimiter.GetLimit(operationId, slot)
 }

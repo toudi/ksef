@@ -2,6 +2,7 @@ package authorization
 
 import (
 	"errors"
+
 	"ksef/cmd/ksef/commands/authorization/challenge"
 	"ksef/cmd/ksef/flags"
 	kr "ksef/core/keyring"
@@ -79,11 +80,23 @@ func authSessionDebug(cmd *cobra.Command, _ []string) error {
 
 	authValidator = token.NewAuthHandler(vip, initializerFuncs...)
 
+	// the signed challenge file (if used) has already set the NIP in vip
+	nip, err = runtime.GetNIP(vip)
+	if err != nil {
+		return err
+	}
+
+	rateLimitsState, err := resources.RateLimitsState(vip, nip)
+	if err != nil {
+		return err
+	}
+
 	cli, err := v2.NewClient(
 		ctx,
 		vip,
 		v2.WithAuthValidator(authValidator),
 		v2.WithKeyring(keyring),
+		v2.WithRateLimitsStateStorage(rateLimitsState),
 	)
 	if err != nil {
 		return err

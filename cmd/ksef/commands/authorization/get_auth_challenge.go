@@ -2,11 +2,13 @@ package authorization
 
 import (
 	"fmt"
+
 	"ksef/cmd/ksef/flags"
 	v2 "ksef/internal/client/v2"
 	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/token"
 	"ksef/internal/resources"
+	"ksef/internal/runtime"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -56,14 +58,27 @@ func dumpAuthChallenge(cmd *cobra.Command, _ []string) error {
 		token.WithCertsDB(certsDB),
 		token.WithKeyring(keyring),
 	)
+
+	nip, err := runtime.GetNIP(vip)
+	if err != nil {
+		return err
+	}
+
+	rateLimitsState, err := resources.RateLimitsState(vip, nip)
+	if err != nil {
+		return err
+	}
+
 	cli, err := v2.NewClient(
 		ctx,
 		vip,
 		v2.WithAuthValidator(authValidator),
 		v2.WithKeyring(keyring),
+		v2.WithRateLimitsStateStorage(rateLimitsState),
 	)
 	if err != nil {
 		return err
 	}
+
 	return cli.WaitForTokenManagerLoop()
 }

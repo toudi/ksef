@@ -15,6 +15,11 @@ func ReadYAML(reader io.Reader, dest any) error {
 	return err
 }
 
+// WriteYAML encodes data as YAML into writer.
+func WriteYAML(writer io.Writer, data any) error {
+	return yaml.NewEncoder(writer).Encode(data)
+}
+
 func SaveYAML(data any, dest string) error {
 	writer, err := os.Create(dest)
 	if err != nil {
@@ -22,5 +27,5 @@ func SaveYAML(data any, dest string) error {
 	}
 	defer writer.Close()
 
-	return yaml.NewEncoder(writer).Encode(data)
+	return WriteYAML(writer, data)
 }

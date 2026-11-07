@@ -2,7 +2,9 @@ package v2
 
 import (
 	"context"
+	"errors"
 	"ksef/core/certsdb"
+	"ksef/core/ratelimits"
 	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/validator"
 	"ksef/internal/client/v2/certificates"
@@ -12,12 +14,14 @@ import (
 
 	kr "ksef/core/keyring"
 
-	ratelimits "ksef/internal/client/v2/rate-limits"
+	ratelimitsclient "ksef/internal/client/v2/rate-limits"
 
 	httpClient "ksef/internal/http"
 
 	"github.com/spf13/viper"
 )
+
+var errRateLimitsStateNotConfigured = errors.New("rate limits state storage is not configured")
 
 type APIClient struct {
 	tokenManager           *auth.TokenManager
@@ -33,9 +37,8 @@ type APIClient struct {
 	tokenManagerStarted bool
 	vip                 *viper.Viper
 	keyring             kr.Keyring
+	rateLimitsState     ratelimits.StateStorage
 }
-
-type InitializerFunc func(c *APIClient)
 
 func NewClient(ctx context.Context, vip *viper.Viper, options ...InitializerFunc) (*APIClient, error) {
 	logging.SeiLogger.Info("klient KSeF v2 - start programu")
@@ -52,6 +55,10 @@ func NewClient(ctx context.Context, vip *viper.Viper, options ...InitializerFunc
 
 	for _, option := range options {
 		option(client)
+	}
+
+	if client.authChallengeValidator != nil && client.rateLimitsState == nil {
+		return nil, errRateLimitsStateNotConfigured
 	}
 
 	if client.authChallengeValidator != nil {
@@ -74,45 +81,17 @@ func (c *APIClient) authenticatedHTTPClient() *httpClient.Client {
 	// endpoints make use of that.
 	if c.authedHTTPClient == nil {
 		// create a copy of httpClient that will use token manager instance to retrieve the current session token
-		c.authedHTTPClient = &httpClient.Client{
-			Base:                   c.httpClient.Base,
-			AuthTokenRetrieverFunc: c.tokenManager.GetAuthorizationToken,
-			RateLimitsDiscoverFunc: ratelimits.DiscoverRateLimits,
-			Vip:                    c.vip,
-		}
+		c.authedHTTPClient = http.NewClient(
+			c.httpClient.Base,
+			http.WithAuthTokenRetriever(c.tokenManager.GetAuthorizationToken),
+			http.WithRateLimitsDiscovery(ratelimitsclient.DiscoverRateLimits),
+			http.WithMaxRetries(runtime.HttpMaxRetries(c.vip)),
+			http.WithRateLimitsState(c.rateLimitsState),
+		)
 	}
 	return c.authedHTTPClient
 }
 
 func (c *APIClient) Close() {
 	c.tokenManager.Stop()
-	if c.authedHTTPClient != nil {
-		if err := c.authedHTTPClient.SaveRateLimitsState(c.vip); err != nil {
-			logging.SeiLogger.Error("unable to persist rate limits state", "err", err)
-		}
-	}
-}
-
-func WithAuthValidator(validator validator.AuthChallengeValidator) func(client *APIClient) {
-	return func(client *APIClient) {
-		client.authChallengeValidator = validator
-	}
-}
-
-func WithCertificatesDB(certsDB *certsdb.CertsDB) func(client *APIClient) {
-	return func(client *APIClient) {
-		client.certsDB = certsDB
-	}
-}
-
-func WithKeyring(keyring kr.Keyring) func(client *APIClient) {
-	return func(client *APIClient) {
-		client.keyring = keyring
-	}
-}
-
-func WithoutTokenManager() func(client *APIClient) {
-	return func(client *APIClient) {
-		client.runTokenManager = false
-	}
 }

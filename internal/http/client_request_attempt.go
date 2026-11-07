@@ -49,6 +49,7 @@ func (rb *Client) requestAttempt(
 				logging.HTTPLogger.Error("Unable to discover rate limits", "err", err)
 			} else {
 				rb.SetRateLimiter(
+					ctx,
 					NewRequestRateLimit(logging.HTTPLogger, rateLimits),
 				)
 			}
@@ -137,7 +138,6 @@ func (rb *Client) requestAttempt(
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		rb.tryToPersistRateLimiterState()
 		return resp, err
 	}
 
@@ -154,9 +154,6 @@ func (rb *Client) requestAttempt(
 	)
 
 	if config.ExpectedStatus > 0 && resp.StatusCode != config.ExpectedStatus {
-		if resp.StatusCode == http.StatusTooManyRequests {
-			rb.tryToPersistRateLimiterState()
-		}
 		return resp, fmt.Errorf("%w: %d vs %d", ErrUnexpectedStatusCode, resp.StatusCode, config.ExpectedStatus)
 	}
 

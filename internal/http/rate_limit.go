@@ -2,6 +2,8 @@ package http
 
 import (
 	"errors"
+	"ksef/core/ratelimits"
+	"ksef/internal/logging"
 	"log/slog"
 	"time"
 
@@ -64,4 +66,49 @@ func (rl *RequestRateLimit) GetLimit(operationId string, slot time.Duration) (in
 	}
 
 	return 0, errLimitNotFound
+}
+
+// Snapshot converts the limiter into its persistable form: for every operation ID
+// it holds the requests that are still within the limiter's sliding windows.
+func (rl *RequestRateLimit) snapshot(now time.Time) ratelimits.State {
+	state := make(ratelimits.State, len(rl.limits))
+
+	for operationId, limiter := range rl.limits {
+		requestsWithinSlot := limiter.EntriesWithinSlot(now)
+		if len(requestsWithinSlot) == 0 {
+			continue
+		}
+
+		slots := make([]ratelimits.SlotEntries, len(requestsWithinSlot))
+		for idx, entry := range requestsWithinSlot {
+			slots[idx] = ratelimits.SlotEntries{
+				Slot:    entry.Slot,
+				Entries: entry.Entries,
+			}
+		}
+		state[operationId] = slots
+	}
+
+	return state
+}
+
+// Load restores the limiter from a previously persisted state. Entries for
+// unknown operation IDs are ignored.
+func (rl *RequestRateLimit) load(state ratelimits.State) {
+	for operationId, slots := range state {
+		limiter, exists := rl.limits[operationId]
+		if !exists {
+			logging.HTTPLogger.Warn("rate limiter for operation ID does not exist", "operationId", operationId)
+			continue
+		}
+
+		entries := make([]ratelimiter.LimiterSlotEntries, len(slots))
+		for idx, slot := range slots {
+			entries[idx] = ratelimiter.LimiterSlotEntries{
+				Slot:    slot.Slot,
+				Entries: slot.Entries,
+			}
+		}
+		limiter.LoadEntries(entries)
+	}
 }
