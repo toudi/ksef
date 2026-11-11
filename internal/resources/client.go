@@ -1,7 +1,11 @@
 package resources
 
 import (
+	"context"
+
 	"ksef/core/client"
+	"ksef/core/ksef"
+	"ksef/internal/client/v2/auth/token"
 	"ksef/internal/http"
 	"ksef/internal/runtime"
 
@@ -23,14 +27,14 @@ func HTTPClient(vip *viper.Viper) (*http.Client, error) {
 	return http.NewClient(gateway.APIBaseURL), nil
 }
 
-func Client(vip *viper.Viper, NIP string) (*client.Client, error) {
+func Client(ctx context.Context, vip *viper.Viper, NIP string) (*client.Client, error) {
 	mu.Lock()
 	defer mu.Unlock()
 
-	return clientLocked(vip, NIP)
+	return clientLocked(ctx, vip, NIP)
 }
 
-func clientLocked(vip *viper.Viper, NIP string) (*client.Client, error) {
+func clientLocked(ctx context.Context, vip *viper.Viper, NIP string) (*client.Client, error) {
 	if instance, exists := clientInstance[NIP]; exists {
 		return instance, nil
 	}
@@ -57,13 +61,41 @@ func clientLocked(vip *viper.Viper, NIP string) (*client.Client, error) {
 		return nil, err
 	}
 
-	cli := client.Init(
+	rateLimitsState, err := RateLimitsState(vip, NIP)
+	if err != nil {
+		return nil, err
+	}
+
+	authValidator := token.NewAuthHandler(
+		token.WithNIP(NIP),
+		token.WithCertsDB(certsDB),
+		token.WithKeyring(keyring),
+	)
+
+	cli, err := client.Init(
+		ctx,
 		certsDB,
 		invoiceDB,
 		keyring,
 		gateway,
+		NIP,
+		client.HTTPConfig{
+			HTTPConfig: ksef.HTTPConfig{
+				MaxRetries:   runtime.HttpMaxRetries(vip),
+				PollWaitTime: runtime.HttpPollWaitTime(vip),
+			},
+			RateLimitsState: rateLimitsState,
+		},
+		client.WithAuthValidator(authValidator),
 		client.WithPDFRenderer(NewPDFRenderer(vip, dataStorage)),
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	OnClose(func(c context.Context, _ error) error {
+		return cli.Close()
+	})
 
 	clientInstance[NIP] = cli
 	return cli, nil

@@ -52,7 +52,7 @@ func downloadRun(cmd *cobra.Command, _ []string) (commandErr error) {
 		return err
 	}
 
-	ksefClient, err := resources.Client(vip, nip)
+	ksefClient, err := resources.Client(ctx, vip, nip)
 	if err != nil {
 		return err
 	}
