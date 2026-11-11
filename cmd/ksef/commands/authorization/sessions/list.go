@@ -2,10 +2,13 @@ package sessions
 
 import (
 	"fmt"
+
 	"ksef/cmd/ksef/flags"
 	"ksef/internal/client/v2/auth"
+	"ksef/internal/http"
 	"ksef/internal/logging"
 	"ksef/internal/resources"
+	"ksef/internal/runtime"
 
 	"github.com/alexeyco/simpletable"
 	"github.com/spf13/cobra"
@@ -46,9 +49,20 @@ func getSessions(cmd *cobra.Command, _ []string) error {
 	}
 	defer resources.Close(ctx, nil)
 
+	nip, err := runtime.GetNIP(vip)
+	if err != nil {
+		return err
+	}
+
+	environment := runtime.GetEnvironment(vip)
+
 	tokenManager, err = auth.NewTokenManager(
-		cmd.Context(),
-		vip,
+		ctx,
+		auth.Config{
+			NIP:           nip,
+			EnvironmentID: runtime.GetEnvironmentId(vip),
+			HTTPClient:    http.NewClient(environment.API),
+		},
 		nil,
 		keyring,
 		certsDB,

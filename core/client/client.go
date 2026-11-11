@@ -2,11 +2,11 @@ package client
 
 import (
 	"context"
-
 	"ksef/core/certsdb"
 	"ksef/core/invoicedb"
 	"ksef/core/keyring"
 	"ksef/core/ksef"
+	v2 "ksef/internal/client/v2"
 	"ksef/internal/http"
 )
 
@@ -33,6 +33,7 @@ type Client struct {
 	httpClient  *http.Client
 	gateway     ksef.KSeFGatewayConfig
 	pdfRenderer InvoicePDFRenderer
+	apiClient   *v2.APIClient
 }
 
 func Init(

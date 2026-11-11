@@ -30,7 +30,7 @@ func (t *TokenManager) redeemTokens(ctx context.Context) error {
 
 	t.updateSessionTokens(&tokens, true)
 
-	if t.vip.GetBool(FlagExitAfterPersistingToken) {
+	if t.exitAfterPersistingToken {
 		t.finished = true
 	}
 

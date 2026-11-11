@@ -76,15 +76,18 @@ func authSessionDebug(cmd *cobra.Command, _ []string) error {
 		initializerFuncs = append(initializerFuncs, token.WithCertsDB(certsDB))
 	}
 
-	initializerFuncs = append(initializerFuncs, token.WithKeyring(keyring))
-
-	authValidator = token.NewAuthHandler(vip, initializerFuncs...)
-
 	// the signed challenge file (if used) has already set the NIP in vip
 	nip, err = runtime.GetNIP(vip)
 	if err != nil {
 		return err
 	}
+
+	initializerFuncs = append(initializerFuncs,
+		token.WithKeyring(keyring),
+		token.WithNIP(nip),
+	)
+
+	authValidator = token.NewAuthHandler(initializerFuncs...)
 
 	rateLimitsState, err := resources.RateLimitsState(vip, nip)
 	if err != nil {

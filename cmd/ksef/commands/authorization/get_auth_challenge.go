@@ -52,17 +52,17 @@ func dumpAuthChallenge(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("nie podano pliku wyjścia")
 	}
 
-	authValidator := token.NewAuthHandler(
-		vip,
-		token.WithDumpChallenge(output),
-		token.WithCertsDB(certsDB),
-		token.WithKeyring(keyring),
-	)
-
 	nip, err := runtime.GetNIP(vip)
 	if err != nil {
 		return err
 	}
+
+	authValidator := token.NewAuthHandler(
+		token.WithNIP(nip),
+		token.WithDumpChallenge(output),
+		token.WithCertsDB(certsDB),
+		token.WithKeyring(keyring),
+	)
 
 	rateLimitsState, err := resources.RateLimitsState(vip, nip)
 	if err != nil {

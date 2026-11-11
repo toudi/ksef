@@ -50,7 +50,7 @@ func login(cmd *cobra.Command, args []string) error {
 	}
 
 	authValidator := token.NewAuthHandler(
-		vip,
+		token.WithNIP(nip),
 		token.WithSignedChallengeFile(signedChallengeFile),
 		token.WithCertsDB(certsDB),
 		token.WithKeyring(keyring),

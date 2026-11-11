@@ -36,7 +36,7 @@ func InitClient(
 		v2.WithKeyring(keyring),
 		v2.WithAuthValidator(
 			token.NewAuthHandler(
-				vip,
+				token.WithNIP(nip),
 				token.WithCertsDB(certsDB),
 				token.WithKeyring(keyring),
 			),

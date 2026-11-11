@@ -3,6 +3,7 @@ package v2
 import (
 	"context"
 	"errors"
+
 	"ksef/core/certsdb"
 	"ksef/core/ratelimits"
 	"ksef/internal/client/v2/auth"
@@ -62,8 +63,18 @@ func NewClient(ctx context.Context, vip *viper.Viper, options ...InitializerFunc
 	}
 
 	if client.authChallengeValidator != nil {
-		var err error
-		if client.tokenManager, err = auth.NewTokenManager(ctx, vip, client.authChallengeValidator, client.keyring, client.certsDB); err != nil {
+		nip, err := runtime.GetNIP(vip)
+		if err != nil {
+			return nil, err
+		}
+		authCfg := auth.Config{
+			NIP:                      nip,
+			EnvironmentID:            runtime.GetEnvironmentId(vip),
+			HTTPClient:               httpClient,
+			SkipRestore:              vip.GetBool(auth.FlagDoNotRestoreTokens),
+			ExitAfterPersistingToken: vip.GetBool(auth.FlagExitAfterPersistingToken),
+		}
+		if client.tokenManager, err = auth.NewTokenManager(ctx, authCfg, client.authChallengeValidator, client.keyring, client.certsDB); err != nil {
 			return nil, err
 		}
 		if client.runTokenManager {

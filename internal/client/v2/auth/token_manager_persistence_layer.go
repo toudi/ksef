@@ -5,10 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+
 	"ksef/core/certsdb"
 	"ksef/core/keyring"
 	"ksef/internal/logging"
-	"ksef/internal/runtime"
 )
 
 var (
@@ -28,19 +28,15 @@ func (tm *TokenManager) persistTokens() error {
 		logger.Error("enkodowanie tokenów do JSON zakończone niepowodzeniem", "err", err)
 		return err
 	}
-	nip, err := runtime.GetNIP(tm.vip)
-	if err != nil {
-		logger.Error("nieprawidłowy numer NIP", "err", err)
-		return err
-	}
 	authCert, err := tm.certsDB.GetCertificateByUsageAndNIP(
-		context.Background(), certsdb.CertificateUsageAuthentication, nip,
+		context.Background(), certsdb.CertificateUsageAuthentication, tm.nip,
 	)
 	if err != nil {
 		logger.Error("nie udało się odczytać certyfikatu", "err", err)
+		return err
 	}
 
-	err = tm.keyring.Set(string(runtime.GetEnvironmentId(tm.vip)), nip, keyring.SessionTokensKey(authCert.UID), buffer.String())
+	err = tm.keyring.Set(tm.environmentID, tm.nip, keyring.SessionTokensKey(authCert.UID), buffer.String())
 
 	logger.Debug("rezultat zapisywania tokenów do keyringu", "err", err)
 	return err
@@ -54,37 +50,29 @@ func (tm *TokenManager) clearSessionTokens() error {
 	logger := logging.AuthLogger.With("auth", "token manager")
 
 	tm.sessionTokens = nil
-	nip, err := runtime.GetNIP(tm.vip)
-	if err != nil {
-		return err
-	}
 	authCert, err := tm.certsDB.GetCertificateByUsageAndNIP(
-		context.Background(), certsdb.CertificateUsageAuthentication, nip,
+		context.Background(), certsdb.CertificateUsageAuthentication, tm.nip,
 	)
 	if err != nil {
 		logger.Error("nie udało się odczytać certyfikatu", "err", err)
+		return err
 	}
 
-	return tm.keyring.Delete(string(runtime.GetEnvironmentId(tm.vip)), nip, keyring.SessionTokensKey(authCert.UID))
+	return tm.keyring.Delete(tm.environmentID, tm.nip, keyring.SessionTokensKey(authCert.UID))
 }
 
 func (tm *TokenManager) restoreTokens(ctx context.Context) error {
 	logger := logging.AuthLogger.With("auth", "token manager")
 	logger.Debug("próba odczytania tokenów z systemowego pęku kluczy")
-	nip, err := runtime.GetNIP(tm.vip)
-	if err != nil {
-		logger.Error("błąd odczytu numeru NIP", "err", err)
-		return err
-	}
-	gateway := runtime.GetEnvironmentId(tm.vip)
 	logger.Debug("próba odczytania certyfikatu odpowiedzialnego za autoryzację")
 	authCert, err := tm.certsDB.GetCertificateByUsageAndNIP(
-		ctx, certsdb.CertificateUsageAuthentication, nip,
+		ctx, certsdb.CertificateUsageAuthentication, tm.nip,
 	)
 	if err != nil {
 		logger.Error("nie udało się odczytać certyfikatu", "err", err)
+		return err
 	}
-	tokens, err := tm.keyring.Get(string(gateway), nip, keyring.SessionTokensKey(authCert.UID))
+	tokens, err := tm.keyring.Get(tm.environmentID, tm.nip, keyring.SessionTokensKey(authCert.UID))
 	if err != nil && err != keyring.ErrNotFound && err != keyring.ErrPermissionDenied {
 		logger.Error("błąd odczytu tokenów", "err", err)
 		return err
@@ -107,7 +95,7 @@ func (tm *TokenManager) restoreTokens(ctx context.Context) error {
 	if canBeUsed {
 		logger.Debug("tokeny mogą być użyte ponownie")
 		tm.updateSessionTokens(&sessionTokens, refreshed)
-		if tm.vip.GetBool(FlagExitAfterPersistingToken) {
+		if tm.exitAfterPersistingToken {
 			tm.finished = true
 		}
 		return nil

@@ -32,3 +32,9 @@ func WithKeyring(keyring kr.Keyring) initializerFunc {
 		handler.keyring = keyring
 	}
 }
+
+func WithNIP(nip string) initializerFunc {
+	return func(handler *TokenHandler) {
+		handler.nip = nip
+	}
+}

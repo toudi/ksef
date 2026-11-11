@@ -4,17 +4,15 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"os"
+
 	"ksef/core/certsdb"
 	"ksef/internal/client/v2/auth/validator"
 	"ksef/internal/client/v2/auth/xades"
 	"ksef/internal/http"
 	"ksef/internal/logging"
-	"ksef/internal/runtime"
-	"os"
 
 	kr "ksef/core/keyring"
-
-	"github.com/spf13/viper"
 )
 
 type mode uint8
@@ -26,7 +24,6 @@ const (
 )
 
 type TokenHandler struct {
-	vip                 *viper.Viper
 	httpClient          *http.Client
 	eventChannel        chan validator.AuthEvent
 	certsDB             *certsdb.CertsDB
@@ -34,13 +31,13 @@ type TokenHandler struct {
 	challengeDumpPath   string
 	signedChallengeFile string
 	keyring             kr.Keyring
+	nip                 string
 }
 
-func NewAuthHandler(vip *viper.Viper, initializers ...initializerFunc) validator.AuthChallengeValidator {
+func NewAuthHandler(initializers ...initializerFunc) validator.AuthChallengeValidator {
 	handler := &TokenHandler{
 		eventChannel: make(chan validator.AuthEvent),
 		mode:         modeRegular,
-		vip:          vip,
 	}
 
 	for _, initializer := range initializers {
@@ -115,19 +112,14 @@ func (e *TokenHandler) ValidateChallenge(ctx context.Context, challenge validato
 		defer sourceDocument.(*os.File).Close()
 	}
 
-	nip, err := runtime.GetNIP(e.vip)
-	if err != nil {
-		return err
-	}
-
 	certificate, err := e.certsDB.GetCertificateByUsageAndNIP(
-		ctx, certsdb.CertificateUsageAuthentication, nip,
+		ctx, certsdb.CertificateUsageAuthentication, e.nip,
 	)
 	if err != nil {
 		return err
 	}
 
-	if err = dumpChallengeToWriter(challenge, nip, *certificate, sourceDocument); err != nil {
+	if err = dumpChallengeToWriter(challenge, e.nip, *certificate, sourceDocument); err != nil {
 		logging.AuthLogger.Error("nie udało się zapisać wyzwania do bufora", "err", err)
 		return err
 	}

@@ -8,11 +8,8 @@ import (
 	"ksef/internal/client/v2/auth/validator"
 	"ksef/internal/http"
 	"ksef/internal/logging"
-	"ksef/internal/runtime"
 	"sync"
 	"time"
-
-	"github.com/spf13/viper"
 )
 
 const (
@@ -38,43 +35,63 @@ type SessionTokens struct {
 	RefreshToken       *TokenInfo `json:"refreshToken"`
 }
 
+// Config carries the per-invocation inputs the token manager used to read from
+// the CLI configuration layer.
+type Config struct {
+	NIP string
+	// EnvironmentID is the keyring bucket, i.e. the KSeF gateway id. This is used to later
+	// construct the keyring key for storing the tokens
+	EnvironmentID string
+	// HTTPClient is the unauthenticated client used for the auth endpoints.
+	HTTPClient *http.Client
+	// SkipRestore disables restoring persisted tokens, forcing a fresh
+	// authentication.
+	SkipRestore bool
+	// ExitAfterPersistingToken makes the event loop finish once tokens have been
+	// persisted.
+	ExitAfterPersistingToken bool
+}
+
 type TokenManager struct {
-	challengeValidator  validator.AuthChallengeValidator
-	finished            bool
-	sessionTokens       *SessionTokens
-	mutex               sync.Mutex
-	httpClient          *http.Client
-	validationReference *validator.ValidationReference
-	done                chan struct{}
-	vip                 *viper.Viper
-	obtainNewChallenge  bool
-	keyring             keyring.Keyring
-	certsDB             *certsdb.CertsDB
+	challengeValidator       validator.AuthChallengeValidator
+	finished                 bool
+	sessionTokens            *SessionTokens
+	mutex                    sync.Mutex
+	httpClient               *http.Client
+	validationReference      *validator.ValidationReference
+	done                     chan struct{}
+	obtainNewChallenge       bool
+	keyring                  keyring.Keyring
+	certsDB                  *certsdb.CertsDB
+	nip                      string
+	environmentID            string
+	skipRestore              bool
+	exitAfterPersistingToken bool
 }
 
 func NewTokenManager(
 	ctx context.Context,
-	vip *viper.Viper,
+	cfg Config,
 	challengeValidator validator.AuthChallengeValidator,
 	keyring keyring.Keyring,
 	certsDB *certsdb.CertsDB,
 ) (*TokenManager, error) {
-	environment := runtime.GetEnvironment(vip)
-	httpClient := http.NewClient(environment.API)
-
 	if challengeValidator != nil {
-		if err := challengeValidator.Initialize(ctx, httpClient); err != nil {
+		if err := challengeValidator.Initialize(ctx, cfg.HTTPClient); err != nil {
 			return nil, err
 		}
 	}
 
 	tm := &TokenManager{
-		httpClient:         httpClient,
-		challengeValidator: challengeValidator,
-		done:               make(chan struct{}),
-		vip:                vip,
-		keyring:            keyring,
-		certsDB:            certsDB,
+		httpClient:               cfg.HTTPClient,
+		challengeValidator:       challengeValidator,
+		done:                     make(chan struct{}),
+		keyring:                  keyring,
+		certsDB:                  certsDB,
+		nip:                      cfg.NIP,
+		environmentID:            cfg.EnvironmentID,
+		skipRestore:              cfg.SkipRestore,
+		exitAfterPersistingToken: cfg.ExitAfterPersistingToken,
 	}
 
 	return tm, nil
