@@ -10,4 +10,5 @@ var (
 	ErrInvalidCertificateUsage     = errors.New("unexpected certificate usage")
 	ErrCertificateAlreadyExists    = errors.New("certificate with this properties is already imported")
 	ErrNoPrivateKey                = errors.New("no private key available for signing")
+	ErrEnvironmentRequired         = errors.New("certificate database requires a non-empty environment id")
 )

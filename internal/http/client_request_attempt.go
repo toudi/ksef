@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -38,7 +39,10 @@ func (rb *Client) requestAttempt(
 	if rb.AuthTokenRetrieverFunc != nil {
 		token, err := rb.AuthTokenRetrieverFunc()
 		if err != nil {
-			return nil, err
+			// Not retryable: the caller cannot produce a token right now (missing
+			// certificate, failed challenge, ...). Wrapped so Request can tell this
+			// apart from transport errors.
+			return nil, errors.Join(ErrAuthTokenUnavailable, err)
 		}
 		bearerToken = token
 

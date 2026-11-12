@@ -6,13 +6,14 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"net/http"
+	"strconv"
+	"time"
+
 	"ksef/core/ratelimits"
 	"ksef/internal/interfaces"
 	"ksef/internal/logging"
 	"ksef/internal/runtime"
-	"net/http"
-	"strconv"
-	"time"
 )
 
 var (
@@ -20,6 +21,10 @@ var (
 	ErrUnableToCopyResponse = errors.New("unable to copy HTTP response to buffer")
 	ErrUnexpectedBody       = errors.New("unexpected body (content type not specified and body is not a reader)")
 	ErrUnwindingBody        = errors.New("unable to rewind body reader")
+	// ErrAuthTokenUnavailable marks a failure to obtain the bearer token. It is
+	// not transient: retrying would just wait for a token that cannot appear
+	// (e.g. a missing or unreadable certificate), so Request returns immediately.
+	ErrAuthTokenUnavailable = errors.New("unable to obtain authorization token")
 )
 
 const (
@@ -88,6 +93,12 @@ func (rb *Client) Request(
 		}
 		resp, err = rb.requestAttempt(ctx, config, endpoint, numRetries, maxRetries)
 		if err != nil {
+			// A missing token is not a transient condition - retrying would just
+			// poll for a token that cannot be produced. Surface it immediately.
+			if errors.Is(err, ErrAuthTokenUnavailable) {
+				return resp, err
+			}
+
 			// let's check if the returned error code is telling us to slow down
 			if resp != nil && resp.StatusCode == http.StatusTooManyRequests {
 				secondsToWait, _ := strconv.Atoi(resp.Header.Get("Retry-After"))

@@ -82,6 +82,7 @@ func CertsDB(vip *viper.Viper) (*certsdb.CertsDB, error) {
 	}
 
 	db, err := certsdb.Init(
+		runtime.GetEnvironmentId(vip),
 		metaStorage,
 		dataStorage,
 		certsdb.WithPreferredCertProfile(runtime.GetPreferredCertProfile(vip)),

@@ -9,7 +9,9 @@ type CertsDB struct {
 	metadataStorage  CertificateMetadataStorage
 	dataStorage      CertificateDataStorage
 	preferredProfile string
-	env              string
+	// env is the KSeF gateway id (e.g. "demo") used to narrow certificate
+	// lookups. It is required and validated in Init.
+	env string
 }
 
 type CertsDBInitializer func(*CertsDB)
@@ -25,11 +27,17 @@ func WithPreferredCertProfile(name string) CertsDBInitializer {
 }
 
 func Init(
+	environment string,
 	metadataStorage CertificateMetadataStorage,
-	dataStorage     CertificateDataStorage,
+	dataStorage CertificateDataStorage,
 	initializers ...CertsDBInitializer,
 ) (*CertsDB, error) {
+	if environment == "" {
+		return nil, ErrEnvironmentRequired
+	}
+
 	certsDB := &CertsDB{
+		env:             environment,
 		metadataStorage: metadataStorage,
 		dataStorage:     dataStorage,
 	}

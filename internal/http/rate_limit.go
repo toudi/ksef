@@ -2,10 +2,11 @@ package http
 
 import (
 	"errors"
-	"ksef/core/ratelimits"
-	"ksef/internal/logging"
 	"log/slog"
 	"time"
+
+	"ksef/core/ratelimits"
+	"ksef/internal/logging"
 
 	ratelimiter "ksef/internal/utils/rate-limiter"
 )

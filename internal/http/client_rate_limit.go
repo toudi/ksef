@@ -2,8 +2,9 @@ package http
 
 import (
 	"context"
-	"ksef/internal/logging"
 	"time"
+
+	"ksef/internal/logging"
 )
 
 func (rb *Client) SetRateLimiter(ctx context.Context, limiter *RequestRateLimit) {
