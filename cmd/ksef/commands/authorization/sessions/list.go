@@ -4,9 +4,6 @@ import (
 	"fmt"
 
 	"ksef/cmd/ksef/flags"
-	"ksef/internal/client/v2/auth"
-	"ksef/internal/http"
-	"ksef/internal/logging"
 	"ksef/internal/resources"
 	"ksef/internal/runtime"
 
@@ -16,10 +13,9 @@ import (
 )
 
 var GetAuthSessions = &cobra.Command{
-	Use:     "sessions",
-	Short:   "wyświetla listę sesji dla aktualnego tokenu sesyjnego",
-	PreRunE: getSessions,
-	RunE:    runGetAuthSessions,
+	Use:   "sessions",
+	Short: "wyświetla listę sesji dla aktualnego tokenu sesyjnego",
+	RunE:  runGetAuthSessions,
 }
 
 func init() {
@@ -27,59 +23,28 @@ func init() {
 	GetAuthSessions.AddCommand(closeSession)
 }
 
-var (
-	activeSessions *auth.AuthSessionsResponse
-	tokenManager   *auth.TokenManager
-)
-
-func getSessions(cmd *cobra.Command, _ []string) error {
-	var err error
-
-	vip := viper.GetViper()
+func runGetAuthSessions(cmd *cobra.Command, _ []string) (commandErr error) {
 	ctx := cmd.Context()
-
-	keyring, err := resources.Keyring(vip)
-	if err != nil {
-		logging.SeiLogger.Error("błąd inicjalizacji keyringu", "err", err)
-		return err
-	}
-	certsDB, err := resources.CertsDB(vip)
-	if err != nil {
-		return err
-	}
-	defer resources.Close(ctx, nil)
+	vip := viper.GetViper()
 
 	nip, err := runtime.GetNIP(vip)
 	if err != nil {
 		return err
 	}
 
-	environment := runtime.GetEnvironment(vip)
+	ksefClient, err := resources.Client(ctx, vip, nip)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		resources.Close(ctx, commandErr)
+	}()
 
-	tokenManager, err = auth.NewTokenManager(
-		ctx,
-		auth.Config{
-			NIP:           nip,
-			EnvironmentID: runtime.GetEnvironmentId(vip),
-			HTTPClient:    http.NewClient(environment.API),
-		},
-		nil,
-		keyring,
-		certsDB,
-	)
+	sessions, err := ksefClient.AuthSessions(ctx)
 	if err != nil {
 		return err
 	}
 
-	activeSessions, err = tokenManager.GetAuthSessions(ctx)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func runGetAuthSessions(cmd *cobra.Command, _ []string) error {
 	table := simpletable.New()
 
 	table.Header = &simpletable.Header{
@@ -91,7 +56,7 @@ func runGetAuthSessions(cmd *cobra.Command, _ []string) error {
 		},
 	}
 
-	for _, session := range activeSessions.Sessions {
+	for _, session := range sessions.Sessions {
 		table.Body.Cells = append(table.Body.Cells, []*simpletable.Cell{
 			{
 				Text: session.ID,

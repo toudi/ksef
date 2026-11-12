@@ -6,6 +6,7 @@ import (
 	baseHttp "net/http"
 	"time"
 
+	"ksef/core/ksef"
 	"ksef/internal/http"
 	"ksef/internal/logging"
 )
@@ -21,26 +22,9 @@ var (
 	errUnexpectedStatus  = errors.New("unexpected HTTP response status code")
 )
 
-type AuthSessionStatus struct {
-	Code        int    `json:"status"`
-	Description string `json:"description"`
-}
-type AuthSession struct {
-	ID                     string            `json:"referenceNumber"`
-	Current                bool              `json:"isCurrent"`
-	StartDate              time.Time         `json:"startDate"`
-	AuthMethod             string            `json:"authenticationMethod"`
-	Status                 AuthSessionStatus `json:"status"`
-	TokenRedeemed          bool              `json:"isTokenRedeemed"`
-	RefreshTokenValidUntil time.Time         `json:"refreshTokenValidUntil"`
-}
-type AuthSessionsResponse struct {
-	Sessions []AuthSession `json:"items"`
-}
-
 func (tm *TokenManager) getAuthSessionsForToken(
 	ctx context.Context, sessionTokens *SessionTokens,
-) (sessions *AuthSessionsResponse, err error) {
+) (sessions *ksef.AuthSessions, err error) {
 	if sessionTokens == nil {
 		return nil, errNoTokens
 	}
@@ -69,7 +53,7 @@ func (tm *TokenManager) getAuthSessionsForToken(
 }
 
 func (tm *TokenManager) GetAuthSessions(ctx context.Context) (
-	sessions *AuthSessionsResponse, err error,
+	sessions *ksef.AuthSessions, err error,
 ) {
 	if err := tm.restoreTokens(ctx); err != nil {
 		return nil, err

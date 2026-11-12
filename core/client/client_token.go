@@ -3,6 +3,8 @@ package client
 import (
 	"context"
 	"time"
+
+	"ksef/core/ksef"
 )
 
 // TokenProvider is the minimal capability the authenticated HTTP client needs:
@@ -16,4 +18,11 @@ type TokenProvider interface {
 type tokenRunner interface {
 	Run(ctx context.Context)
 	Done() <-chan struct{}
+}
+
+// authSessionManager is the optional capability used by the auth-session
+// commands.
+type authSessionManager interface {
+	GetAuthSessions(ctx context.Context) (*ksef.AuthSessions, error)
+	Logout(sessionRefNo string) error
 }
