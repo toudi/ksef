@@ -74,5 +74,5 @@ func (tm *TokenManager) GetAuthSessions(ctx context.Context) (
 	if err := tm.restoreTokens(ctx); err != nil {
 		return nil, err
 	}
-	return tm.getAuthSessionsForToken(ctx, tm.sessionTokens)
+	return tm.getAuthSessionsForToken(ctx, tm.currentSessionTokens())
 }

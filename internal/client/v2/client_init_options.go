@@ -38,3 +38,11 @@ func WithoutTokenManager() func(client *APIClient) {
 		client.runTokenManager = false
 	}
 }
+
+// WithoutRestoringTokens forces a fresh authentication instead of reusing
+// tokens persisted in the keyring.
+func WithoutRestoringTokens() func(client *APIClient) {
+	return func(client *APIClient) {
+		client.skipRestore = true
+	}
+}

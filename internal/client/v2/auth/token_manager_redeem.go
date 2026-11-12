@@ -29,10 +29,7 @@ func (t *TokenManager) redeemTokens(ctx context.Context) error {
 	}
 
 	t.updateSessionTokens(&tokens, true)
-
-	if t.exitAfterPersistingToken {
-		t.finished = true
-	}
+	t.markReady()
 
 	return nil
 }

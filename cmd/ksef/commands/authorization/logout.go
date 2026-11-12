@@ -3,7 +3,6 @@ package authorization
 import (
 	"ksef/cmd/ksef/commands/client"
 	"ksef/cmd/ksef/flags"
-	"ksef/internal/client/v2/auth"
 	"ksef/internal/logging"
 	"ksef/internal/resources"
 
@@ -26,7 +25,6 @@ func init() {
 func logout(cmd *cobra.Command, _ []string) error {
 	ctx := cmd.Context()
 	vip := viper.GetViper()
-	vip.Set(auth.FlagExitAfterPersistingToken, "true")
 
 	keyring, err := resources.Keyring(vip)
 	if err != nil {

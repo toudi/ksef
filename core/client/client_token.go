@@ -1,6 +1,9 @@
 package client
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 // TokenProvider is the minimal capability the authenticated HTTP client needs:
 // a bearer token for the current session.
@@ -11,6 +14,6 @@ type TokenProvider interface {
 // tokenRunner is the optional lifecycle a concrete token manager exposes. A
 // provider injected for tests need not implement it.
 type tokenRunner interface {
-	Run()
-	Stop()
+	Run(ctx context.Context)
+	Done() <-chan struct{}
 }

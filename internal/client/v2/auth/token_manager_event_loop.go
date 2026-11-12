@@ -9,28 +9,25 @@ import (
 	"ksef/internal/logging"
 )
 
-func (t *TokenManager) Stop() {
-	t.finished = true
-}
-
-func (t *TokenManager) Done() chan struct{} {
-	return t.done
-}
-
-func (t *TokenManager) Run() {
+// Run drives the auth lifecycle until ctx is cancelled. It is meant to be
+// started in its own goroutine by whoever owns the manager.
+//
+// The manager never closes the keyring: the keyring is constructed and closed
+// by the caller (the CLI's resources layer).
+func (t *TokenManager) Run(ctx context.Context) {
 	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+	defer close(t.done)
 
-	ctx := context.Background()
 	logger := logging.AuthLogger.With("auth", "token manager")
 
 	if !t.skipRestore {
 		if err := t.restoreTokens(ctx); err != nil {
 			if err != errCannotUseToken {
 				logger.Error("fatal (?) error during token restoration", "err", err)
-				t.finished = true
-			} else {
-				t.obtainNewChallenge = true
+				return
 			}
+			t.obtainNewChallenge = true
 		}
 	}
 
@@ -41,8 +38,12 @@ func (t *TokenManager) Run() {
 
 	var lastDebugEvent time.Time
 
-	for !t.finished {
+	for {
 		select {
+		case <-ctx.Done():
+			logger.Debug("token manager stopped")
+			return
+
 		case now := <-ticker.C:
 			// do not be so noisy about loop tick reporting
 			if now.Sub(lastDebugEvent) > time.Duration(1*time.Minute) {
@@ -50,7 +51,8 @@ func (t *TokenManager) Run() {
 				lastDebugEvent = now
 			}
 			// let's check if we have to refresh the session token
-			if t.sessionTokens == nil {
+			sessionTokens := t.currentSessionTokens()
+			if sessionTokens == nil {
 				if t.validationReference == nil {
 					logger.Debug("authorization in process")
 					break
@@ -62,17 +64,17 @@ func (t *TokenManager) Run() {
 
 				break
 			}
-			if now.After(t.sessionTokens.AuthorizationToken.ExpiresAt) {
+			if now.After(sessionTokens.AuthorizationToken.ExpiresAt) {
 				logger.Debug("need to refresh authorization token")
 				// but only if we're not past refresh token expiration time
-				if now.Before(t.sessionTokens.RefreshToken.ExpiresAt) {
-					newToken, err := t.refreshAccessToken(ctx, t.sessionTokens.RefreshToken.Token)
+				if now.Before(sessionTokens.RefreshToken.ExpiresAt) {
+					newToken, err := t.refreshAccessToken(ctx, sessionTokens.RefreshToken.Token)
 					if err == nil {
 						t.updateAuthorizationToken(newToken)
 					}
 				} else {
 					logger.Warn("too late to refresh token. request new challenge")
-					t.sessionTokens = nil
+					t.clearAuthorizationToken()
 					go t.beginAuth(ctx, logger)
 				}
 			}
@@ -87,18 +89,34 @@ func (t *TokenManager) Run() {
 			if validatorEvent.State == validator.StateExit {
 				// at the moment it's used only by the "fake" validator of type xadesInit
 				// which has a single purpose of dumping the challenge to a file.
-				t.finished = true
+				return
 			}
 		}
 	}
+}
 
-	ticker.Stop()
+// Done is closed when Run returns. Callers that started Run can use it to wait
+// for a clean shutdown.
+func (t *TokenManager) Done() <-chan struct{} {
+	return t.done
+}
 
-	if err := t.keyring.Close(); err != nil {
-		logging.AuthLogger.Error("error saving keyring", "err", err)
+// WaitReady blocks until tokens have been restored or redeemed, or until ctx is
+// cancelled. It replaces the old "exit-after-persisting-token" behaviour: the
+// caller decides when it has seen enough and cancels its own context.
+func (t *TokenManager) WaitReady(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-t.ready:
+		return nil
 	}
+}
 
-	t.done <- struct{}{}
+func (t *TokenManager) markReady() {
+	t.readyOnce.Do(func() {
+		close(t.ready)
+	})
 }
 
 func (t *TokenManager) beginAuth(ctx context.Context, logger *slog.Logger) {
@@ -107,7 +125,6 @@ func (t *TokenManager) beginAuth(ctx context.Context, logger *slog.Logger) {
 	authChallenge, err := t.getAuthChallenge(ctx)
 	if err != nil {
 		logger.Error("unable to obtain auth challenge", "err", err)
-		t.finished = true
 		return
 	}
 	if err := t.challengeValidator.ValidateChallenge(ctx, *authChallenge); err != nil {

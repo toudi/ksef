@@ -13,8 +13,28 @@ var (
 	errTokenManagerNotInitialized  = errors.New("token manager is not initialized")
 )
 
+const tokenManagerShutdownTimeout = 30 * time.Second
+
 func (c *APIClient) WaitForTokenManagerLoop() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	if c.tokenManager == nil {
+		return errTokenManagerNotInitialized
+	}
+
+	c.StopTokenManager()
+
+	return c.awaitTokenManagerLoop()
+}
+
+func (c *APIClient) AwaitTokenManagerLoop() error {
+	if c.tokenManager == nil {
+		return errTokenManagerNotInitialized
+	}
+
+	return c.awaitTokenManagerLoop()
+}
+
+func (c *APIClient) awaitTokenManagerLoop() error {
+	ctx, cancel := context.WithTimeout(context.Background(), tokenManagerShutdownTimeout)
 	defer cancel()
 
 	select {
@@ -25,21 +45,17 @@ func (c *APIClient) WaitForTokenManagerLoop() error {
 	}
 }
 
+// ObtainToken blocks until session tokens are available (restored or redeemed).
 func (c *APIClient) ObtainToken() error {
-	_, err := c.tokenManager.GetAuthorizationToken(30 * time.Second)
-	if err != nil {
-		return err
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), tokenManagerShutdownTimeout)
+	defer cancel()
 
-	return nil
+	return c.tokenManager.WaitReady(ctx)
 }
 
-func (c *APIClient) SetSessionTokens(tokens *auth.SessionTokens) {
-	c.tokenManager.SetSessionTokens(tokens)
-}
-
+// Logout stops the token manager's event loop.
 func (c *APIClient) Logout() error {
-	c.tokenManager.Stop()
+	c.StopTokenManager()
 	return nil
 }
 
@@ -47,6 +63,8 @@ func (c *APIClient) BindNIPToPESEL(ctx context.Context, nip, pesel string) error
 	return auth.BindNIPToPESEL(ctx, c.httpClient, nip, pesel)
 }
 
+// StartTokenManager starts the auth event loop in the background. It is
+// idempotent.
 func (c *APIClient) StartTokenManager() error {
 	if c.tokenManager == nil {
 		return errTokenManagerNotInitialized
@@ -56,7 +74,20 @@ func (c *APIClient) StartTokenManager() error {
 		return nil
 	}
 
-	go c.tokenManager.Run()
+	ctx, cancel := context.WithCancel(context.Background())
+	c.tokenManagerCancel = cancel
+	go c.tokenManager.Run(ctx)
 	c.tokenManagerStarted = true
+
 	return nil
+}
+
+// StopTokenManager asks the event loop to finish. It is safe to call when the
+// manager was never started, and it is idempotent.
+func (c *APIClient) StopTokenManager() {
+	if c.tokenManagerCancel != nil {
+		c.tokenManagerCancel()
+		c.tokenManagerCancel = nil
+	}
+	c.tokenManagerStarted = false
 }

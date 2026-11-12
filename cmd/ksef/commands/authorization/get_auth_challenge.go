@@ -5,7 +5,6 @@ import (
 
 	"ksef/cmd/ksef/flags"
 	v2 "ksef/internal/client/v2"
-	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/token"
 	"ksef/internal/resources"
 	"ksef/internal/runtime"
@@ -34,7 +33,6 @@ func init() {
 func dumpAuthChallenge(cmd *cobra.Command, _ []string) error {
 	ctx := cmd.Context()
 	vip := viper.GetViper()
-	vip.Set(auth.FlagDoNotRestoreTokens, "true")
 
 	certsDB, err := resources.CertsDB(vip)
 	if err != nil {
@@ -75,10 +73,11 @@ func dumpAuthChallenge(cmd *cobra.Command, _ []string) error {
 		v2.WithAuthValidator(authValidator),
 		v2.WithKeyring(keyring),
 		v2.WithRateLimitsStateStorage(rateLimitsState),
+		v2.WithoutRestoringTokens(),
 	)
 	if err != nil {
 		return err
 	}
 
-	return cli.WaitForTokenManagerLoop()
+	return cli.AwaitTokenManagerLoop()
 }

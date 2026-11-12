@@ -3,19 +3,18 @@ package auth
 import (
 	"context"
 	"errors"
+	"sync"
+	"time"
+
 	"ksef/core/certsdb"
 	"ksef/core/keyring"
 	"ksef/internal/client/v2/auth/validator"
 	"ksef/internal/http"
 	"ksef/internal/logging"
-	"sync"
-	"time"
 )
 
 const (
-	endpointAuthTokenRefresh     = "/v2/auth/token/refresh"
-	FlagDoNotRestoreTokens       = "no-restore-tokens"
-	FlagExitAfterPersistingToken = "exit-after-persisting-token"
+	endpointAuthTokenRefresh = "/v2/auth/token/refresh"
 )
 
 var ErrTimeoutReadingToken = errors.New("timeout reading authorization token")
@@ -47,26 +46,23 @@ type Config struct {
 	// SkipRestore disables restoring persisted tokens, forcing a fresh
 	// authentication.
 	SkipRestore bool
-	// ExitAfterPersistingToken makes the event loop finish once tokens have been
-	// persisted.
-	ExitAfterPersistingToken bool
 }
 
 type TokenManager struct {
-	challengeValidator       validator.AuthChallengeValidator
-	finished                 bool
-	sessionTokens            *SessionTokens
-	mutex                    sync.Mutex
-	httpClient               *http.Client
-	validationReference      *validator.ValidationReference
-	done                     chan struct{}
-	obtainNewChallenge       bool
-	keyring                  keyring.Keyring
-	certsDB                  *certsdb.CertsDB
-	nip                      string
-	environmentID            string
-	skipRestore              bool
-	exitAfterPersistingToken bool
+	challengeValidator  validator.AuthChallengeValidator
+	sessionTokens       *SessionTokens
+	mutex               sync.Mutex
+	httpClient          *http.Client
+	validationReference *validator.ValidationReference
+	done                chan struct{}
+	ready               chan struct{}
+	readyOnce           sync.Once
+	obtainNewChallenge  bool
+	keyring             keyring.Keyring
+	certsDB             *certsdb.CertsDB
+	nip                 string
+	environmentID       string
+	skipRestore         bool
 }
 
 func NewTokenManager(
@@ -83,15 +79,15 @@ func NewTokenManager(
 	}
 
 	tm := &TokenManager{
-		httpClient:               cfg.HTTPClient,
-		challengeValidator:       challengeValidator,
-		done:                     make(chan struct{}),
-		keyring:                  keyring,
-		certsDB:                  certsDB,
-		nip:                      cfg.NIP,
-		environmentID:            cfg.EnvironmentID,
-		skipRestore:              cfg.SkipRestore,
-		exitAfterPersistingToken: cfg.ExitAfterPersistingToken,
+		httpClient:         cfg.HTTPClient,
+		challengeValidator: challengeValidator,
+		done:               make(chan struct{}),
+		ready:              make(chan struct{}),
+		keyring:            keyring,
+		certsDB:            certsDB,
+		nip:                cfg.NIP,
+		environmentID:      cfg.EnvironmentID,
+		skipRestore:        cfg.SkipRestore,
 	}
 
 	return tm, nil
@@ -131,13 +127,25 @@ func (t *TokenManager) GetAuthorizationToken(timeout ...time.Duration) (string, 
 	return "", ErrTimeoutReadingToken
 }
 
+func (t *TokenManager) currentSessionTokens() *SessionTokens {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
+	return t.sessionTokens
+}
+
+func (t *TokenManager) clearAuthorizationToken() {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+
+	t.sessionTokens = nil
+}
+
 func (t *TokenManager) updateAuthorizationToken(authToken *TokenInfo) {
 	logging.AuthLogger.Debug("updateAuthorizationToken()")
 	defer logging.AuthLogger.Debug("updateAuthorizationToken() - finish")
 
 	t.mutex.Lock()
-	defer t.mutex.Unlock()
-
 	canSafelyPersistTokens := t.sessionTokens != nil
 
 	if t.sessionTokens == nil {
@@ -145,6 +153,7 @@ func (t *TokenManager) updateAuthorizationToken(authToken *TokenInfo) {
 	}
 
 	t.sessionTokens.AuthorizationToken = authToken
+	t.mutex.Unlock()
 
 	if canSafelyPersistTokens {
 		logging.AuthLogger.Debug("updateAuthorizationToken() - try to persist tokens")
@@ -160,9 +169,8 @@ func (t *TokenManager) updateSessionTokens(tokens *SessionTokens, persist bool) 
 	defer logging.AuthLogger.Debug("updateSessionTokens() - finish")
 
 	t.mutex.Lock()
-	defer t.mutex.Unlock()
-
 	t.sessionTokens = tokens
+	t.mutex.Unlock()
 
 	if persist {
 		logging.AuthLogger.Debug("updateSessionTokens() - try to persist tokens")

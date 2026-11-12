@@ -3,7 +3,6 @@ package authorization
 import (
 	"ksef/cmd/ksef/commands/authorization/challenge"
 	v2 "ksef/internal/client/v2"
-	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/token"
 	"ksef/internal/resources"
 	"ksef/internal/runtime"
@@ -29,8 +28,6 @@ func login(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	signedChallengeFile := args[0]
 	vip := viper.GetViper()
-	vip.Set(auth.FlagDoNotRestoreTokens, "true")
-	vip.Set(auth.FlagExitAfterPersistingToken, "true")
 
 	_, nip, err := challenge.GetNIPFromChallengeFile(signedChallengeFile)
 	if err != nil {
@@ -67,6 +64,7 @@ func login(cmd *cobra.Command, args []string) error {
 		v2.WithAuthValidator(authValidator),
 		v2.WithKeyring(keyring),
 		v2.WithRateLimitsStateStorage(rateLimitsState),
+		v2.WithoutRestoringTokens(),
 	)
 	if err != nil {
 		return err

@@ -19,12 +19,18 @@ var (
 func (tm *TokenManager) persistTokens() error {
 	logger := logging.AuthLogger.With("auth", "token manager")
 	logger.Debug("zapisywanie tokenów sesyjnych")
-	if tm.sessionTokens == nil {
+
+	// Snapshot the tokens under the lock, then release it before doing I/O.
+	tm.mutex.Lock()
+	sessionTokens := tm.sessionTokens
+	tm.mutex.Unlock()
+
+	if sessionTokens == nil {
 		logger.Error("tokeny sesyjne nieustawione")
 		return errEmptySessionTokens
 	}
 	var buffer bytes.Buffer
-	if err := json.NewEncoder(&buffer).Encode(tm.sessionTokens); err != nil {
+	if err := json.NewEncoder(&buffer).Encode(sessionTokens); err != nil {
 		logger.Error("enkodowanie tokenów do JSON zakończone niepowodzeniem", "err", err)
 		return err
 	}
@@ -42,14 +48,10 @@ func (tm *TokenManager) persistTokens() error {
 	return err
 }
 
-func (tm *TokenManager) SetSessionTokens(tokens *SessionTokens) {
-	tm.sessionTokens = tokens
-}
-
 func (tm *TokenManager) clearSessionTokens() error {
 	logger := logging.AuthLogger.With("auth", "token manager")
 
-	tm.sessionTokens = nil
+	tm.clearAuthorizationToken()
 	authCert, err := tm.certsDB.GetCertificateByUsageAndNIP(
 		context.Background(), certsdb.CertificateUsageAuthentication, tm.nip,
 	)
@@ -95,9 +97,7 @@ func (tm *TokenManager) restoreTokens(ctx context.Context) error {
 	if canBeUsed {
 		logger.Debug("tokeny mogą być użyte ponownie")
 		tm.updateSessionTokens(&sessionTokens, refreshed)
-		if tm.exitAfterPersistingToken {
-			tm.finished = true
-		}
+		tm.markReady()
 		return nil
 	}
 	logger.Debug("tokeny nie mogą być użyte ponownie - usuwam z pęku kluczy")

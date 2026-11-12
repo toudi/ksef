@@ -48,7 +48,18 @@ type Client struct {
 	tokenProvider    TokenProvider
 	authedHTTPClient *http.Client
 	authOnce         sync.Once
+
+	// authCtx is the root context the auth worker runs under. It is derived from
+	// the context passed to Init (not from the context of whichever request
+	// happens to start the worker first), so a request-scoped context can never
+	// terminate the worker.
+	authCtx     context.Context
+	authCancel  context.CancelFunc
+	authStarted bool
 }
+
+// authShutdownTimeout bounds how long Close waits for the auth worker.
+const authShutdownTimeout = 5 * time.Second
 
 func Init(
 	ctx context.Context,
@@ -68,6 +79,11 @@ func Init(
 		gateway:    gateway,
 		httpConfig: httpConfig,
 	}
+
+	// Construct a separate context for the auth worker so that the requests don't accidentally
+	// kill the worker itself (i.e. they will use separate contexts with separate timeouts)
+	client.authCtx, client.authCancel = context.WithCancel(context.WithoutCancel(ctx))
+
 	for _, initializer := range initializers {
 		initializer(client)
 	}
@@ -90,11 +106,29 @@ func Init(
 	return client, nil
 }
 
-// Close stops the background auth worker. It is safe to call when no token
-// manager was constructed (e.g. a token provider was injected).
+// Close stops the background auth worker and waits (bounded) for it to finish.
+// It is safe to call when no token manager was constructed (e.g. a token
+// provider was injected) or when the worker was never started.
 func (c *Client) Close() error {
-	if runner, ok := c.tokenProvider.(tokenRunner); ok {
-		runner.Stop()
+	if c.authCancel == nil {
+		return nil
 	}
-	return nil
+	c.authCancel()
+
+	// Nothing to join if the worker was never started.
+	if !c.authStarted {
+		return nil
+	}
+
+	runner, ok := c.tokenProvider.(tokenRunner)
+	if !ok {
+		return nil
+	}
+
+	select {
+	case <-runner.Done():
+		return nil
+	case <-time.After(authShutdownTimeout):
+		return nil
+	}
 }

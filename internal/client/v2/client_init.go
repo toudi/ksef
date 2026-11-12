@@ -36,6 +36,8 @@ type APIClient struct {
 	// init options
 	runTokenManager     bool
 	tokenManagerStarted bool
+	tokenManagerCancel  context.CancelFunc
+	skipRestore         bool
 	vip                 *viper.Viper
 	keyring             kr.Keyring
 	rateLimitsState     ratelimits.StateStorage
@@ -68,11 +70,10 @@ func NewClient(ctx context.Context, vip *viper.Viper, options ...InitializerFunc
 			return nil, err
 		}
 		authCfg := auth.Config{
-			NIP:                      nip,
-			EnvironmentID:            runtime.GetEnvironmentId(vip),
-			HTTPClient:               httpClient,
-			SkipRestore:              vip.GetBool(auth.FlagDoNotRestoreTokens),
-			ExitAfterPersistingToken: vip.GetBool(auth.FlagExitAfterPersistingToken),
+			NIP:           nip,
+			EnvironmentID: runtime.GetEnvironmentId(vip),
+			HTTPClient:    httpClient,
+			SkipRestore:   client.skipRestore,
 		}
 		if client.tokenManager, err = auth.NewTokenManager(ctx, authCfg, client.authChallengeValidator, client.keyring, client.certsDB); err != nil {
 			return nil, err
@@ -104,5 +105,5 @@ func (c *APIClient) authenticatedHTTPClient() *httpClient.Client {
 }
 
 func (c *APIClient) Close() {
-	c.tokenManager.Stop()
+	c.StopTokenManager()
 }

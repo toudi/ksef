@@ -18,7 +18,8 @@ const defaultTokenTimeout = 30 * time.Second
 func (c *Client) authenticatedHTTPClient() *http.Client {
 	c.authOnce.Do(func() {
 		if runner, ok := c.tokenProvider.(tokenRunner); ok {
-			go runner.Run()
+			c.authStarted = true
+			go runner.Run(c.authCtx)
 		}
 
 		tokenTimeout := c.httpConfig.TokenTimeout

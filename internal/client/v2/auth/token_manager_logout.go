@@ -13,7 +13,8 @@ const (
 )
 
 func (t *TokenManager) Logout(sessionRefNo string) error {
-	if t.sessionTokens == nil {
+	sessionTokens := t.currentSessionTokens()
+	if sessionTokens == nil || sessionTokens.AuthorizationToken == nil {
 		return errNoTokens
 	}
 
@@ -24,7 +25,7 @@ func (t *TokenManager) Logout(sessionRefNo string) error {
 	_, err := t.httpClient.Request(
 		context.Background(),
 		http.RequestConfig{
-			Headers:        map[string]string{"Authorization": "Bearer " + t.sessionTokens.AuthorizationToken.Token},
+			Headers:        map[string]string{"Authorization": "Bearer " + sessionTokens.AuthorizationToken.Token},
 			Method:         baseHTTP.MethodDelete,
 			ExpectedStatus: baseHTTP.StatusNoContent,
 		},

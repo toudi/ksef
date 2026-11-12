@@ -7,7 +7,6 @@ import (
 	"ksef/cmd/ksef/flags"
 	kr "ksef/core/keyring"
 	v2 "ksef/internal/client/v2"
-	"ksef/internal/client/v2/auth"
 	"ksef/internal/client/v2/auth/token"
 	"ksef/internal/client/v2/auth/validator"
 	"ksef/internal/resources"
@@ -41,7 +40,6 @@ func authSessionDebug(cmd *cobra.Command, _ []string) error {
 	ctx := cmd.Context()
 	var authValidator validator.AuthChallengeValidator
 	vip := viper.GetViper()
-	vip.Set(auth.FlagExitAfterPersistingToken, "true")
 	var nip string
 
 	var err error
