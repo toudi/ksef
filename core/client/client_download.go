@@ -48,6 +48,12 @@ func (c *Client) DownloadInvoices(
 			return err
 		}
 
+		if syncParams == nil {
+			syncParams = &invoicedb.InvoiceSyncParams{
+				SubjectTypes: cfg.SubjectTypes,
+			}
+		}
+
 		tmpDownloadParams := cfg
 		tmpDownloadParams.DateType = ksef.DateTypeStorage
 		// initialize starting cutoff with month start:
@@ -58,7 +64,7 @@ func (c *Client) DownloadInvoices(
 		// it is within the month range. The reason for that is if for whatever reason there's
 		// a wrong date persisted - i.e. from a different month due to a bug - we want to ignore
 		// it as it would lead to a faulty request
-		if syncParams != nil && !syncParams.LastTimestamp.IsZero() && utils.WithinMonthRange(syncParams.LastTimestamp, month) {
+		if !syncParams.LastTimestamp.IsZero() && utils.WithinMonthRange(syncParams.LastTimestamp, month) {
 			// use .In(month.Location) because the registry persists timestamps in UTC
 			// however month comes from user entry, therefore we need to compare them with respect to
 			// the same timezone
