@@ -61,7 +61,7 @@ func clientLocked(ctx context.Context, vip *viper.Viper, NIP string) (*client.Cl
 		return nil, err
 	}
 
-	rateLimitsState, err := RateLimitsState(vip, NIP)
+	rateLimitsState, err := rateLimitsStateLocked(vip, NIP)
 	if err != nil {
 		return nil, err
 	}

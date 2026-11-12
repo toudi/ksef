@@ -3,8 +3,9 @@ package resources
 import (
 	"context"
 	"errors"
-	"ksef/core/ratelimits"
 	"path/filepath"
+
+	"ksef/core/ratelimits"
 
 	ratelimitsfs "ksef/core/ratelimits/fs"
 
@@ -25,20 +26,20 @@ func init() {
 // invoices data root and the NIP - so the NIP is passed explicitly while the root
 // comes from InvoiceStorageRoot (which deliberately does not resolve a NIP).
 func RateLimitsState(vip *viper.Viper, NIP string) (ratelimits.StateStorage, error) {
-	if NIP == "" {
-		// filepath.Join(root, "") would silently point at <root>/<environment>
-		return nil, errNIPRequired
-	}
-
 	mu.Lock()
 	defer mu.Unlock()
 
-	return rateLimitsStateLocked(vip, NIP), nil
+	return rateLimitsStateLocked(vip, NIP)
 }
 
-func rateLimitsStateLocked(vip *viper.Viper, NIP string) ratelimits.StateStorage {
+func rateLimitsStateLocked(vip *viper.Viper, NIP string) (ratelimits.StateStorage, error) {
 	if instance, exists := rateLimitsStateInstance[NIP]; exists {
-		return instance
+		return instance, nil
+	}
+
+	if NIP == "" {
+		// filepath.Join(root, "") would silently point at <root>/<environment>
+		return nil, errNIPRequired
 	}
 
 	instance := ratelimitsfs.NewFSStorage(filepath.Join(InvoiceStorageRoot(vip), NIP))
@@ -48,5 +49,5 @@ func rateLimitsStateLocked(vip *viper.Viper, NIP string) ratelimits.StateStorage
 		return instance.Close(context.WithoutCancel(ctx))
 	})
 
-	return instance
+	return instance, nil
 }
